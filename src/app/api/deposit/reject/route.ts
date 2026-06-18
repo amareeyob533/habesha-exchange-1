@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
 import { verifyApprovalToken } from '@/lib/deposit-approval'
+import { rejectDeposit, type DepositWithUser } from '@/lib/deposit-actions'
+import { db } from '@/lib/db'
 
 /**
  * Admin rejects a deposit by clicking the link in the email.
  * GET /api/deposit/reject?token=<signed>
- * Marks the deposit rejected (no balance change) and notifies the user.
  */
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token')
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   const depositId = verifyApprovalToken(token, 'reject')
   if (!depositId) return renderPage('error', 'This rejection link is invalid or has expired (7-day limit).')
 
-  const deposit = await db.deposit.findUnique({ where: { id: depositId }, include: { user: true } })
+  const deposit = (await db.deposit.findUnique({ where: { id: depositId }, include: { user: true } })) as DepositWithUser | null
   if (!deposit) return renderPage('error', 'Deposit not found.')
 
   if (deposit.status === 'rejected') {
@@ -24,22 +24,14 @@ export async function GET(req: NextRequest) {
     return renderPage('error', `This deposit was already approved and cannot be rejected.`)
   }
 
-  await db.$transaction(async (tx) => {
-    await tx.deposit.update({ where: { id: deposit.id }, data: { status: 'rejected' } })
-    await tx.notification.create({
-      data: {
-        userId: deposit.userId,
-        title: 'Deposit Rejected',
-        message: `Your deposit of ${deposit.amount} ${deposit.token} on ${deposit.network} could not be confirmed and has been rejected. Please contact support if you believe this is an error.`,
-        type: 'warning',
-      },
-    })
-  })
-
-  return renderPage('success', `You rejected the deposit of ${deposit.amount} ${deposit.token} from User ${deposit.user.uid}. No balance was credited.`, deposit)
+  const result = await rejectDeposit(depositId)
+  if (result === 'done') {
+    return renderPage('success', `You rejected the deposit of ${deposit.amount} ${deposit.token} from User ${deposit.user.uid}. No balance was credited.`, deposit)
+  }
+  return renderPage('error', `Could not reject the deposit (${result}).`)
 }
 
-function renderPage(kind: 'success' | 'error' | 'already', message: string, deposit?: any): NextResponse {
+function renderPage(kind: 'success' | 'error' | 'already', message: string, deposit?: DepositWithUser): NextResponse {
   const palette = {
     success: { color: '#F6465D', title: 'Deposit Rejected', emoji: '✕' },
     error: { color: '#F6465D', title: 'Action Failed', emoji: '✕' },

@@ -115,3 +115,34 @@ Verified E2E (curl + browser):
 
 Stage Summary:
 - Deposits now require manual admin approval via signed email links (no more auto-credit). The admin email contains one-click Approve/Reject buttons. Links are JWT-signed (can't be guessed), expire in 7 days, and are idempotent. Lint clean, server stable on :3000.
+
+---
+Task ID: 15
+Agent: main
+Task: Build in-app admin approval panel (email not deliverable in sandbox without SMTP)
+
+Why: The email-based approval can't actually deliver to amareeyob533@gmail.com because this sandbox has no SMTP server configured (emails only log to dev.log). Built an in-app admin panel so the admin can approve deposits directly in the website — works immediately, no email setup needed.
+
+Changes:
+- src/lib/deposit-actions.ts (NEW): shared logic — isAdminEmail(email==ADMIN_EMAIL), fetchDeposits(status), approveDeposit(id) [credit+tx+notify, atomic, idempotent], rejectDeposit(id) [mark+notify, idempotent].
+- src/app/api/deposit/{approve,reject}/route.ts: refactored to use shared approveDeposit/rejectDeposit (no duplication).
+- src/app/api/admin/deposits/route.ts (NEW): GET ?status=pending|approved|rejected|all — admin-only list of all deposits with user info.
+- src/app/api/admin/deposits/approve/route.ts (NEW): POST {depositId} — admin-only approve.
+- src/app/api/admin/deposits/reject/route.ts (NEW): POST {depositId} — admin-only reject.
+- src/hooks/use-ui.ts: added 'admin' to ViewKey.
+- src/components/dashboard/sidebar.tsx: shows "Admin · Approvals" nav item ONLY when logged-in user email == ADMIN_EMAIL (amareeyob533@gmail.com).
+- src/components/dashboard/views/admin.tsx (NEW): Admin view with Pending/Approved/Rejected/All tabs, deposit table (user UID+email, amount, network, time, status), Approve (green) / Reject (red) buttons on pending items, "X deposits awaiting your approval" banner, how-it-works note.
+- src/components/dashboard/dashboard-shell.tsx: renders AdminView for view==='admin'.
+
+Admin access: email amareeyob533@gmail.com is auto-detected as admin. Created that account (UID 728545, password reset to admin123 for testing).
+
+Verified E2E (curl + browser):
+- Friend (friend@test.com) signs up, deposits 1000 USDT → balance stays 0 (NOT credited). ✓
+- Admin (amareeyob533@gmail.com) logs in → sees "Admin · Approvals" in sidebar. ✓
+- Admin view shows pending deposit: "1000 USDT from UID 592106 (friend@test.com)". ✓
+- Admin clicks Approve → balance credited instantly (Friend USDT 0 → 1000). ✓
+- Non-admin (Alice) blocked from /api/admin/deposits (403 Admin access required). ✓
+- Browser: admin login → Admin nav visible → pending deposits table → click Approve → balance credited (Alice 400 → 700). ✓
+
+Stage Summary:
+- The admin (amareeyob533@gmail.com) can now log in and approve/reject all user deposits from an in-app Admin panel — no email required. Email sending is still in place for when SMTP gets configured later. Lint clean, server stable on :3000.

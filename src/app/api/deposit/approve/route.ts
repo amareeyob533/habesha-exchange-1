@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
 import { verifyApprovalToken } from '@/lib/deposit-approval'
+import { approveDeposit, type DepositWithUser } from '@/lib/deposit-actions'
+import { db } from '@/lib/db'
 
 /**
  * Admin approves a deposit by clicking the link in the email.
  * GET /api/deposit/approve?token=<signed>
- * Credits the user's balance (only once), creates a completed transaction,
- * notifies the user, and returns an HTML confirmation page.
  */
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token')
@@ -15,8 +14,7 @@ export async function GET(req: NextRequest) {
   const depositId = verifyApprovalToken(token, 'approve')
   if (!depositId) return renderPage('error', 'This approval link is invalid or has expired (7-day limit).')
 
-  // Fetch deposit + user (need uid for the page)
-  const deposit = await db.deposit.findUnique({ where: { id: depositId }, include: { user: true } })
+  const deposit = (await db.deposit.findUnique({ where: { id: depositId }, include: { user: true } })) as DepositWithUser | null
   if (!deposit) return renderPage('error', 'Deposit not found.')
 
   if (deposit.status === 'approved') {
@@ -26,42 +24,14 @@ export async function GET(req: NextRequest) {
     return renderPage('error', `This deposit was already rejected and cannot be approved.`)
   }
 
-  // Credit balance + mark approved + transaction + user notification (atomic)
-  await db.$transaction(async (tx) => {
-    await tx.deposit.update({ where: { id: deposit.id }, data: { status: 'approved' } })
-    const bal = await tx.balance.findUnique({
-      where: { userId_token: { userId: deposit.userId, token: deposit.token } },
-    })
-    if (bal) {
-      await tx.balance.update({ where: { id: bal.id }, data: { amount: bal.amount + deposit.amount } })
-    } else {
-      await tx.balance.create({ data: { userId: deposit.userId, token: deposit.token, amount: deposit.amount } })
-    }
-    await tx.transaction.create({
-      data: {
-        userId: deposit.userId,
-        type: 'deposit',
-        token: deposit.token,
-        amount: deposit.amount,
-        status: 'completed',
-        network: deposit.network,
-        note: 'Deposit approved by admin',
-      },
-    })
-    await tx.notification.create({
-      data: {
-        userId: deposit.userId,
-        title: 'Deposit Credited ✓',
-        message: `Your deposit of ${deposit.amount} ${deposit.token} on ${deposit.network} has been approved and credited to your account.`,
-        type: 'success',
-      },
-    })
-  })
-
-  return renderPage('success', `You approved the deposit. ${deposit.amount} ${deposit.token} has been credited to User ${deposit.user.uid}.`, deposit)
+  const result = await approveDeposit(depositId)
+  if (result === 'done') {
+    return renderPage('success', `You approved the deposit. ${deposit.amount} ${deposit.token} has been credited to User ${deposit.user.uid}.`, deposit)
+  }
+  return renderPage('error', `Could not approve the deposit (${result}).`)
 }
 
-function renderPage(kind: 'success' | 'error' | 'already' | 'info', message: string, deposit?: any): NextResponse {
+function renderPage(kind: 'success' | 'error' | 'already' | 'info', message: string, deposit?: DepositWithUser): NextResponse {
   const palette = {
     success: { color: '#0ECB81', title: 'Deposit Approved', emoji: '✓' },
     error: { color: '#F6465D', title: 'Action Failed', emoji: '✕' },

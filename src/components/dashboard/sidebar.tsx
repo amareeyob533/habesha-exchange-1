@@ -3,8 +3,9 @@
 import { motion } from 'framer-motion'
 import { LogoWord } from '@/components/common/logo'
 import { useUI, type ViewKey } from '@/hooks/use-ui'
+import { useAuth } from '@/hooks/use-auth'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, LineChart, Wallet, Receipt, ShieldCheck, LifeBuoy, User, X } from 'lucide-react'
+import { LayoutDashboard, LineChart, Wallet, Receipt, ShieldCheck, LifeBuoy, User, X, ShieldAlert } from 'lucide-react'
 
 const NAV: { key: ViewKey; label: string; icon: any }[] = [
   { key: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -16,8 +17,12 @@ const NAV: { key: ViewKey; label: string; icon: any }[] = [
   { key: 'profile', label: 'Profile', icon: User },
 ]
 
+const ADMIN_NAV = { key: 'admin' as ViewKey, label: 'Admin · Approvals', icon: ShieldAlert }
+
 export function Sidebar() {
   const { view, setView, sidebarOpen, setSidebarOpen } = useUI()
+  const { user } = useAuth()
+  const isAdmin = user?.email?.toLowerCase() === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'amareeyob533@gmail.com').toLowerCase()
   return (
     <>
       {/* Mobile overlay */}
@@ -60,6 +65,13 @@ export function Sidebar() {
               </button>
             )
           })}
+          {isAdmin && (
+            <>
+              <div className="my-2 border-t border-border/60" />
+              <div className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wider text-gold">Admin</div>
+              <AdminNavItem item={ADMIN_NAV} active={view === ADMIN_NAV.key} onClick={() => setView(ADMIN_NAV.key)} />
+            </>
+          )}
         </nav>
         <div className="border-t border-border p-4">
           <div className="rounded-xl border border-gold/20 bg-gold/5 p-3 text-xs text-muted-foreground">
@@ -72,5 +84,27 @@ export function Sidebar() {
         </div>
       </aside>
     </>
+  )
+}
+
+function AdminNavItem({ item, active, onClick }: { item: { key: ViewKey; label: string; icon: any }; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+        active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60',
+      )}
+    >
+      {active && (
+        <motion.div
+          layoutId="sidebar-active"
+          className="absolute inset-0 rounded-xl border border-gold/40 bg-gold/10"
+          transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+        />
+      )}
+      <item.icon className={cn('relative h-[18px] w-[18px]', active ? 'text-gold' : 'text-gold/70')} />
+      <span className="relative">{item.label}</span>
+    </button>
   )
 }

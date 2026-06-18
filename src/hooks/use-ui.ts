@@ -2,7 +2,7 @@
 
 import { create } from 'zustand'
 
-export type ViewKey = 'overview' | 'markets' | 'wallet' | 'transactions' | 'kyc' | 'support' | 'profile'
+export type ViewKey = 'overview' | 'markets' | 'wallet' | 'transactions' | 'kyc' | 'support' | 'profile' | 'admin'
 
 interface ModalState {
   view: ViewKey

@@ -333,3 +333,28 @@ Verified in browser (iPhone 14 viewport):
 
 Stage Summary:
 - Mobile users now get a Binance-style bottom icon nav (Home / Markets / Trade / Wallet) for quick switching; desktop keeps the sidebar. Lint clean, server stable on :3000.
+
+---
+Task ID: 22
+Agent: main
+Task: Habesha Token exchange restriction — can receive (swap TO) but cannot exchange FROM into other tokens
+
+Changes:
+- src/app/api/swap/route.ts: backend now blocks any swap where fromToken.internalOnly (HABESHA). Returns 400 with clear message: "Habesha Token is not listed yet and cannot be exchanged into other tokens. You can only receive HABESHA (by swapping other tokens into it) or transfer it internally between Habesha Exchange users." Swapping other tokens INTO HABESHA still works.
+- src/components/dashboard/views/exchange.tsx:
+  - "From" dropdown: HABESHA option is disabled (with a Lock icon).
+  - Swap-direction button: disabled when "To" is HABESHA (with tooltip) + toast warning if clicked.
+  - Warning banner appears when "To" = HABESHA: "One-way conversion ... cannot be exchanged back ... only transferred internally".
+  - Info card at bottom explaining the Habesha Token listing status.
+  - Confirmation dialog ("Confirm Habesha Token Exchange") before completing a swap INTO HABESHA: shows amount, lists the 4 restrictions (not listed, can't swap back, internal-only transfers, no external withdraw), Cancel / "I Understand — Confirm" buttons.
+
+Verified:
+- Backend: HABESHA→USDT blocked with error; USDT→HABESHA succeeds. ✓
+- Frontend: HABESHA disabled in "From" dropdown (Lock icon). ✓
+- Swap-direction button disabled when To=HABESHA. ✓
+- "One-way conversion" warning banner shows when To=HABESHA. ✓
+- Entering amount + clicking Exchange → confirmation dialog appears. ✓
+- Clicking "I Understand — Confirm" → swap completes, "Exchange Complete ✓ You received 0.777343 HABESHA", balance updated. ✓
+
+Stage Summary:
+- Habesha Token is now one-way in the Exchange: users can swap any token INTO HABESHA (with a clear warning + confirmation), but cannot swap HABESHA back into other tokens (blocked on backend + disabled in UI). This reflects its "not yet listed" status. Lint clean, server stable on :3000.

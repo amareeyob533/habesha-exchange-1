@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { LogoWord, LogoMark } from '@/components/common/logo'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
+import { useUI } from '@/hooks/use-ui'
 import { apiFetch } from '@/lib/api-client'
 import { formatUsd } from '@/lib/format'
-import { ArrowRight, ShieldCheck, Zap, Globe2, Wallet, Lock, TrendingUp, Gift, Users, ChevronRight, Menu } from 'lucide-react'
+import { ArrowRight, ShieldCheck, Zap, Globe2, Wallet, Lock, TrendingUp, Gift, Users, ChevronRight, Menu, Search } from 'lucide-react'
 
 interface TokenRow {
   symbol: string
@@ -21,9 +23,11 @@ interface TokenRow {
   listed: boolean
 }
 
-export function LandingPage({ onAuth }: { onAuth: (tab: 'login' | 'signup') => void }) {
+export function LandingPage() {
+  const { openAuth, openTokenDetail } = useUI()
   const [tokens, setTokens] = useState<TokenRow[]>([])
   const [mobileNav, setMobileNav] = useState(false)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     apiFetch<{ tokens: TokenRow[] }>('/api/tokens').then((d) => setTokens(d.tokens)).catch(() => {})
@@ -55,10 +59,10 @@ export function LandingPage({ onAuth }: { onAuth: (tab: 'login' | 'signup') => v
           </nav>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button variant="ghost" className="hidden sm:inline-flex" onClick={() => onAuth('login')}>
+            <Button variant="ghost" className="hidden sm:inline-flex" onClick={() => openAuth('login')}>
               Sign In
             </Button>
-            <Button className="bg-gold-gradient font-semibold text-primary-foreground hover:opacity-95" onClick={() => onAuth('signup')}>
+            <Button className="bg-gold-gradient font-semibold text-primary-foreground hover:opacity-95" onClick={() => openAuth('signup')}>
               Get Started
             </Button>
             <button className="md:hidden" onClick={() => setMobileNav((s) => !s)} aria-label="Menu">
@@ -114,10 +118,10 @@ export function LandingPage({ onAuth }: { onAuth: (tab: 'login' | 'signup') => v
             A premium, secure and lightning-fast exchange built for everyone. Trade BTC, USDT, USDC, TON and the exclusive Habesha Token — all in one place.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button size="lg" className="bg-gold-gradient h-12 px-8 text-base font-semibold text-primary-foreground hover:opacity-95" onClick={() => onAuth('signup')}>
+            <Button size="lg" className="bg-gold-gradient h-12 px-8 text-base font-semibold text-primary-foreground hover:opacity-95" onClick={() => openAuth('signup')}>
               Create Free Account <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
-            <Button size="lg" variant="outline" className="h-12 px-8 text-base font-semibold" onClick={() => onAuth('login')}>
+            <Button size="lg" variant="outline" className="h-12 px-8 text-base font-semibold" onClick={() => openAuth('login')}>
               Sign In
             </Button>
           </div>
@@ -184,10 +188,19 @@ export function LandingPage({ onAuth }: { onAuth: (tab: 'login' | 'signup') => v
 
       {/* Tokens / Markets */}
       <section id="tokens" className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6">
-        <div className="mb-8 flex items-end justify-between">
+        <div className="mb-8 flex items-end justify-between gap-4">
           <div>
             <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Markets</h2>
-            <p className="mt-2 text-muted-foreground">Today's token prices and 24h performance.</p>
+            <p className="mt-2 text-muted-foreground">Click any token to view its price chart.</p>
+          </div>
+          <div className="relative w-full max-w-[220px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search token…"
+              className="border-border bg-card/60 pl-9"
+            />
           </div>
         </div>
         <div className="overflow-hidden rounded-2xl border border-border bg-card/60">
@@ -197,13 +210,20 @@ export function LandingPage({ onAuth }: { onAuth: (tab: 'login' | 'signup') => v
             <div className="col-span-2 sm:col-span-3 text-right">24h</div>
             <div className="col-span-2 sm:col-span-2 text-right">Trade</div>
           </div>
-          {tokens.map((t, i) => (
+          {tokens
+            .filter((t) => {
+              const q = search.trim().toLowerCase()
+              if (!q) return true
+              return t.symbol.toLowerCase().includes(q) || t.name.toLowerCase().includes(q)
+            })
+            .map((t, i) => (
             <motion.div
               key={t.symbol}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: i * 0.05 }}
-              className="grid grid-cols-12 items-center gap-2 border-b border-border/50 px-5 py-4 last:border-0 transition-colors hover:bg-secondary/30"
+              onClick={() => openTokenDetail(t.symbol)}
+              className="grid cursor-pointer grid-cols-12 items-center gap-2 border-b border-border/50 px-5 py-4 last:border-0 transition-colors hover:bg-secondary/40"
             >
               <div className="col-span-5 flex items-center gap-3 sm:col-span-4">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold" style={{ backgroundColor: `${t.color}22`, color: t.color }}>
@@ -224,8 +244,8 @@ export function LandingPage({ onAuth }: { onAuth: (tab: 'login' | 'signup') => v
               <div className={`col-span-2 text-right font-mono text-sm sm:col-span-3 ${t.change24h >= 0 ? 'text-up' : 'text-down'}`}>
                 {t.change24h >= 0 ? '+' : ''}{t.change24h.toFixed(2)}%
               </div>
-              <div className="col-span-2 text-right sm:col-span-2">
-                <Button size="sm" variant="outline" className="h-8 border-gold/30 text-gold hover:bg-gold/10" onClick={() => onAuth('signup')}>
+              <div className="col-span-2 text-right sm:col-span-2" onClick={(e) => e.stopPropagation()}>
+                <Button size="sm" variant="outline" className="h-8 border-gold/30 text-gold hover:bg-gold/10" onClick={() => openAuth('signup')}>
                   Trade <ChevronRight className="h-3 w-3" />
                 </Button>
               </div>
@@ -248,7 +268,7 @@ export function LandingPage({ onAuth }: { onAuth: (tab: 'login' | 'signup') => v
                 Habesha Token is fixed at <b className="text-gold">$6.4321674</b> and not yet listed publicly. Every new member receives
                 <b className="text-gold"> $299.9</b> worth instantly. Transferable between Habesha Exchange users — no external withdrawals.
               </p>
-              <Button className="bg-gold-gradient mt-6 font-semibold text-primary-foreground hover:opacity-95" onClick={() => onAuth('signup')}>
+              <Button className="bg-gold-gradient mt-6 font-semibold text-primary-foreground hover:opacity-95" onClick={() => openAuth('signup')}>
                 Claim your bonus <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
@@ -306,7 +326,7 @@ export function LandingPage({ onAuth }: { onAuth: (tab: 'login' | 'signup') => v
           <div className="relative">
             <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Start trading in under a minute</h2>
             <p className="mx-auto mt-3 max-w-xl text-muted-foreground">Join thousands of traders on Habesha Exchange and claim your welcome bonus today.</p>
-            <Button size="lg" className="bg-gold-gradient mt-6 h-12 px-8 text-base font-semibold text-primary-foreground hover:opacity-95" onClick={() => onAuth('signup')}>
+            <Button size="lg" className="bg-gold-gradient mt-6 h-12 px-8 text-base font-semibold text-primary-foreground hover:opacity-95" onClick={() => openAuth('signup')}>
               Create Free Account <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           </div>

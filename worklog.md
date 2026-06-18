@@ -239,3 +239,28 @@ Verified E2E:
 
 Stage Summary:
 - Both KYC levels now require manual admin approval (no auto-approval). The user's real webcam records a live face video (4s) via getUserMedia+MediaRecorder; High KYC also captures an ID photo. The admin sees each submission in Admin · Approvals → KYC with the playable video and ID photo, and can Approve (sets the requested level) or Reject (clears + notifies). Lint clean, server stable on :3000.
+
+---
+Task ID: 18
+Agent: main
+Task: Add interactive price charts for every token (Binance-style) — click/search a token to view its chart
+
+Changes:
+- src/hooks/use-ui.ts: added tokenDetail + openTokenDetail (which token's chart to show) and authOpen/authTab/openAuth/closeAuth (auth modal state moved into the store so any component can trigger sign-in).
+- src/app/page.tsx: removed local authOpen/authTab state; reads from use-ui store; renders <TokenDetailModal/> globally (works on both landing + dashboard).
+- src/components/landing/landing-page.tsx: removed onAuth prop (uses useUI.openAuth now); added search bar in Markets section; token rows are now clickable (cursor-pointer + openTokenDetail(symbol)); "Trade" button stops propagation so it still opens auth. Search filters by symbol or name.
+- src/lib/price-history.ts (NEW): deterministic seeded PRNG (mulberry32) generates historical price points per token per timeframe (1D/1W/1M/3M/1Y). Per-token volatility (stablecoins 0.15%, BTC 3%, TON 5%, HABESHA 0% flat). priceStats() computes high/low/change.
+- src/components/markets/token-chart.tsx (NEW): recharts AreaChart with gradient fill (gold/up-green/down-red), timeframe selector (1D/1W/1M/3M/1Y), live price header with % change, custom tooltip (date+price+symbol), X-axis time labels, right-aligned Y-axis price labels, 3-stat row (high/low/change). HABESHA shows gold flat line.
+- src/components/modals/token-detail-modal.tsx (NEW): modal with token header (icon/symbol/name/24h badge), the TokenChart, fixed-price + internal-only notices for HABESHA, Deposit/Withdraw(Transfer) action buttons. Logged-out users clicking an action → auth modal opens. HABESHA Deposit disabled.
+- src/components/dashboard/views/markets.tsx: added search bar; token rows clickable (openTokenDetail); empty-state when search has no matches; action buttons stopPropagation so they still work.
+
+Verified in browser:
+- Landing Markets: search "bit" → filters to BTC only. ✓
+- Click any token row → chart modal opens with price, 24h change, area chart, 1D/1W/1M/3M/1Y tabs, high/low/change stats. ✓
+- BTC chart: $97,500, ▲2.34% 24h, switching 1W→1M updates chart + stats (▼10.76% · 1M). ✓
+- HABESHA: flat gold chart, "fixed at $6.4321674, chart flat by design" notice, "internal only" notice, Deposit disabled, Withdraw→Transfer. ✓
+- Logged-out: clicking Withdraw on TON chart → auth modal opens (Sign In). ✓
+- Dashboard Markets: same search + click behavior. ✓
+
+Stage Summary:
+- Every token now has a Binance-style price chart. Click any token (or search + click) on the homepage Markets section or the dashboard Markets view to open a chart modal with timeframe tabs (1D/1W/1M/3M/1Y), live price, 24h change, high/low stats, and trade actions. Lint clean, server stable on :3000.

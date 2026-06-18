@@ -23,6 +23,14 @@ interface ModalState {
   openSupport: () => void
   openNotif: () => void
   closeAll: () => void
+  // token detail modal (chart)
+  tokenDetail: string | null
+  openTokenDetail: (symbol: string) => void
+  // auth modal
+  authOpen: boolean
+  authTab: 'login' | 'signup'
+  openAuth: (tab?: 'login' | 'signup') => void
+  closeAuth: () => void
 }
 
 export const useUI = create<ModalState>((set) => ({
@@ -44,4 +52,10 @@ export const useUI = create<ModalState>((set) => ({
   openNotif: () => set({ notifOpen: true }),
   closeAll: () =>
     set({ depositToken: null, withdrawToken: null, transferToken: null, kycOpen: false, supportOpen: false, notifOpen: false }),
+  tokenDetail: null,
+  openTokenDetail: (symbol) => set({ tokenDetail: symbol }),
+  authOpen: false,
+  authTab: 'login',
+  openAuth: (tab = 'login') => set({ authOpen: true, authTab: tab }),
+  closeAuth: () => set({ authOpen: false }),
 }))

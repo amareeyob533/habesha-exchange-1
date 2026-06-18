@@ -2,25 +2,21 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
+import { useUI } from '@/hooks/use-ui'
 import { LandingPage } from '@/components/landing/landing-page'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 import { AuthModal } from '@/components/auth/auth-modal'
+import { TokenDetailModal } from '@/components/modals/token-detail-modal'
 import { BrandIntro, LogoLoader } from '@/components/common/logo-loader'
 
 export default function Home() {
   const { user, authChecked, fetchMe } = useAuth()
+  const { authOpen, authTab, closeAuth } = useUI()
   const [introDone, setIntroDone] = useState(false)
-  const [authOpen, setAuthOpen] = useState(false)
-  const [authTab, setAuthTab] = useState<'login' | 'signup'>('login')
 
   useEffect(() => {
     fetchMe()
   }, [fetchMe])
-
-  function openAuth(tab: 'login' | 'signup') {
-    setAuthTab(tab)
-    setAuthOpen(true)
-  }
 
   const booting = !introDone || !authChecked
 
@@ -35,10 +31,11 @@ export default function Home() {
       )}
 
       {!booting && (
-        user ? <DashboardShell /> : <LandingPage onAuth={openAuth} />
+        user ? <DashboardShell /> : <LandingPage />
       )}
 
-      <AuthModal open={authOpen} onOpenChange={setAuthOpen} defaultTab={authTab} />
+      <AuthModal open={authOpen} onOpenChange={(v) => !v && closeAuth()} defaultTab={authTab} />
+      <TokenDetailModal />
     </>
   )
 }

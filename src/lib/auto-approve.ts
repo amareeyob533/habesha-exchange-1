@@ -1,8 +1,11 @@
 import { db } from '@/lib/db'
 
 const KYC_AUTO_APPROVE_MS = 30 * 1000 // 30 seconds (per requirement)
-const DEPOSIT_AUTO_APPROVE_MS = 60 * 1000 // 60 seconds (demo admin approval)
 const WITHDRAW_AUTO_APPROVE_MS = 60 * 1000 // 60 seconds (demo processing)
+
+// NOTE: Deposits are NO LONGER auto-approved. They require manual admin approval
+// via the signed link sent to the admin email (amareeyob533@gmail.com).
+// See src/app/api/deposit/approve/route.ts and src/lib/deposit-approval.ts.
 
 /**
  * Process pending items that have exceeded their auto-approval window.
@@ -10,7 +13,6 @@ const WITHDRAW_AUTO_APPROVE_MS = 60 * 1000 // 60 seconds (demo processing)
  */
 export async function processAutoApprovals(userId: string) {
   await autoApproveKyc(userId)
-  await autoApproveDeposits(userId)
   await autoCompleteWithdrawals(userId)
 }
 
@@ -39,49 +41,6 @@ async function autoApproveKyc(userId: string) {
       type: 'success',
     },
   })
-}
-
-async function autoApproveDeposits(userId: string) {
-  const pending = await db.deposit.findMany({
-    where: { userId, status: 'pending' },
-  })
-  for (const dep of pending) {
-    if (Date.now() - dep.createdAt.getTime() < DEPOSIT_AUTO_APPROVE_MS) continue
-    // Credit balance + mark approved + completed transaction + notify.
-    await db.$transaction(async (tx) => {
-      await tx.deposit.update({ where: { id: dep.id }, data: { status: 'approved' } })
-      const bal = await tx.balance.findUnique({
-        where: { userId_token: { userId, token: dep.token } },
-      })
-      if (bal) {
-        await tx.balance.update({
-          where: { id: bal.id },
-          data: { amount: bal.amount + dep.amount },
-        })
-      } else {
-        await tx.balance.create({ data: { userId, token: dep.token, amount: dep.amount } })
-      }
-      await tx.transaction.create({
-        data: {
-          userId,
-          type: 'deposit',
-          token: dep.token,
-          amount: dep.amount,
-          status: 'completed',
-          network: dep.network,
-          note: 'Deposit approved',
-        },
-      })
-      await tx.notification.create({
-        data: {
-          userId,
-          title: 'Deposit Credited',
-          message: `${dep.amount} ${dep.token} has been credited to your account.`,
-          type: 'success',
-        },
-      })
-    })
-  }
 }
 
 async function autoCompleteWithdrawals(userId: string) {

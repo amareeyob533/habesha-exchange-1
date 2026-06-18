@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
 import { getToken } from '@/lib/tokens'
 import { notifyAdminDeposit } from '@/lib/email'
+import { signApprovalToken, getBaseUrl } from '@/lib/deposit-approval'
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,13 +30,16 @@ export async function POST(req: NextRequest) {
       data: {
         userId: user.id,
         title: 'Deposit Submitted',
-        message: `Your deposit of ${amt} ${token} on ${network} is pending confirmation.`,
+        message: `Your deposit of ${amt} ${token} on ${network} is pending admin confirmation. You'll be notified once it's credited.`,
         type: 'info',
       },
     })
 
-    // Email admin
-    await notifyAdminDeposit({ uid: user.uid, amount: amt, token, network })
+    // Build signed one-click approve / reject links and email them to the admin.
+    const base = getBaseUrl(req)
+    const approveUrl = `${base}/api/deposit/approve?token=${signApprovalToken(deposit.id, 'approve')}`
+    const rejectUrl = `${base}/api/deposit/reject?token=${signApprovalToken(deposit.id, 'reject')}`
+    await notifyAdminDeposit({ uid: user.uid, amount: amt, token, network, approveUrl, rejectUrl })
 
     return NextResponse.json({ ok: true, deposit })
   } catch (err: any) {

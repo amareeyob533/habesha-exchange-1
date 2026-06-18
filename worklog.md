@@ -90,3 +90,28 @@ Verified via Agent Browser (clean localStorage + cookies):
 
 Stage Summary:
 - Login/signup now work in the Preview Panel iframe. Lint clean, server stable on :3000.
+
+---
+Task ID: 14
+Agent: main
+Task: Replace deposit auto-approval with manual admin approval via email links
+
+Changes:
+- src/lib/deposit-approval.ts (NEW): signApprovalToken/verifyApprovalToken (JWT, 7-day expiry, action-scoped) + getBaseUrl (NEXT_PUBLIC_BASE_URL env → x-forwarded-proto+host → localhost:3000).
+- src/lib/auto-approve.ts: REMOVED autoApproveDeposits() and its call. Deposits now stay "pending" until the admin clicks the approve link. KYC (30s) and withdrawal (60s) auto-approvals kept as-is.
+- src/lib/email.ts: notifyAdminDeposit now accepts approveUrl + rejectUrl and renders a branded dark+gold email with big green "✓ APPROVE DEPOSIT" and red "✕ REJECT" buttons, plus plain-text link fallbacks.
+- src/app/api/deposit/route.ts: builds signed approve/reject URLs via getBaseUrl(req) + signApprovalToken, passes to notifyAdminDeposit. Deposit notification message updated to "pending admin confirmation".
+- src/app/api/deposit/approve/route.ts (NEW, GET): verifies signed token → if pending: credits balance + creates completed transaction + notifies user (atomic) → returns branded HTML "Deposit Approved" page. Guards: already-approved/rejected states, expired/invalid tokens. Idempotent (no double credit).
+- src/app/api/deposit/reject/route.ts (NEW, GET): verifies signed token → if pending: marks rejected (no balance change) + notifies user → returns branded HTML "Deposit Rejected" page. Same guards.
+
+Verified E2E (curl + browser):
+- Deposit 150 USDT → balance UNCHANGED (200, not credited), status pending. ✓
+- Email sent to amareeyob533@gmail.com with subject "[Action Required] Approve Deposit — User 510600 · 150 USDT", containing Approve + Reject buttons and plain-text links. ✓
+- Admin clicks Approve link → branded "Deposit Approved" HTML page, balance credited (+150 → 350), user gets "Deposit Credited ✓" notification. ✓
+- Click Approve again → "Already Processed", NO double credit (stays 350). ✓
+- Admin clicks Reject link (on a separate deposit) → "Deposit Rejected" page, balance UNCHANGED (no credit), user notified. ✓
+- Cannot approve a rejected deposit (Action Failed). ✓
+- Browser: UI deposit 50 USDT → approve link opened in browser → balance +50, approval page renders correctly (gold header, green checkmark, deposit details). ✓
+
+Stage Summary:
+- Deposits now require manual admin approval via signed email links (no more auto-credit). The admin email contains one-click Approve/Reject buttons. Links are JWT-signed (can't be guessed), expire in 7 days, and are idempotent. Lint clean, server stable on :3000.

@@ -61,26 +61,49 @@ export async function sendEmail(
   }
 }
 
-/** Notify admin about a new deposit. */
+/** Notify admin about a new deposit, with one-click Approve / Reject links. */
 export async function notifyAdminDeposit(params: {
   uid: string
   amount: number
   token: string
   network: string
+  approveUrl: string
+  rejectUrl: string
 }) {
-  const { uid, amount, token, network } = params
-  const subject = `New Deposit — User ${uid}`
+  const { uid, amount, token, network, approveUrl, rejectUrl } = params
+  const time = new Date().toISOString()
+  const subject = `[Action Required] Approve Deposit — User ${uid} · ${amount} ${token}`
   const html = `
-    <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;border:1px solid #eee;border-radius:8px;padding:24px">
-      <h2 style="color:#F0B90B;margin-top:0">Habesha Exchange — New Deposit</h2>
-      <p>A user has submitted a deposit confirmation. Please review and approve in the admin panel.</p>
-      <table style="width:100%;border-collapse:collapse;margin:16px 0">
-        <tr><td style="padding:8px;border:1px solid #eee;font-weight:bold">User UID</td><td style="padding:8px;border:1px solid #eee">${uid}</td></tr>
-        <tr><td style="padding:8px;border:1px solid #eee;font-weight:bold">Amount</td><td style="padding:8px;border:1px solid #eee">${amount} ${token}</td></tr>
-        <tr><td style="padding:8px;border:1px solid #eee;font-weight:bold">Network</td><td style="padding:8px;border:1px solid #eee">${network}</td></tr>
-        <tr><td style="padding:8px;border:1px solid #eee;font-weight:bold">Time</td><td style="padding:8px;border:1px solid #eee">${new Date().toISOString()}</td></tr>
-      </table>
-      <p style="color:#888;font-size:12px">This is an automated notification from Habesha Exchange.</p>
+    <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:auto;background:#0b0b10;border:1px solid #1f1f26;border-radius:12px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#FCD66B,#F0B90B 50%,#C8901A);padding:20px 24px">
+        <h2 style="margin:0;color:#0A0A0C;font-size:18px">Habesha Exchange — Deposit Approval Required</h2>
+      </div>
+      <div style="padding:24px;color:#F4F4F7">
+        <p style="margin:0 0 4px">A user has submitted a deposit confirmation. The funds have <b>NOT</b> been credited yet.</p>
+        <p style="margin:0 0 16px;color:#8B8B95;font-size:13px">Review the details below and click <b style="color:#0ECB81">Approve</b> to credit the user's balance, or <b style="color:#F6465D">Reject</b> to decline.</p>
+        <table style="width:100%;border-collapse:collapse;margin:0 0 20px;font-size:14px">
+          <tr><td style="padding:10px;border:1px solid #1f1f26;background:#111116;font-weight:bold;color:#F0B90B">User UID</td><td style="padding:10px;border:1px solid #1f1f26;background:#111116">${uid}</td></tr>
+          <tr><td style="padding:10px;border:1px solid #1f1f26;background:#111116;font-weight:bold;color:#F0B90B">Amount</td><td style="padding:10px;border:1px solid #1f1f26;background:#111116">${amount} ${token}</td></tr>
+          <tr><td style="padding:10px;border:1px solid #1f1f26;background:#111116;font-weight:bold;color:#F0B90B">Network</td><td style="padding:10px;border:1px solid #1f1f26;background:#111116">${network}</td></tr>
+          <tr><td style="padding:10px;border:1px solid #1f1f26;background:#111116;font-weight:bold;color:#F0B90B">Time (UTC)</td><td style="padding:10px;border:1px solid #1f1f26;background:#111116">${time}</td></tr>
+        </table>
+        <table style="width:100%;border-collapse:collapse">
+          <tr>
+            <td style="padding:0 4px 0 0;width:50%">
+              <a href="${approveUrl}" style="display:block;text-align:center;background:linear-gradient(135deg,#0ECB81,#0BA56A);color:#fff;text-decoration:none;padding:14px 0;border-radius:8px;font-weight:bold;font-size:15px">✓ APPROVE DEPOSIT</a>
+            </td>
+            <td style="padding:0 0 0 4px;width:50%">
+              <a href="${rejectUrl}" style="display:block;text-align:center;background:linear-gradient(135deg,#F6465D,#E0364E);color:#fff;text-decoration:none;padding:14px 0;border-radius:8px;font-weight:bold;font-size:15px">✕ REJECT</a>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:16px 0 0;color:#8B8B95;font-size:12px;line-height:1.5">
+          If the buttons don't work, copy these links into your browser:<br>
+          Approve: <span style="color:#F0B90B;word-break:break-all">${approveUrl}</span><br>
+          Reject: <span style="color:#F0B90B;word-break:break-all">${rejectUrl}</span>
+        </p>
+        <p style="margin:16px 0 0;color:#555;font-size:11px">This is an automated notification from Habesha Exchange. The approval links expire in 7 days.</p>
+      </div>
     </div>
   `
   return sendEmail(ADMIN_EMAIL, subject, html)

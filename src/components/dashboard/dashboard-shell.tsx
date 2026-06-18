@@ -17,6 +17,7 @@ import { WithdrawModal } from '@/components/modals/withdraw-modal'
 import { KycModal } from '@/components/modals/kyc-modal'
 import { SupportModal } from '@/components/modals/support-modal'
 import { NotificationPanel } from '@/components/dashboard/notification-panel'
+import { BottomNav } from '@/components/dashboard/bottom-nav'
 import { useUI } from '@/hooks/use-ui'
 import { useAuth } from '@/hooks/use-auth'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -61,7 +62,7 @@ export function DashboardShell() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-border/60 bg-background/80 lg:pl-64">
+      <footer className="border-t border-border/60 bg-background/80 pb-20 lg:pl-64 lg:pb-0">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-2 px-4 py-5 sm:flex-row sm:justify-between sm:px-6">
           <div className="flex items-center gap-2">
             <LogoMark className="h-6 w-6 rounded" />
@@ -74,6 +75,9 @@ export function DashboardShell() {
           </div>
         </div>
       </footer>
+
+      {/* Mobile bottom navigation (icons) */}
+      <BottomNav />
 
       {/* Modals */}
       <DepositModal />

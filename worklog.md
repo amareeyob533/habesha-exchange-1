@@ -315,3 +315,21 @@ Verified in browser (VLM eye-comfort ratings):
 
 Stage Summary:
 - Light mode is now soft, warm, and eye-comfortable (warm linen backgrounds, soft charcoal text, gentle warm borders, calmer gold/green/red). No longer looks like an inverted color filter. Smooth transition between themes. Lint clean, server stable on :3000.
+
+---
+Task ID: 21
+Agent: main
+Task: Add mobile bottom navigation bar with icons (Overview, Markets, Exchange, Wallet) like Binance mobile
+
+Changes:
+- src/components/dashboard/bottom-nav.tsx (NEW): fixed bottom nav bar, icon-only (LayoutDashboard/Home, LineChart/Markets, ArrowLeftRight/Trade, Wallet). Active icon turns gold + animated pill background (layoutId) + small gold dot indicator. Visible only on < lg screens (lg:hidden) where the sidebar is hidden. Respects iOS safe-area-inset-bottom.
+- src/components/dashboard/dashboard-shell.tsx: renders <BottomNav/>; footer gets pb-20 on mobile (lg:pb-0) so it isn't covered by the fixed nav.
+
+Verified in browser (iPhone 14 viewport):
+- Bottom nav visible with 4 icons on mobile. ✓
+- Active state: gold icon + animated pill + dot indicator. ✓
+- Clicking each icon switches view: Home→Overview, Markets→Markets, Trade→Exchange, Wallet→Wallet. ✓
+- Hidden on desktop (sidebar handles nav there). ✓
+
+Stage Summary:
+- Mobile users now get a Binance-style bottom icon nav (Home / Markets / Trade / Wallet) for quick switching; desktop keeps the sidebar. Lint clean, server stable on :3000.

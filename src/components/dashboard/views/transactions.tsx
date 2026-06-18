@@ -6,7 +6,7 @@ import { apiFetch } from '@/lib/api-client'
 import { formatTokenAmount, timeAgo, shortAddr } from '@/lib/format'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
-import { RefreshCw, ArrowDownToLine, ArrowUpFromLine, Send, Gift, Download } from 'lucide-react'
+import { RefreshCw, ArrowDownToLine, ArrowUpFromLine, Send, Gift, Download, Undo2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 interface Tx {
@@ -39,6 +39,7 @@ const TYPE_META: Record<string, { icon: any; label: string; color: string; sign:
   transfer_in: { icon: Download, label: 'Transfer In', color: 'text-up', sign: '+' },
   transfer_out: { icon: Send, label: 'Transfer Out', color: 'text-down', sign: '-' },
   airdrop: { icon: Gift, label: 'Airdrop', color: 'text-up', sign: '+' },
+  refund: { icon: Undo2, label: 'Refund', color: 'text-up', sign: '+' },
 }
 
 export function TransactionsView() {

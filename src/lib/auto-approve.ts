@@ -1,19 +1,21 @@
 import { db } from '@/lib/db'
 
 const KYC_AUTO_APPROVE_MS = 30 * 1000 // 30 seconds (per requirement)
-const WITHDRAW_AUTO_APPROVE_MS = 60 * 1000 // 60 seconds (demo processing)
 
-// NOTE: Deposits are NO LONGER auto-approved. They require manual admin approval
-// via the signed link sent to the admin email (amareeyob533@gmail.com).
-// See src/app/api/deposit/approve/route.ts and src/lib/deposit-approval.ts.
+// NOTE: Deposits and external withdrawals are NO LONGER auto-approved.
+// Both require manual admin approval via the in-app Admin panel
+// (visible to amareeyob533@gmail.com). See:
+//   - src/lib/deposit-actions.ts (approveDeposit / rejectDeposit)
+//   - src/lib/withdrawal-actions.ts (approveWithdrawal / rejectWithdrawal)
+//   - src/app/api/admin/*
+// Internal transfers remain instant (peer-to-peer by design).
 
 /**
- * Process pending items that have exceeded their auto-approval window.
+ * Process pending KYC items that have exceeded their auto-approval window.
  * Called on session/me fetch so the demo feels live without background jobs.
  */
 export async function processAutoApprovals(userId: string) {
   await autoApproveKyc(userId)
-  await autoCompleteWithdrawals(userId)
 }
 
 async function autoApproveKyc(userId: string) {
@@ -41,40 +43,4 @@ async function autoApproveKyc(userId: string) {
       type: 'success',
     },
   })
-}
-
-async function autoCompleteWithdrawals(userId: string) {
-  const pending = await db.withdrawal.findMany({
-    where: { userId, status: 'pending' },
-  })
-  for (const wd of pending) {
-    if (Date.now() - wd.createdAt.getTime() < WITHDRAW_AUTO_APPROVE_MS) continue
-    await db.$transaction(async (tx) => {
-      await tx.withdrawal.update({ where: { id: wd.id }, data: { status: 'completed' } })
-      // Create the completed transaction record (none was created at request time).
-      await tx.transaction.create({
-        data: {
-          userId,
-          type: 'withdraw',
-          token: wd.token,
-          amount: wd.amount,
-          status: 'completed',
-          network: wd.network,
-          address: wd.address,
-          note: `Withdrawal to ${wd.address}`,
-        },
-      })
-      const isInternal = wd.network === 'internal'
-      await tx.notification.create({
-        data: {
-          userId,
-          title: isInternal ? 'Transfer Completed' : 'Withdrawal Completed',
-          message: isInternal
-            ? `Your transfer of ${wd.amount} ${wd.token} to UID ${wd.address} is complete.`
-            : `Your withdrawal of ${wd.amount} ${wd.token} to ${wd.address.slice(0, 10)}... is complete.`,
-          type: 'success',
-        },
-      })
-    })
-  }
 }

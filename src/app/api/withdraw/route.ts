@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
         data: {
           userId: user.id,
           title: 'Withdrawal Submitted',
-          message: `Your withdrawal of ${amt} ${token} to ${String(address).slice(0, 12)}... is processing.`,
+          message: `Your withdrawal of ${amt} ${token} to ${String(address).slice(0, 12)}... is pending admin approval. You'll be notified once it's processed.`,
           type: 'info',
         },
       })

@@ -146,3 +146,36 @@ Verified E2E (curl + browser):
 
 Stage Summary:
 - The admin (amareeyob533@gmail.com) can now log in and approve/reject all user deposits from an in-app Admin panel — no email required. Email sending is still in place for when SMTP gets configured later. Lint clean, server stable on :3000.
+
+---
+Task ID: 16
+Agent: main
+Task: Extend admin panel to also control/approve withdrawals (not just deposits)
+
+Changes:
+- src/lib/auto-approve.ts: removed autoCompleteWithdrawals() entirely. External withdrawals now stay "pending" until admin approves/rejects. KYC (30s) auto-approval kept. Internal transfers remain instant (peer-to-peer by design).
+- src/app/api/withdraw/route.ts: updated notification message to "pending admin approval".
+- src/lib/withdrawal-actions.ts (NEW): fetchWithdrawals(status), approveWithdrawal(id) [mark completed + create completed withdraw transaction + notify], rejectWithdrawal(id) [refund deducted balance + mark rejected + create refund transaction + notify]. Both idempotent.
+- src/app/api/admin/withdrawals/route.ts (NEW): GET ?status=pending|completed|rejected|all — admin-only list.
+- src/app/api/admin/withdrawals/approve/route.ts (NEW): POST {id} — admin-only.
+- src/app/api/admin/withdrawals/reject/route.ts (NEW): POST {id} — admin-only (refunds user).
+- src/components/dashboard/views/transactions.tsx: added 'refund' type to TYPE_META (Undo2 icon, green +amount) so rejected withdrawals show as a refund in user history.
+- src/components/dashboard/views/admin.tsx: rewrote with Deposits/Withdrawals section toggle + Pending/Approved(Completed)/Rejected/All status tabs. Deposits table shows user/amount/network/time/status + Approve/Reject. Withdrawals table shows user/amount/network/destination wallet/time/status + Approve/Reject. Context-aware "how it works" note per section.
+
+Verified E2E (curl + browser):
+- Alice (700 USDT) requests external withdrawal 200 USDT → balance deducted to 500, status pending. ✓
+- After 5s, still pending (no auto-complete). ✓
+- Admin sees pending withdrawal: "200 USDT to TXyZ... UID 510600". ✓
+- Admin APPROVES → withdrawal completed, balance stays 500 (already deducted). Transaction: withdraw 200 completed. ✓
+- Alice requests another withdrawal 100 USDT → balance 400. ✓
+- Admin REJECTS → balance refunded to 500, status rejected. Transaction: refund 100 completed. ✓
+- Browser: admin login → Admin nav → Deposits tab (1 pending) → Withdrawals tab → Completed (200 USDT) + Rejected (100 USDT) tabs correct. ✓
+
+How to access admin panel:
+1. Sign in with amareeyob533@gmail.com / admin123
+2. Click "Admin · Approvals" in the sidebar
+3. Toggle between Deposits and Withdrawals
+4. Click Approve or Reject on any pending item
+
+Stage Summary:
+- Admin can now approve/reject BOTH deposits and withdrawals from the in-app panel. No email needed. Rejecting a withdrawal refunds the user automatically. Lint clean, server stable on :3000.

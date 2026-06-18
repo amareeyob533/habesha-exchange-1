@@ -399,3 +399,22 @@ Verified E2E (curl + browser):
 
 Stage Summary:
 - Usernames are now unique (no two accounts can share one). Admin has a full User Management panel: search by username/UID/email/name, view full details (KYC video + ID photo + balances + transactions), reward any token/amount, send notifications, block, unblock, or permanently delete accounts. Blocked users are instantly signed out. Lint clean, server stable on :3000.
+
+---
+Task ID: 24
+Agent: main
+Task: Fix Vercel deployment — switch from SQLite to PostgreSQL so signup/login works on Vercel
+
+Root cause: The app used SQLite (local file database) which doesn't work on Vercel's serverless platform (no persistent filesystem). Every signup/login failed because Prisma couldn't write to the local file.
+
+Changes:
+- prisma/schema.prisma: provider changed from "sqlite" to "postgresql" (works on Vercel).
+- package.json build script: changed from "next build && cp..." (sandbox-specific) to "prisma generate && prisma db push --accept-data-loss && next build" — this auto-creates all database tables on every Vercel deploy.
+- next.config.ts: removed "output: standalone" (not needed on Vercel, simplifies build).
+- .gitignore: added .env, .env.local, .env.production, /db/ so secrets and local DB aren't committed to GitHub.
+- DEPLOY.md (NEW): step-by-step Vercel deployment guide — create Vercel Postgres, set env vars, push to GitHub, build auto-creates tables, sign up with admin email.
+
+Local dev impact: The sandbox dev server now requires a PostgreSQL DATABASE_URL (the old SQLite file no longer works with provider=postgresql). The Preview Panel won't work for testing after this change — the user should test on their live Vercel URL instead.
+
+Stage Summary:
+- The app is now Vercel-ready. User needs to: (1) create Vercel Postgres, (2) set env vars (JWT_SECRET, NEXT_PUBLIC_ADMIN_EMAIL, NEXT_PUBLIC_WHATSAPP, NEXT_PUBLIC_BASE_URL), (3) push to GitHub, (4) wait for build (auto-creates tables), (5) sign up with amareeyob533@gmail.com to become admin. Full instructions in DEPLOY.md.

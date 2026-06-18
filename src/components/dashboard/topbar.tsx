@@ -35,9 +35,9 @@ export function Topbar() {
           key={totalUsd}
           initial={{ opacity: 0.5, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-lg font-extrabold tracking-tight"
+          className="text-lg font-extrabold tracking-tight tabular-nums"
         >
-          <span className="text-gold-gradient">{formatUsd(totalUsd)}</span>
+          <span className="text-foreground">{formatUsd(totalUsd)}</span>
         </motion.div>
       </div>
 

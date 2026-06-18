@@ -264,3 +264,23 @@ Verified in browser:
 
 Stage Summary:
 - Every token now has a Binance-style price chart. Click any token (or search + click) on the homepage Markets section or the dashboard Markets view to open a chart modal with timeframe tabs (1D/1W/1M/3M/1Y), live price, 24h change, high/low stats, and trade actions. Lint clean, server stable on :3000.
+
+---
+Task ID: 19
+Agent: main
+Task: Change balance color to formal white (dark mode) / dark (light mode) with clean font + fix theme toggle
+
+Changes:
+- src/app/layout.tsx: removed hardcoded className="dark" from <html> — next-themes now fully manages the theme class (defaultTheme="dark"), preventing any conflict when toggling.
+- src/components/dashboard/views/overview.tsx: Total Balance changed from text-gold-gradient to text-foreground (white in dark, dark in light) + added tabular-nums for clean digit alignment.
+- src/components/dashboard/topbar.tsx: Total Balance changed from text-gold-gradient to text-foreground + tabular-nums.
+- src/components/dashboard/views/wallet.tsx: Total Estimated Value changed from text-gold-gradient to text-foreground + tabular-nums.
+
+Verified in browser:
+- Dark mode: balance is white, clean professional font (tabular-nums). ✓
+- Light mode (toggle): balance is dark/black, readable, clean font. ✓
+- Theme toggle switches correctly (html class dark↔light). ✓
+- Wallet view + topbar balance both correct in both modes. ✓
+
+Stage Summary:
+- Balances now use a formal white color in dark mode and dark color in light mode (text-foreground), with tabular-nums for professional digit alignment. The theme toggle works cleanly. Lint clean, server stable on :3000.

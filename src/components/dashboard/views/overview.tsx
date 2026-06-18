@@ -52,8 +52,8 @@ export function OverviewView() {
           <div className="bg-gold-glow pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full opacity-40" />
           <div className="relative">
             <div className="text-xs uppercase tracking-wider text-muted-foreground">Total Balance (USD)</div>
-            <motion.div key={totalUsd} initial={{ opacity: 0.5 }} animate={{ opacity: 1 }} className="mt-2 text-4xl font-extrabold tracking-tight sm:text-5xl">
-              <span className="text-gold-gradient">{formatUsd(totalUsd)}</span>
+            <motion.div key={totalUsd} initial={{ opacity: 0.5 }} animate={{ opacity: 1 }} className="mt-2 text-4xl font-extrabold tracking-tight tabular-nums sm:text-5xl">
+              <span className="text-foreground">{formatUsd(totalUsd)}</span>
             </motion.div>
             <div className="mt-1 flex items-center gap-1.5 text-xs text-up">
               <TrendingUp className="h-3.5 w-3.5" /> Ready to trade

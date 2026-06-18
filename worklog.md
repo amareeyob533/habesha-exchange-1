@@ -66,3 +66,27 @@ Bug found & fixed:
 Stage Summary:
 - All core flows browser-verified: auth (email+google), deposit, withdraw (internal+external), Habesha internal-only restriction, KYC (normal+high, 30s auto-approve), support (whatsapp), notifications, transactions, theme toggle.
 - Lint clean (0 errors), dev server stable on :3000. Production-ready.
+
+---
+Task ID: 13
+Agent: main
+Task: Fix login not working in Preview Panel (iframe cookie blocking)
+
+Root cause:
+- The Preview Panel embeds the app in a cross-origin iframe. Browsers block `sameSite: 'lax'` cookies from being SET in cross-site iframes. So the login POST succeeded server-side (→ "logged in" toast) but the session cookie was never stored client-side → /api/auth/me returned user:null → user stayed on the landing page.
+
+Fix (Bearer token + localStorage, cookie kept as fallback):
+- src/lib/auth.ts: getSession() now reads `Authorization: Bearer <token>` header FIRST (works in any iframe/origin), then falls back to the httpOnly cookie. setSessionCookie() now also RETURNS the raw token.
+- src/app/api/auth/{login,signup,google}/route.ts: responses now include `token`.
+- src/lib/api-client.ts: added getStoredToken/setStoredToken/clearStoredToken (localStorage); apiFetch() and uploadFile() attach `Authorization: Bearer <token>` when present; 401 clears stale token.
+- src/hooks/use-auth.ts: login/signup/google store the returned token in localStorage before fetchMe; logout clears it; fetchMe short-circuits to null when no token (avoids 401 spam). Also resets dashboard view to 'overview' on every successful auth so users land on the Overview.
+
+Verified via Agent Browser (clean localStorage + cookies):
+- Login (alice@test.com) → token stored in localStorage → dashboard Overview renders (Total Balance / My Assets / Recent Activity). ✓
+- Page reload → session persists via localStorage Bearer token. ✓
+- Logout (Profile → Sign out) → token cleared → back to landing. ✓
+- Fresh signup (dana@test.com) → token stored, UID assigned, dashboard renders. ✓
+- Backend curl: login returns token; /api/auth/me with `Authorization: Bearer <token>` (no cookie) returns full user+balances; without auth returns null. ✓
+
+Stage Summary:
+- Login/signup now work in the Preview Panel iframe. Lint clean, server stable on :3000.

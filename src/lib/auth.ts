@@ -1,7 +1,7 @@
 import { db } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'habesha-exchange-dev-secret-change-me'
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d'
@@ -33,30 +33,67 @@ export async function comparePassword(password: string, hash: string): Promise<b
   return bcrypt.compare(password, hash)
 }
 
-/** Read the current session from the httpOnly cookie. */
+/**
+ * Read the current session.
+ *
+ * Checks the `Authorization: Bearer <token>` header FIRST (this works inside
+ * cross-origin iframes / preview panels where sameSite cookies are blocked),
+ * then falls back to the httpOnly session cookie for same-origin top-level use.
+ */
 export async function getSession(): Promise<SessionPayload | null> {
-  const store = await cookies()
-  const token = store.get(COOKIE_NAME)?.value
-  if (!token) return null
-  return verifyToken(token)
+  // 1. Bearer token from Authorization header
+  try {
+    const headerStore = await headers()
+    const authHeader = headerStore.get('authorization') || headerStore.get('Authorization')
+    if (authHeader?.toLowerCase().startsWith('bearer ')) {
+      const token = authHeader.slice(7).trim()
+      const payload = verifyToken(token)
+      if (payload) return payload
+    }
+  } catch {
+    // headers() may throw in some contexts; fall through to cookie
+  }
+
+  // 2. httpOnly cookie fallback
+  try {
+    const store = await cookies()
+    const token = store.get(COOKIE_NAME)?.value
+    if (!token) return null
+    return verifyToken(token)
+  } catch {
+    return null
+  }
 }
 
-/** Set the session cookie on the response. */
-export async function setSessionCookie(payload: SessionPayload) {
+/**
+ * Establish a session: sets the httpOnly cookie (for same-origin) AND returns
+ * the raw token so the client can also persist it in localStorage and send it
+ * as a Bearer header (for iframe / cross-origin contexts).
+ */
+export async function setSessionCookie(payload: SessionPayload): Promise<string> {
   const token = signToken(payload)
-  const store = await cookies()
-  store.set(COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-  })
+  try {
+    const store = await cookies()
+    store.set(COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    })
+  } catch {
+    // setting cookie may fail in some contexts; token is still returned
+  }
+  return token
 }
 
 export async function clearSessionCookie() {
-  const store = await cookies()
-  store.delete(COOKIE_NAME)
+  try {
+    const store = await cookies()
+    store.delete(COOKIE_NAME)
+  } catch {
+    // ignore
+  }
 }
 
 /** Get the full user record for the current session, or null. */

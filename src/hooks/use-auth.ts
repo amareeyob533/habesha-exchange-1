@@ -1,7 +1,8 @@
 'use client'
 
 import { create } from 'zustand'
-import { apiFetch } from '@/lib/api-client'
+import { apiFetch, setStoredToken, clearStoredToken, getStoredToken } from '@/lib/api-client'
+import { useUI } from '@/hooks/use-ui'
 
 export interface Balance {
   symbol: string
@@ -58,6 +59,11 @@ export const useAuth = create<AuthState>((set, get) => ({
   authChecked: false,
 
   fetchMe: async () => {
+    // If we have no stored token, there's nothing to fetch — avoid a 401 round-trip.
+    if (!getStoredToken()) {
+      set({ user: null, authChecked: true })
+      return
+    }
     try {
       const data = await apiFetch<{ user: AuthUser | null; balances: Balance[]; totalUsd: number; notifications: AppNotification[] }>('/api/auth/me')
       set({
@@ -68,6 +74,7 @@ export const useAuth = create<AuthState>((set, get) => ({
         authChecked: true,
       })
     } catch {
+      clearStoredToken()
       set({ user: null, authChecked: true })
     }
   },
@@ -75,10 +82,12 @@ export const useAuth = create<AuthState>((set, get) => ({
   login: async (email, password) => {
     set({ loading: true })
     try {
-      await apiFetch('/api/auth/login', {
+      const res = await apiFetch<{ token: string }>('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       })
+      if (res.token) setStoredToken(res.token)
+      useUI.getState().setView('overview')
       await get().fetchMe()
     } finally {
       set({ loading: false })
@@ -88,10 +97,12 @@ export const useAuth = create<AuthState>((set, get) => ({
   signup: async (email, password, name) => {
     set({ loading: true })
     try {
-      await apiFetch('/api/auth/signup', {
+      const res = await apiFetch<{ token: string }>('/api/auth/signup', {
         method: 'POST',
         body: JSON.stringify({ email, password, name }),
       })
+      if (res.token) setStoredToken(res.token)
+      useUI.getState().setView('overview')
       await get().fetchMe()
     } finally {
       set({ loading: false })
@@ -101,10 +112,12 @@ export const useAuth = create<AuthState>((set, get) => ({
   loginWithGoogle: async (profile) => {
     set({ loading: true })
     try {
-      await apiFetch('/api/auth/google', {
+      const res = await apiFetch<{ token: string }>('/api/auth/google', {
         method: 'POST',
         body: JSON.stringify(profile),
       })
+      if (res.token) setStoredToken(res.token)
+      useUI.getState().setView('overview')
       await get().fetchMe()
     } finally {
       set({ loading: false })
@@ -112,7 +125,12 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
-    await apiFetch('/api/auth/logout', { method: 'POST' })
+    try {
+      await apiFetch('/api/auth/logout', { method: 'POST' })
+    } catch {
+      // ignore network errors on logout
+    }
+    clearStoredToken()
     set({ user: null, balances: [], totalUsd: 0, notifications: [] })
   },
 

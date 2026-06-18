@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     if (!ok) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
-    await setSessionCookie({ userId: user.id, uid: user.uid, email: user.email })
+    const token = await setSessionCookie({ userId: user.id, uid: user.uid, email: user.email })
 
     return NextResponse.json({
       id: user.id,
@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
       provider: user.provider,
       kycStatus: user.kycStatus,
       kycLevel: user.kycLevel,
+      token,
     })
   } catch (err: any) {
     console.error('Login error:', err)

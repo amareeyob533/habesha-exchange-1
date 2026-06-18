@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    await setSessionCookie({ userId: user.id, uid: user.uid, email: user.email })
+    const token = await setSessionCookie({ userId: user.id, uid: user.uid, email: user.email })
 
     return NextResponse.json({
       id: user.id,
@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
       provider: user.provider,
       kycStatus: user.kycStatus,
       kycLevel: user.kycLevel,
+      token,
     })
   } catch (err: any) {
     console.error('Signup error:', err)

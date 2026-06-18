@@ -8,6 +8,9 @@ export interface WithdrawalWithUser {
   amount: number
   address: string
   status: string
+  bankName: string | null
+  accountName: string | null
+  birrAmount: number | null
   createdAt: Date
   user: { id: string; uid: string; email: string; name: string | null }
 }
@@ -34,6 +37,7 @@ export async function approveWithdrawal(id: string): Promise<'done' | 'already' 
 
   await db.$transaction(async (tx) => {
     await tx.withdrawal.update({ where: { id: wd.id }, data: { status: 'completed' } })
+    const isBank = wd.network === 'bank'
     await tx.transaction.create({
       data: {
         userId: wd.userId,
@@ -43,14 +47,18 @@ export async function approveWithdrawal(id: string): Promise<'done' | 'already' 
         status: 'completed',
         network: wd.network,
         address: wd.address,
-        note: `Withdrawal approved by admin → ${wd.address}`,
+        note: isBank
+          ? `Bank withdrawal approved → ${wd.bankName} · ${wd.accountName} · ${wd.address} · ${wd.birrAmount} ETB`
+          : `Withdrawal approved by admin → ${wd.address}`,
       },
     })
     await tx.notification.create({
       data: {
         userId: wd.userId,
-        title: 'Withdrawal Completed ✓',
-        message: `Your withdrawal of ${wd.amount} ${wd.token} to ${wd.address.slice(0, 12)}... has been approved and sent.`,
+        title: isBank ? 'Bank Withdrawal Approved ✓' : 'Withdrawal Completed ✓',
+        message: isBank
+          ? `Your bank withdrawal of ${wd.amount} USDT (≈ ${Number(wd.birrAmount).toLocaleString('en-US')} ETB) to ${wd.bankName} account ${wd.address} (${wd.accountName}) has been approved. The ETB will arrive in your bank account shortly.`
+          : `Your withdrawal of ${wd.amount} ${wd.token} to ${wd.address.slice(0, 12)}... has been approved and sent.`,
         type: 'success',
       },
     })
@@ -95,7 +103,10 @@ export async function rejectWithdrawal(id: string): Promise<'done' | 'already' |
       data: {
         userId: wd.userId,
         title: 'Withdrawal Rejected',
-        message: `Your withdrawal of ${wd.amount} ${wd.token} was rejected. ${wd.amount} ${wd.token} has been returned to your account.`,
+        message:
+          wd.network === 'bank'
+            ? `Your bank withdrawal of ${wd.amount} USDT was rejected. ${wd.amount} USDT has been returned to your account. Please contact support if you believe this is an error.`
+            : `Your withdrawal of ${wd.amount} ${wd.token} was rejected. ${wd.amount} ${wd.token} has been returned to your account.`,
         type: 'warning',
       },
     })

@@ -25,6 +25,9 @@ interface AdminWithdrawal {
   amount: number
   address: string
   status: string
+  bankName: string | null
+  accountName: string | null
+  birrAmount: number | null
   createdAt: string
   user: { uid: string; email: string; name: string | null }
 }
@@ -248,34 +251,55 @@ function WithdrawalsTable({ withdrawals, acting, onAct }: { withdrawals: AdminWi
         <div className="col-span-1">Status</div>
         <div className="col-span-1 text-right">Actions</div>
       </div>
-      {withdrawals.map((w, i) => (
-        <motion.div key={w.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }} className="grid grid-cols-12 items-center gap-2 border-b border-border/50 px-5 py-3.5 last:border-0 transition-colors hover:bg-secondary/30">
-          <div className="col-span-12 sm:col-span-2">
-            <div className="text-sm font-bold text-gold">UID {w.user.uid}</div>
-            <div className="truncate text-[11px] text-muted-foreground">{w.user.email}</div>
-          </div>
-          <div className="col-span-6 sm:col-span-2">
-            <div className="font-mono text-sm font-bold">{formatTokenAmount(w.amount, w.token)}</div>
-            <div className="text-[11px] text-muted-foreground">{w.token}</div>
-          </div>
-          <div className="col-span-6 text-xs text-muted-foreground sm:col-span-2">{w.network}</div>
-          <div className="col-span-12 truncate font-mono text-[11px] text-muted-foreground sm:col-span-3" title={w.address}>{shortAddr(w.address, 8)}</div>
-          <div className="col-span-6 text-[11px] text-muted-foreground sm:col-span-1">{timeAgo(w.createdAt)}</div>
-          <div className="col-span-6 sm:col-span-1"><StatusBadge status={w.status} /></div>
-          <div className="col-span-12 flex justify-end gap-1.5 sm:col-span-1">
-            {w.status === 'pending' ? (
-              <div className="flex gap-1.5">
-                <Button size="sm" className="h-8 bg-up px-2 text-white hover:bg-up/90" disabled={acting === w.id} onClick={() => onAct(w.id, 'approve')} title="Approve">
-                  {acting === w.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                </Button>
-                <Button size="sm" variant="outline" className="h-8 border-down/40 px-2 text-down hover:bg-down/10" disabled={acting === w.id} onClick={() => onAct(w.id, 'reject')} title="Reject & refund">
-                  {acting === w.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
-                </Button>
-              </div>
-            ) : <span className="text-[11px] text-muted-foreground">—</span>}
-          </div>
-        </motion.div>
-      ))}
+      {withdrawals.map((w, i) => {
+        const isBank = w.network === 'bank'
+        return (
+          <motion.div key={w.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }} className="grid grid-cols-12 items-start gap-2 border-b border-border/50 px-5 py-3.5 last:border-0 transition-colors hover:bg-secondary/30">
+            <div className="col-span-12 sm:col-span-2">
+              <div className="text-sm font-bold text-gold">UID {w.user.uid}</div>
+              <div className="truncate text-[11px] text-muted-foreground">{w.user.email}</div>
+            </div>
+            <div className="col-span-6 sm:col-span-2">
+              <div className="font-mono text-sm font-bold">{formatTokenAmount(w.amount, w.token)}</div>
+              <div className="text-[11px] text-muted-foreground">{w.token}</div>
+              {isBank && w.birrAmount != null && (
+                <div className="mt-0.5 text-[11px] font-bold text-gold">≈ {Number(w.birrAmount).toLocaleString('en-US')} ETB</div>
+              )}
+            </div>
+            <div className="col-span-6 text-xs sm:col-span-2">
+              {isBank ? (
+                <span className="inline-flex items-center gap-1 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] font-bold text-gold">BANK · {w.bankName}</span>
+              ) : (
+                <span className="text-muted-foreground">{w.network}</span>
+              )}
+            </div>
+            <div className="col-span-12 sm:col-span-3">
+              {isBank ? (
+                <div className="space-y-0.5 text-[11px]">
+                  <div className="font-mono text-muted-foreground" title={w.address}>Acct: {w.address}</div>
+                  <div className="text-muted-foreground">Name: {w.accountName}</div>
+                </div>
+              ) : (
+                <div className="truncate font-mono text-[11px] text-muted-foreground" title={w.address}>{shortAddr(w.address, 8)}</div>
+              )}
+            </div>
+            <div className="col-span-6 text-[11px] text-muted-foreground sm:col-span-1">{timeAgo(w.createdAt)}</div>
+            <div className="col-span-6 sm:col-span-1"><StatusBadge status={w.status} /></div>
+            <div className="col-span-12 flex justify-end gap-1.5 sm:col-span-1">
+              {w.status === 'pending' ? (
+                <div className="flex gap-1.5">
+                  <Button size="sm" className="h-8 bg-up px-2 text-white hover:bg-up/90" disabled={acting === w.id} onClick={() => onAct(w.id, 'approve')} title="Approve">
+                    {acting === w.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-8 border-down/40 px-2 text-down hover:bg-down/10" disabled={acting === w.id} onClick={() => onAct(w.id, 'reject')} title="Reject & refund">
+                    {acting === w.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+                  </Button>
+                </div>
+              ) : <span className="text-[11px] text-muted-foreground">—</span>}
+            </div>
+          </motion.div>
+        )
+      })}
     </div>
   )
 }

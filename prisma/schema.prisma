@@ -76,16 +76,20 @@ model Deposit {
 }
 
 model Withdrawal {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String
-  network   String   // internal | TRON | ETHEREUM | BTC NETWORK | TON NETWORK
-  amount    Float
-  address   String   // wallet address or target UID for internal
-  status    String   @default("pending") // pending | completed | rejected
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token       String
+  network     String   // internal | TRON | ETHEREUM | BTC NETWORK | TON NETWORK | bank
+  amount      Float
+  address     String   // wallet address, target UID, or bank account number
+  status      String   @default("pending") // pending | completed | rejected
+  // Bank-withdrawal-only fields (null for crypto/internal withdrawals)
+  bankName    String?  // CBE | Telebirr | Abay Bank | EMPSA
+  accountName String?  // account holder name
+  birrAmount  Float?   // ETB equivalent at request time (amount_usd * rate)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Transfer {

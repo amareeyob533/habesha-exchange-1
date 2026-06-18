@@ -6,6 +6,7 @@ import { Topbar } from '@/components/dashboard/topbar'
 import { OverviewView } from '@/components/dashboard/views/overview'
 import { WalletView } from '@/components/dashboard/views/wallet'
 import { MarketsView } from '@/components/dashboard/views/markets'
+import { ExchangeView } from '@/components/dashboard/views/exchange'
 import { TransactionsView } from '@/components/dashboard/views/transactions'
 import { KycView } from '@/components/dashboard/views/kyc-view'
 import { SupportView } from '@/components/dashboard/views/support-view'
@@ -48,6 +49,7 @@ export function DashboardShell() {
               {view === 'overview' && <OverviewView />}
               {view === 'wallet' && <WalletView />}
               {view === 'markets' && <MarketsView />}
+              {view === 'exchange' && <ExchangeView />}
               {view === 'transactions' && <TransactionsView />}
               {view === 'kyc' && <KycView />}
               {view === 'support' && <SupportView />}

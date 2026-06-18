@@ -179,3 +179,35 @@ How to access admin panel:
 
 Stage Summary:
 - Admin can now approve/reject BOTH deposits and withdrawals from the in-app panel. No email needed. Rejecting a withdrawal refunds the user automatically. Lint clean, server stable on :3000.
+
+---
+Task ID: 16
+Agent: main
+Task: Add Bank withdrawal (3rd option) + Token Exchange (swap) feature
+
+Changes:
+- prisma/schema.prisma: Withdrawal model gained bankName, accountName, birrAmount (all optional, null for crypto/internal).
+- src/lib/tokens.ts: added ETB_RATE=192 and BANKS list (CBE, Telebirr, Abay Bank, EMPSA).
+- src/app/api/swap/route.ts (NEW): POST {fromToken, toToken, amount} → deducts fromToken, credits USD-equivalent of toToken at live prices. Creates swap_out + swap_in transactions + notification.
+- src/components/dashboard/views/exchange.tsx (NEW): Exchange page with from/to token selectors, amount input, live rate display, swap-direction button, estimated received amount, "Exchange" submit. Tip box: "exchange to USDT first for bank withdrawal".
+- src/hooks/use-ui.ts: added 'exchange' to ViewKey.
+- src/components/dashboard/sidebar.tsx: added "Exchange" nav item (ArrowLeftRight icon).
+- src/components/dashboard/dashboard-shell.tsx: renders ExchangeView.
+- src/app/api/withdraw/route.ts: added bank mode — validates token==USDT, bankName in BANKS, accountName + accountNumber required. Stores bankName/accountName/birrAmount. network='bank'.
+- src/lib/withdrawal-actions.ts: approveWithdrawal/rejectWithdrawal now bank-aware (approve sends "Bank Withdrawal Approved ✓ ... ≈ X ETB to CBE account N (Name)" notification; reject refunds USDT + "bank withdrawal rejected" notification). WithdrawalWithUser interface includes new fields.
+- src/components/modals/withdraw-modal.tsx: 3rd mode "Bank ETB cash-out" (Landmark icon). Bank requires USDT (disabled otherwise with tip to use Exchange). 2-stage flow: stage 1 = select bank + enter USDT amount (live ETB preview = amount×192), stage 2 = bank info form (account holder name + bank account number) with summary banner. Submit → "Bank Withdrawal Submitted ... pending admin approval".
+- src/components/dashboard/views/admin.tsx: AdminWithdrawal interface + WithdrawalsTable updated to show bank info (BANK · CBE badge, account number, account name, ≈ X ETB) for bank withdrawals.
+
+Verified E2E (curl):
+- Swap 50 USDT → HABESHA: received 7.7734 HABESHA (≈ $50), balances updated instantly. ✓
+- Bank withdraw 100 USDT → CBE (acct 123456789, name Abebe Kebede): USDT deducted (450→350), birrAmount=19200 stored. ✓
+- Bank withdraw 50 USDT → Telebirr (acct 987654321, name Sara Tesfaye): birrAmount=9600 stored. ✓
+- Admin approve CBE bank withdrawal: status completed, user notified "Bank Withdrawal Approved ✓ ... ≈ 19,200 ETB to CBE account 123456789 (Abebe Kebede)". ✓
+- Admin reject Telebirr bank withdrawal: status rejected, 50 USDT REFUNDED to user (300→350), user notified. ✓
+- Non-USDT bank withdrawal blocked: "Bank withdrawals require USDT. Use the Exchange to convert your tokens to USDT first." ✓
+- Admin panel shows all 6 withdrawals including 2 bank entries with full bank details (bank, acct, name, birr). ✓
+
+Browser verified: Exchange page renders (from/to selectors, rate, swap button). Withdraw modal shows 3 modes (Internal, External, Bank). Bank mode shows bank selector (CBE/Telebirr/Abay/EMPSA) + ETB rate info + 2-stage form. (Dropdown-in-dialog option clicks are an agent-browser limitation; functionality proven via curl.)
+
+Stage Summary:
+- Users can now: (1) Exchange any token to USDT on the Exchange page, (2) Withdraw USDT to Ethiopian banks (CBE/Telebirr/Abay/EMPSA) at 1 USDT = 192 ETB, (3) See live ETB preview before confirming, (4) Fill bank account info, (5) Status shows "pending" until admin approves in the admin panel. Admin can approve (mark sent) or reject (refund USDT). Lint clean, server stable on :3000.

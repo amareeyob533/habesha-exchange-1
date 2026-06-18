@@ -18,9 +18,9 @@ The app was using **SQLite** (a local file database) which does NOT work on Verc
 4. Select **Postgres (Neon)** — the free tier
 5. Name it `habesha-db` (or anything you like)
 6. Click **Create**
-7. Vercel will show **Environment Variables** — click **Connect Project** to automatically link the database to your project
+7. Click **Connect Project** to link the database to your project
 
-> This automatically sets `DATABASE_URL` (and a few others) as environment variables in your Vercel project.
+> When you connect a Vercel Postgres database, Vercel **automatically** sets these environment variables: `POSTGRES_PRISMA_URL` (pooled, for app queries) and `POSTGRES_URL_NON_POOLING` (for migrations). The app is configured to use these — **you do NOT need to set `DATABASE_URL`**.
 
 ---
 
@@ -98,7 +98,15 @@ Once the site is live:
 
 ### "Database connection error" or signup fails
 - Make sure the Vercel Postgres database is **connected** to your project (Storage tab → the database should show "Connected to [project name]")
-- Make sure `DATABASE_URL` appears in Settings → Environment Variables
+- Verify these env vars exist in Settings → Environment Variables: `POSTGRES_PRISMA_URL` and `POSTGRES_URL_NON_POOLING` (Vercel auto-sets these when you connect the database)
+- If they're missing, go to Storage tab → click your database → **Connect Project** → select your project
+
+### "Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`"
+This means Prisma can't find a valid Postgres URL. You need to connect a Vercel Postgres database:
+1. Vercel project → **Storage** tab → **Create Database** → **Postgres (Neon)**
+2. Click **Connect Project** → select your project
+3. This auto-creates `POSTGRES_PRISMA_URL` and `POSTGRES_URL_NON_POOLING`
+4. Redeploy (Deployments tab → click the latest → **Redeploy**)
 
 ### Build fails with "Environment variable not found"
 - All `NEXT_PUBLIC_*` variables must be set in Vercel's Environment Variables BEFORE building
@@ -129,7 +137,8 @@ Set these in Vercel → Settings → Environment Variables:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `DATABASE_URL` | ✅ Auto-set by Vercel Postgres | PostgreSQL connection string |
+| `POSTGRES_PRISMA_URL` | ✅ Auto-set by Vercel Postgres | Pooled connection for app queries |
+| `POSTGRES_URL_NON_POOLING` | ✅ Auto-set by Vercel Postgres | Direct connection for migrations |
 | `JWT_SECRET` | ✅ | Any long random string for session security |
 | `NEXT_PUBLIC_ADMIN_EMAIL` | ✅ | `amareeyob533@gmail.com` (your admin email) |
 | `NEXT_PUBLIC_WHATSAPP` | ✅ | Your WhatsApp contact number |
@@ -139,6 +148,8 @@ Set these in Vercel → Settings → Environment Variables:
 | `SMTP_USER` | Optional | For sending real emails |
 | `SMTP_PASS` | Optional | For sending real emails |
 | `SMTP_FROM` | Optional | For sending real emails |
+
+> **Note:** If you're using a different Postgres provider (Supabase, Neon directly, Railway) instead of Vercel Postgres, set `POSTGRES_PRISMA_URL` and `POSTGRES_URL_NON_POOLING` manually to your database connection strings (both can be the same value).
 
 ---
 

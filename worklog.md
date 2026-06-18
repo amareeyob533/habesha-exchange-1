@@ -418,3 +418,17 @@ Local dev impact: The sandbox dev server now requires a PostgreSQL DATABASE_URL 
 
 Stage Summary:
 - The app is now Vercel-ready. User needs to: (1) create Vercel Postgres, (2) set env vars (JWT_SECRET, NEXT_PUBLIC_ADMIN_EMAIL, NEXT_PUBLIC_WHATSAPP, NEXT_PUBLIC_BASE_URL), (3) push to GitHub, (4) wait for build (auto-creates tables), (5) sign up with amareeyob533@gmail.com to become admin. Full instructions in DEPLOY.md.
+
+---
+Task ID: 25
+Agent: main
+Task: Fix Vercel build error P1012 ("URL must start with postgresql://")
+
+Root cause: Vercel Postgres (Neon) does NOT set DATABASE_URL. When you connect a Vercel Postgres database to a project, it auto-sets POSTGRES_PRISMA_URL (pooled) and POSTGRES_URL_NON_POOLING (direct). The schema was referencing env("DATABASE_URL") which was empty → Prisma validation failed.
+
+Fix:
+- prisma/schema.prisma: datasource now uses url=env("POSTGRES_PRISMA_URL") for runtime queries + directUrl=env("POSTGRES_URL_NON_POOLING") for migrations (prisma db push). This is the official Vercel Postgres + Prisma pattern.
+- DEPLOY.md: updated to clarify these env vars are auto-set by Vercel Postgres (user does NOT set DATABASE_URL); added troubleshooting for the exact P1012 error.
+
+Stage Summary:
+- User needs to: (1) make sure the Vercel Postgres database is connected to the project (Storage tab → Connect Project) so POSTGRES_PRISMA_URL + POSTGRES_URL_NON_POOLING get auto-set, (2) push the updated schema to GitHub, (3) Vercel rebuilds — prisma db push will now find the correct URL and create the tables. Lint clean.

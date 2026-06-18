@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -8,10 +8,11 @@ import { useUI } from '@/hooks/use-ui'
 import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/hooks/use-toast'
 import { apiFetch, uploadFile } from '@/lib/api-client'
-import { ShieldCheck, Loader2, Upload, ScanFace, IdCard, Check, Clock } from 'lucide-react'
+import { CameraCapture } from '@/components/kyc/camera-capture'
+import { ShieldCheck, Loader2, Upload, ScanFace, IdCard, Check, Clock, AlertCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-type Step = 'level' | 'verify' | 'scanning' | 'submitting' | 'review'
+type Step = 'level' | 'capture' | 'submitting' | 'review'
 
 export function KycModal() {
   const { kycOpen } = useUI()
@@ -19,12 +20,14 @@ export function KycModal() {
   const { toast } = useToast()
   const [level, setLevel] = useState<'normal' | 'high' | null>(null)
   const [step, setStep] = useState<Step>('level')
+
+  // Captured media (uploaded URLs)
+  const [selfieVideoUrl, setSelfieVideoUrl] = useState<string | null>(null)
+  const [selfiePhotoUrl, setSelfiePhotoUrl] = useState<string | null>(null)
   const [docUrl, setDocUrl] = useState<string | null>(null)
-  const [selfieUrl, setSelfieUrl] = useState<string | null>(null)
   const [docName, setDocName] = useState('')
-  const [selfieName, setSelfieName] = useState('')
   const docRef = useRef<HTMLInputElement>(null)
-  const selfieRef = useRef<HTMLInputElement>(null)
+  const [uploadingVideo, setUploadingVideo] = useState(false)
 
   function close() {
     useUI.setState({ kycOpen: false })
@@ -33,51 +36,68 @@ export function KycModal() {
   function reset() {
     setLevel(null)
     setStep('level')
+    setSelfieVideoUrl(null)
+    setSelfiePhotoUrl(null)
     setDocUrl(null)
-    setSelfieUrl(null)
     setDocName('')
-    setSelfieName('')
   }
 
-  async function uploadDoc(e: React.ChangeEvent<HTMLInputElement>, kind: 'doc' | 'selfie') {
+  const handleCaptured = useCallback(async ({ videoBlob, thumbnailDataUrl }: { videoBlob: Blob; thumbnailDataUrl: string }) => {
+    setUploadingVideo(true)
+    try {
+      // Upload the recorded video
+      const videoFile = new File([videoBlob], 'selfie.webm', { type: 'video/webm' })
+      const vRes = await uploadFile('/api/kyc/upload', videoFile)
+      setSelfieVideoUrl(vRes.url)
+
+      // Upload the thumbnail frame as the selfie photo
+      const thumbBlob = await (await fetch(thumbnailDataUrl)).blob()
+      const thumbFile = new File([thumbBlob], 'selfie.jpg', { type: 'image/jpeg' })
+      const pRes = await uploadFile('/api/kyc/upload', thumbFile)
+      setSelfiePhotoUrl(pRes.url)
+
+      toast({ title: 'Face capture uploaded', description: 'Your live video was recorded successfully.' })
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Upload failed', description: err.message })
+    } finally {
+      setUploadingVideo(false)
+    }
+  }, [toast])
+
+  async function uploadDoc(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     try {
       const { url } = await uploadFile('/api/kyc/upload', file)
-      if (kind === 'doc') {
-        setDocUrl(url)
-        setDocName(file.name)
-      } else {
-        setSelfieUrl(url)
-        setSelfieName(file.name)
-      }
-      toast({ title: 'Uploaded', description: `${kind === 'doc' ? 'Document' : 'Selfie'} uploaded.` })
+      setDocUrl(url)
+      setDocName(file.name)
+      toast({ title: 'ID uploaded', description: file.name })
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Upload failed', description: err.message })
     }
   }
 
-  function startFaceCheck() {
-    setStep('scanning')
-    setTimeout(() => { void doSubmit() }, 2600)
-  }
-
-  async function doSubmit() {
+  async function submit() {
+    if (!selfieVideoUrl && !selfiePhotoUrl) {
+      toast({ variant: 'destructive', title: 'Face capture required', description: 'Please record your live face video first.' })
+      setStep('capture')
+      return
+    }
     if (level === 'high' && !docUrl) {
-      toast({ variant: 'destructive', title: 'ID required', description: 'Please upload your national ID.' })
-      setStep('verify')
+      toast({ variant: 'destructive', title: 'ID required', description: 'Please upload your national ID photo.' })
+      setStep('capture')
       return
     }
     setStep('submitting')
     try {
       await apiFetch('/api/kyc', {
         method: 'POST',
-        body: JSON.stringify({ level, docUrl, selfieUrl }),
+        body: JSON.stringify({ level, docUrl, selfieUrl: selfiePhotoUrl, selfieVideoUrl }),
       })
       await fetchMe()
       setStep('review')
     } catch (err: any) {
-      setStep('verify')
+      setStep('capture')
       toast({ variant: 'destructive', title: 'Submission failed', description: err.message })
     }
   }
@@ -102,7 +122,7 @@ export function KycModal() {
                 active={level === 'normal'}
                 onClick={() => setLevel('normal')}
                 badge="Normal KYC"
-                req="Live face check"
+                req="Live face video (camera)"
                 benefit="Deposit & withdraw · up to $100,000"
                 icon={ScanFace}
               />
@@ -110,70 +130,74 @@ export function KycModal() {
                 active={level === 'high'}
                 onClick={() => setLevel('high')}
                 badge="High KYC"
-                req="National ID + live selfie"
+                req="National ID photo + live face video"
                 benefit="Unlimited deposits & withdrawals"
                 icon={IdCard}
                 highlight
               />
-              <Button
-                className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground"
-                disabled={!level}
-                onClick={() => setStep('verify')}
-              >
+              <div className="flex items-start gap-2 rounded-lg border border-gold/20 bg-gold/5 p-2.5 text-[11px] text-muted-foreground">
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold" />
+                <span>Both levels require a <b className="text-gold">live camera recording</b> of your face. Your verification is reviewed and approved manually by our admin team — no instant auto-approval.</span>
+              </div>
+              <Button className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground" disabled={!level} onClick={() => setStep('capture')}>
                 Continue
               </Button>
             </motion.div>
           )}
 
-          {step === 'verify' && (
-            <motion.div key="verify" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+          {step === 'capture' && (
+            <motion.div key="capture" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
               <div className="rounded-lg border border-border bg-secondary/30 p-3 text-xs text-muted-foreground">
-                <b className="text-foreground">{level === 'high' ? 'High KYC' : 'Normal KYC'}</b> · {level === 'high' ? 'National ID + live selfie verification' : 'Live face check verification'}
+                <b className="text-foreground">{level === 'high' ? 'High KYC' : 'Normal KYC'}</b> · {level === 'high' ? 'ID photo + live face video' : 'Live face video'}
               </div>
 
-              {level === 'high' && (
-                <div className="space-y-3">
-                  <UploadField label="National ID document" fileName={docName} onClick={() => docRef.current?.click()} icon={IdCard} />
-                  <input ref={docRef} type="file" accept="image/*" className="hidden" onChange={(e) => uploadDoc(e, 'doc')} />
-                  <UploadField label="Live selfie (optional)" fileName={selfieName} onClick={() => selfieRef.current?.click()} icon={ScanFace} />
-                  <input ref={selfieRef} type="file" accept="image/*" className="hidden" onChange={(e) => uploadDoc(e, 'selfie')} />
+              {/* Live camera capture (required for both levels) */}
+              <CameraCapture
+                duration={4}
+                label="Live Face Video (required)"
+                hint="Center your face in the frame, then click Start Recording"
+                onCaptured={handleCaptured}
+              />
+
+              {uploadingVideo && (
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-gold" /> Uploading your recording…
                 </div>
               )}
 
-              <div className="rounded-xl border border-gold/20 bg-gold/5 p-3">
-                <div className="flex items-center gap-2 text-xs font-semibold text-gold"><ScanFace className="h-4 w-4" /> Live Face Check</div>
-                <p className="mt-1 text-[11px] text-muted-foreground">Position your face in the frame and stay still during the scan.</p>
-              </div>
+              {/* ID card upload (high KYC only) */}
+              {level === 'high' && (
+                <div className="space-y-1.5 border-t border-border pt-4">
+                  <Label className="text-xs text-muted-foreground">National ID Photo (required)</Label>
+                  <button
+                    type="button"
+                    onClick={() => docRef.current?.click()}
+                    className="flex w-full items-center gap-3 rounded-xl border border-dashed border-border bg-secondary/30 p-3 text-left transition-colors hover:border-gold/50"
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gold/10 text-gold"><IdCard className="h-4 w-4" /></div>
+                    <div className="flex-1">
+                      <div className="text-xs font-semibold">{docName || 'Click to upload ID photo'}</div>
+                      <div className="text-[10px] text-muted-foreground">JPG, PNG or WEBP · max 25MB</div>
+                    </div>
+                    <Upload className="h-4 w-4 text-muted-foreground" />
+                  </button>
+                  <input ref={docRef} type="file" accept="image/*" className="hidden" onChange={uploadDoc} />
+                  {docUrl && (
+                    <div className="flex items-center gap-1 text-[11px] text-up">
+                      <Check className="h-3 w-3" /> ID photo uploaded
+                    </div>
+                  )}
+                </div>
+              )}
 
-              <Button className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground" onClick={startFaceCheck}>
-                <ScanFace className="mr-1 h-4 w-4" /> Start Face Check
+              <Button
+                className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground"
+                disabled={!selfieVideoUrl || (level === 'high' && !docUrl)}
+                onClick={submit}
+              >
+                Submit for Review
               </Button>
               <button onClick={() => setStep('level')} className="w-full text-center text-xs text-muted-foreground hover:text-foreground">← Back</button>
-            </motion.div>
-          )}
-
-          {step === 'scanning' && (
-            <motion.div key="scanning" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center py-8">
-              <div className="relative h-32 w-32">
-                <div className="absolute inset-0 rounded-full border-2 border-gold/30" />
-                <motion.div
-                  className="absolute inset-0 rounded-full border-2 border-transparent"
-                  style={{ borderTopColor: 'var(--gold)' }}
-                  animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <ScanFace className="h-10 w-10 text-gold" />
-                </div>
-                <motion.div
-                  className="absolute left-0 right-0 h-0.5 bg-gold shadow-[0_0_12px_var(--gold)]"
-                  initial={{ top: '10%' }}
-                  animate={{ top: ['10%', '85%', '10%'] }}
-                  transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
-                />
-              </div>
-              <div className="mt-5 text-sm font-semibold">Scanning your face…</div>
-              <div className="mt-1 text-xs text-muted-foreground">Hold still and look at the camera</div>
             </motion.div>
           )}
 
@@ -189,9 +213,9 @@ export function KycModal() {
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gold/15 text-gold ring-2 ring-gold/30">
                 <Clock className="h-8 w-8" />
               </div>
-              <h3 className="mt-4 text-lg font-bold">Under Review</h3>
+              <h3 className="mt-4 text-lg font-bold">Submitted for Review</h3>
               <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-                Your {level === 'high' ? 'High KYC' : 'KYC'} is being verified. This usually takes a few seconds. You'll be notified once approved.
+                Your {level === 'high' ? 'High KYC' : 'KYC'} with the live face recording{level === 'high' ? ' and ID photo' : ''} has been submitted. Our admin team will review it and approve or reject it. You'll receive a notification with the result.
               </p>
               <Button className="bg-gold-gradient mt-5 w-full font-semibold text-primary-foreground" onClick={() => { close(); reset() }}>
                 Done
@@ -227,25 +251,5 @@ function LevelCard({ active, onClick, badge, req, benefit, icon: Icon, highlight
         {active && <Check className="h-3 w-3" />}
       </div>
     </button>
-  )
-}
-
-function UploadField({ label, fileName, onClick, icon: Icon }: { label: string; fileName: string; onClick: () => void; icon: any }) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
-      <button
-        type="button"
-        onClick={onClick}
-        className="flex w-full items-center gap-3 rounded-xl border border-dashed border-border bg-secondary/30 p-3 text-left transition-colors hover:border-gold/50"
-      >
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gold/10 text-gold"><Icon className="h-4 w-4" /></div>
-        <div className="flex-1">
-          <div className="text-xs font-semibold">{fileName || 'Click to upload'}</div>
-          <div className="text-[10px] text-muted-foreground">JPG, PNG or WEBP · max 8MB</div>
-        </div>
-        <Upload className="h-4 w-4 text-muted-foreground" />
-      </button>
-    </div>
   )
 }

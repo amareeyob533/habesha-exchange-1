@@ -1,46 +1,16 @@
 import { db } from '@/lib/db'
 
-const KYC_AUTO_APPROVE_MS = 30 * 1000 // 30 seconds (per requirement)
-
-// NOTE: Deposits and external withdrawals are NO LONGER auto-approved.
-// Both require manual admin approval via the in-app Admin panel
-// (visible to amareeyob533@gmail.com). See:
-//   - src/lib/deposit-actions.ts (approveDeposit / rejectDeposit)
-//   - src/lib/withdrawal-actions.ts (approveWithdrawal / rejectWithdrawal)
-//   - src/app/api/admin/*
-// Internal transfers remain instant (peer-to-peer by design).
+// NOTE: KYC is NO LONGER auto-approved. Both Normal and High KYC require
+// manual admin approval via the in-app Admin panel (Admin · Approvals → KYC).
+// The admin reviews the user's live camera video (and ID card photo for High KYC)
+// before approving or rejecting. See src/lib/kyc-actions.ts and src/app/api/admin/kyc/*.
 
 /**
- * Process pending KYC items that have exceeded their auto-approval window.
- * Called on session/me fetch so the demo feels live without background jobs.
+ * Process any pending items that still need auto-handling.
+ * (Currently nothing — deposits, withdrawals, and KYC all require manual admin approval.)
+ * Kept as a no-op hook called on session/me fetch for future extensibility.
  */
-export async function processAutoApprovals(userId: string) {
-  await autoApproveKyc(userId)
-}
-
-async function autoApproveKyc(userId: string) {
-  const user = await db.user.findUnique({ where: { id: userId }, select: { kycStatus: true, kycSubmittedAt: true } })
-  if (!user || user.kycStatus !== 'pending' || !user.kycSubmittedAt) return
-  if (Date.now() - user.kycSubmittedAt.getTime() < KYC_AUTO_APPROVE_MS) return
-
-  // Determine the requested level from the most recent pending note.
-  // We store the requested level inside kycDocUrl metadata? Simpler: set level based on submitted doc.
-  const hasHighDoc = !!user.kycDocUrl
-  const level = hasHighDoc ? 'high' : 'normal'
-
-  await db.user.update({
-    where: { id: userId },
-    data: { kycStatus: 'approved', kycLevel: level },
-  })
-  await db.notification.create({
-    data: {
-      userId,
-      title: 'KYC Approved',
-      message:
-        level === 'high'
-          ? 'Congratulations! Your High KYC is approved. Unlimited deposits & withdrawals enabled.'
-          : 'Your KYC verification is approved. Deposit & withdrawal enabled (limit $100,000).',
-      type: 'success',
-    },
-  })
+export async function processAutoApprovals(_userId: string) {
+  // Intentionally empty. All approvals are manual via the admin panel.
+  await Promise.resolve()
 }

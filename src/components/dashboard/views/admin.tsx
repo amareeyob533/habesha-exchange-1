@@ -7,7 +7,8 @@ import { timeAgo, formatTokenAmount, shortAddr } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { motion } from 'framer-motion'
-import { Check, X, Loader2, RefreshCw, ShieldAlert, Inbox, Clock, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react'
+import { Check, X, Loader2, RefreshCw, ShieldAlert, Inbox, Clock, ArrowDownToLine, ArrowUpFromLine, ShieldCheck } from 'lucide-react'
+import { KycAdmin } from '@/components/dashboard/views/admin-kyc'
 
 interface AdminDeposit {
   id: string
@@ -32,7 +33,7 @@ interface AdminWithdrawal {
   user: { uid: string; email: string; name: string | null }
 }
 
-type Section = 'deposits' | 'withdrawals'
+type Section = 'deposits' | 'withdrawals' | 'kyc'
 type StatusTab = 'pending' | 'approved' | 'rejected' | 'all'
 
 export function AdminView() {
@@ -43,8 +44,14 @@ export function AdminView() {
   const [withdrawals, setWithdrawals] = useState<AdminWithdrawal[]>([])
   const [loading, setLoading] = useState(false)
   const [acting, setActing] = useState<string | null>(null)
+  const [kycRefreshKey, setKycRefreshKey] = useState(0)
 
   const load = useCallback(async () => {
+    if (section === 'kyc') {
+      // KYC section loads its own data inside KycAdmin; just clear loading state.
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       if (section === 'deposits') {
@@ -111,12 +118,12 @@ export function AdminView() {
           </h2>
           <p className="text-sm text-muted-foreground">Review and approve user deposits & withdrawals</p>
         </div>
-        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+        <Button variant="outline" size="sm" onClick={() => { load(); setKycRefreshKey((k) => k + 1) }} disabled={loading}>
           <RefreshCw className={`mr-1 h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
         </Button>
       </div>
 
-      {/* Section toggle: Deposits / Withdrawals */}
+      {/* Section toggle: Deposits / Withdrawals / KYC */}
       <div className="inline-flex rounded-xl border border-border bg-card p-1">
         <button
           onClick={() => { setSection('deposits'); setStatusTab('pending') }}
@@ -129,6 +136,12 @@ export function AdminView() {
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${section === 'withdrawals' ? 'bg-down/15 text-down' : 'text-muted-foreground hover:text-foreground'}`}
         >
           <ArrowUpFromLine className="h-4 w-4" /> Withdrawals
+        </button>
+        <button
+          onClick={() => { setSection('kyc') }}
+          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${section === 'kyc' ? 'bg-gold/15 text-gold' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          <ShieldCheck className="h-4 w-4" /> KYC
         </button>
       </div>
 
@@ -149,29 +162,35 @@ export function AdminView() {
         </motion.div>
       )}
 
-      <Tabs value={statusTab} onValueChange={(v) => setStatusTab(v as StatusTab)}>
-        <TabsList>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="approved">{section === 'deposits' ? 'Approved' : 'Completed'}</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
-          <TabsTrigger value="all">All</TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      {section === 'deposits' ? (
-        <DepositsTable deposits={deposits} acting={acting} onAct={actDeposit} />
+      {section === 'kyc' ? (
+        <KycAdmin refreshKey={kycRefreshKey} />
       ) : (
-        <WithdrawalsTable withdrawals={withdrawals} acting={acting} onAct={actWithdrawal} />
-      )}
+        <>
+          <Tabs value={statusTab} onValueChange={(v) => setStatusTab(v as StatusTab)}>
+            <TabsList>
+              <TabsTrigger value="pending">Pending</TabsTrigger>
+              <TabsTrigger value="approved">{section === 'deposits' ? 'Approved' : 'Completed'}</TabsTrigger>
+              <TabsTrigger value="rejected">Rejected</TabsTrigger>
+              <TabsTrigger value="all">All</TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-      <div className="rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
-        <b className="text-foreground">How this works:</b>
-        {section === 'deposits' ? (
-          <> When a user clicks "I Deposited", their balance is <b>not</b> credited. The deposit appears here as <b className="text-gold">Pending</b>. Click <b className="text-up">Approve</b> to credit their balance instantly, or <b className="text-down">Reject</b> to decline.</>
-        ) : (
-          <> When a user requests an external withdrawal, the amount is deducted from their balance and held as <b className="text-gold">Pending</b>. Click <b className="text-up">Approve</b> to confirm the withdrawal as sent, or <b className="text-down">Reject</b> to return the funds to the user. <b>Internal transfers</b> (UID to UID) are instant and do not appear here.</>
-        )}
-      </div>
+          {section === 'deposits' ? (
+            <DepositsTable deposits={deposits} acting={acting} onAct={actDeposit} />
+          ) : (
+            <WithdrawalsTable withdrawals={withdrawals} acting={acting} onAct={actWithdrawal} />
+          )}
+
+          <div className="rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
+            <b className="text-foreground">How this works:</b>
+            {section === 'deposits' ? (
+              <> When a user clicks "I Deposited", their balance is <b>not</b> credited. The deposit appears here as <b className="text-gold">Pending</b>. Click <b className="text-up">Approve</b> to credit their balance instantly, or <b className="text-down">Reject</b> to decline.</>
+            ) : (
+              <> When a user requests an external withdrawal, the amount is deducted from their balance and held as <b className="text-gold">Pending</b>. Click <b className="text-up">Approve</b> to confirm the withdrawal as sent, or <b className="text-down">Reject</b> to return the funds to the user. <b>Internal transfers</b> (UID to UID) are instant and do not appear here.</>
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }

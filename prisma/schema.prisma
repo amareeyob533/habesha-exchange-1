@@ -19,8 +19,10 @@ model User {
   kycLevel        String   @default("none") // none | normal | high
   kycStatus       String   @default("none") // none | pending | approved | rejected
   kycSubmittedAt  DateTime?
-  kycDocUrl       String?
-  kycSelfieUrl    String?
+  kycRequestedLevel String? // normal | high (the level the user applied for)
+  kycDocUrl       String?  // ID card photo (high KYC)
+  kycSelfieUrl    String?  // captured selfie photo frame (normal + high)
+  kycSelfieVideoUrl String? // live camera video recording (normal + high)
   country         String?
   phone           String?
   createdAt       DateTime @default(now())

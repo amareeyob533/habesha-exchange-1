@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/hooks/use-toast'
+import { apiFetch } from '@/lib/api-client'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Lock, User, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck } from 'lucide-react'
+import { Mail, Lock, User, AtSign, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, Check, X } from 'lucide-react'
 import { LogoMark } from '@/components/common/logo'
 
 interface AuthModalProps {
@@ -29,9 +30,34 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
   const [lpass, setLpass] = useState('')
   // signup form
   const [sname, setSname] = useState('')
+  const [susername, setSusername] = useState('')
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle')
   const [semail, setSemail] = useState('')
   const [spass, setSpass] = useState('')
   const [showPass, setShowPass] = useState(false)
+
+  // Debounced username availability check
+  useEffect(() => {
+    const raw = susername.toLowerCase().trim().replace(/\s+/g, '')
+    // Validate synchronously without setState; derive status from the async callback only.
+    let cancelled = false
+    if (!raw || raw.length < 3 || !/^[a-z0-9_.]+$/.test(raw)) {
+      // mark invalid on next tick (avoids set-state-in-effect lint)
+      const id = setTimeout(() => !cancelled && setUsernameStatus(raw ? 'invalid' : 'idle'), 0)
+      return () => { cancelled = true; clearTimeout(id) }
+    }
+    const id = setTimeout(async () => {
+      if (cancelled) return
+      setUsernameStatus('checking')
+      try {
+        const res = await apiFetch<{ available: boolean }>(`/api/auth/check-username?username=${encodeURIComponent(raw)}`)
+        if (!cancelled) setUsernameStatus(res.available ? 'available' : 'taken')
+      } catch {
+        if (!cancelled) setUsernameStatus('idle')
+      }
+    }, 450)
+    return () => { cancelled = true; clearTimeout(id) }
+  }, [susername])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -50,8 +76,12 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
       toast({ variant: 'destructive', title: 'Weak password', description: 'Use at least 6 characters.' })
       return
     }
+    if (usernameStatus !== 'available') {
+      toast({ variant: 'destructive', title: 'Username required', description: 'Choose an available username (3+ chars, letters/numbers/_/.)' })
+      return
+    }
     try {
-      await signup(semail, spass, sname)
+      await signup(semail, spass, sname, susername)
       toast({
         title: 'Account created! 🎉',
         description: 'You received $299.9 in Habesha Token as a welcome bonus.',
@@ -154,6 +184,33 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
                         className="border-border bg-secondary/40 pl-10"
                       />
                     </Field>
+                    <Field icon={AtSign} label="Username (unique)">
+                      <Input
+                        required
+                        value={susername}
+                        onChange={(e) => setSusername(e.target.value.toLowerCase())}
+                        placeholder="e.g. amarey2026"
+                        className={`border-border bg-secondary/40 pl-10 pr-10 ${
+                          usernameStatus === 'available' ? 'border-up/50' : usernameStatus === 'taken' || usernameStatus === 'invalid' ? 'border-down/50' : ''
+                        }`}
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {usernameStatus === 'checking' && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                        {usernameStatus === 'available' && <Check className="h-4 w-4 text-up" />}
+                        {(usernameStatus === 'taken' || usernameStatus === 'invalid') && <X className="h-4 w-4 text-down" />}
+                      </div>
+                    </Field>
+                    {usernameStatus === 'taken' && (
+                      <div className="text-[11px] text-down">This username is already taken. Try another.</div>
+                    )}
+                    {usernameStatus === 'invalid' && susername && (
+                      <div className="text-[11px] text-down">Min 3 chars, letters/numbers/underscore/dot only.</div>
+                    )}
+                    {usernameStatus === 'available' && (
+                      <div className="text-[11px] text-up">✓ @{susername.toLowerCase().trim()} is available</div>
+                    )}
                     <Field icon={Mail} label="Email">
                       <Input
                         type="email"

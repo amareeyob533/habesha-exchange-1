@@ -23,6 +23,15 @@ export async function GET() {
       return NextResponse.json({ user: null }, { status: 200 })
     }
 
+    // Blocked accounts: return a blocked flag so the client can sign them out.
+    if (user.isBlocked) {
+      return NextResponse.json({
+        user: null,
+        blocked: true,
+        blockedReason: user.blockedReason || 'Your account has been blocked. Contact support.',
+      })
+    }
+
     // Build balances with USD value
     const balances = TOKENS.map((t) => {
       const bal = user.balances.find((b) => b.token === t.symbol)
@@ -44,6 +53,7 @@ export async function GET() {
         id: user.id,
         uid: user.uid,
         email: user.email,
+        username: user.username,
         name: user.name,
         avatarUrl: user.avatarUrl,
         provider: user.provider,

@@ -25,6 +25,7 @@ export interface AuthUser {
   id: string
   uid: string
   email: string
+  username: string | null
   name: string | null
   avatarUrl: string | null
   provider: string
@@ -44,7 +45,7 @@ interface AuthState {
   authChecked: boolean
   fetchMe: () => Promise<void>
   login: (email: string, password: string) => Promise<void>
-  signup: (email: string, password: string, name?: string) => Promise<void>
+  signup: (email: string, password: string, name?: string, username?: string) => Promise<void>
   loginWithGoogle: (profile: { email: string; name?: string; avatarUrl?: string }) => Promise<void>
   logout: () => Promise<void>
   updateProfile: (data: { name?: string; country?: string; phone?: string }) => Promise<void>
@@ -65,7 +66,23 @@ export const useAuth = create<AuthState>((set, get) => ({
       return
     }
     try {
-      const data = await apiFetch<{ user: AuthUser | null; balances: Balance[]; totalUsd: number; notifications: AppNotification[] }>('/api/auth/me')
+      const data = await apiFetch<{
+        user: AuthUser | null
+        balances: Balance[]
+        totalUsd: number
+        notifications: AppNotification[]
+        blocked?: boolean
+        blockedReason?: string
+      }>('/api/auth/me')
+      // Blocked accounts: clear the session and surface the reason.
+      if (data.blocked) {
+        clearStoredToken()
+        set({ user: null, balances: [], totalUsd: 0, notifications: [], authChecked: true })
+        if (typeof window !== 'undefined') {
+          alert(data.blockedReason || 'Your account has been blocked.')
+        }
+        return
+      }
       set({
         user: data.user,
         balances: data.balances || [],
@@ -94,12 +111,12 @@ export const useAuth = create<AuthState>((set, get) => ({
     }
   },
 
-  signup: async (email, password, name) => {
+  signup: async (email, password, name, username) => {
     set({ loading: true })
     try {
       const res = await apiFetch<{ token: string }>('/api/auth/signup', {
         method: 'POST',
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ email, password, name, username }),
       })
       if (res.token) setStoredToken(res.token)
       useUI.getState().setView('overview')

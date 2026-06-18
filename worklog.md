@@ -358,3 +358,44 @@ Verified:
 
 Stage Summary:
 - Habesha Token is now one-way in the Exchange: users can swap any token INTO HABESHA (with a clear warning + confirmation), but cannot swap HABESHA back into other tokens (blocked on backend + disabled in UI). This reflects its "not yet listed" status. Lint clean, server stable on :3000.
+
+---
+Task ID: 23
+Agent: main
+Task: Unique usernames + admin user management (search, view KYC/balances, block, delete, notify, reward)
+
+Schema changes (prisma/schema.prisma): User gained `username String? @unique` + `isBlocked Boolean @default(false)` + `blockedReason String?`. Existing users backfilled with unique usernames (email-prefix + uid).
+
+Auth:
+- src/app/api/auth/signup/route.ts: requires username (3+ chars, [a-z0-9_.]); checks uniqueness; rejects duplicates with "@username is already taken".
+- src/app/api/auth/check-username/route.ts (NEW): GET ?username= → {available, reason?} for live availability check.
+- src/lib/api.ts: requireAuth() now rejects blocked users (403 {blocked:true, reason}).
+- src/app/api/auth/me/route.ts: returns username; if blocked, returns {user:null, blocked:true, blockedReason}.
+- src/hooks/use-auth.ts: fetchMe handles blocked flag (clears token + alerts user); signup() accepts username; AuthUser includes username.
+- src/components/auth/auth-modal.tsx: signup form has a Username field with live availability indicator (spinner/check/X) + validity hints; blocks submit until username is "available".
+
+Admin user management API (all admin-only):
+- /api/admin/users/search?q= — search by username/uid/email/name.
+- /api/admin/users/detail?userId= — full user detail incl. KYC media (video+selfie+ID), all balances, recent transactions.
+- /api/admin/users/block {userId, reason?} — blocks + notifies user; can't block own admin account.
+- /api/admin/users/unblock {userId} — unblocks + notifies.
+- /api/admin/users/delete {userId} — permanently deletes user + all cascaded data; can't delete own admin account.
+- /api/admin/users/notify {userId, title, message} — sends a notification to the user.
+- /api/admin/users/reward {userId, token, amount, note?} — credits any token in any amount + creates reward transaction + notifies user "🎁 You received a reward".
+
+Admin panel:
+- src/components/dashboard/views/admin-users.tsx (NEW): search bar + results list (username/uid/email/KYC badge/blocked badge/total). Click a user → detail drawer (Sheet) showing profile info, total balance, all token holdings, KYC media (live face video + selfie + ID photo), recent transactions, and admin actions: Reward (dialog: pick token + amount + note), Notify (dialog: title + message), Block/Unblock (with reason prompt), Delete (with confirm). 
+- src/components/dashboard/views/admin.tsx: added 'users' section + "Users" toggle button; renders <UsersAdmin/>.
+
+Verified E2E (curl + browser):
+- Duplicate username signup blocked ("@alice510600 is already taken"). ✓
+- Unique username signup succeeds; live availability check shows ✓/X in signup form. ✓
+- Admin search by username finds users. ✓
+- Admin reward: 500 USDT + 10 HABESHA credited → balances updated, reward transactions created, user notified. ✓
+- Admin notify: message sent to user's notifications. ✓
+- Admin block: user.isBlocked=true; blocked user's /me returns {blocked:true}; can't use any authenticated endpoint. ✓
+- Admin delete: user + all data permanently removed; disappears from search. ✓
+- Browser: admin Users panel search → click user → drawer with KYC video + balances → Reward dialog → credited ($46→$1046). ✓
+
+Stage Summary:
+- Usernames are now unique (no two accounts can share one). Admin has a full User Management panel: search by username/UID/email/name, view full details (KYC video + ID photo + balances + transactions), reward any token/amount, send notifications, block, unblock, or permanently delete accounts. Blocked users are instantly signed out. Lint clean, server stable on :3000.

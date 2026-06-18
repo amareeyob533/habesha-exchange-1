@@ -4,15 +4,35 @@ import { hashPassword, setSessionCookie } from '@/lib/auth'
 import { generateUid, ensureBalances } from '@/lib/uid'
 import { TOKEN_SYMBOLS, HABESHA_PRICE, HABESHA_AIRDROP_USD } from '@/lib/tokens'
 
+function normalizeUsername(raw: string): string {
+  return raw.toLowerCase().trim().replace(/\s+/g, '')
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, name } = await req.json()
+    const { email, password, name, username } = await req.json()
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
     if (password.length < 6) {
       return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
     }
+    // Username required + validated + unique
+    const uname = normalizeUsername(username || '')
+    if (!uname) {
+      return NextResponse.json({ error: 'Username is required' }, { status: 400 })
+    }
+    if (uname.length < 3) {
+      return NextResponse.json({ error: 'Username must be at least 3 characters' }, { status: 400 })
+    }
+    if (!/^[a-z0-9_.]+$/.test(uname)) {
+      return NextResponse.json({ error: 'Username can only contain letters, numbers, underscores and dots' }, { status: 400 })
+    }
+    const existingUsername = await db.user.findUnique({ where: { username: uname }, select: { id: true } })
+    if (existingUsername) {
+      return NextResponse.json({ error: `Username "@${uname}" is already taken. Please choose another.` }, { status: 409 })
+    }
+
     const normalizedEmail = email.toLowerCase().trim()
     const existing = await db.user.findUnique({ where: { email: normalizedEmail } })
     if (existing) {
@@ -25,7 +45,8 @@ export async function POST(req: NextRequest) {
       data: {
         uid,
         email: normalizedEmail,
-        name: name?.trim() || normalizedEmail.split('@')[0],
+        username: uname,
+        name: name?.trim() || uname,
         passwordHash,
         provider: 'credentials',
       },
@@ -65,6 +86,7 @@ export async function POST(req: NextRequest) {
       id: user.id,
       uid: user.uid,
       email: user.email,
+      username: user.username,
       name: user.name,
       provider: user.provider,
       kycStatus: user.kycStatus,

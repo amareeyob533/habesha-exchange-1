@@ -7,8 +7,9 @@ import { timeAgo, formatTokenAmount, shortAddr } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { motion } from 'framer-motion'
-import { Check, X, Loader2, RefreshCw, ShieldAlert, Inbox, Clock, ArrowDownToLine, ArrowUpFromLine, ShieldCheck } from 'lucide-react'
+import { Check, X, Loader2, RefreshCw, ShieldAlert, Inbox, Clock, ArrowDownToLine, ArrowUpFromLine, ShieldCheck, Users } from 'lucide-react'
 import { KycAdmin } from '@/components/dashboard/views/admin-kyc'
+import { UsersAdmin } from '@/components/dashboard/views/admin-users'
 
 interface AdminDeposit {
   id: string
@@ -33,7 +34,7 @@ interface AdminWithdrawal {
   user: { uid: string; email: string; name: string | null }
 }
 
-type Section = 'deposits' | 'withdrawals' | 'kyc'
+type Section = 'deposits' | 'withdrawals' | 'kyc' | 'users'
 type StatusTab = 'pending' | 'approved' | 'rejected' | 'all'
 
 export function AdminView() {
@@ -47,8 +48,8 @@ export function AdminView() {
   const [kycRefreshKey, setKycRefreshKey] = useState(0)
 
   const load = useCallback(async () => {
-    if (section === 'kyc') {
-      // KYC section loads its own data inside KycAdmin; just clear loading state.
+    if (section === 'kyc' || section === 'users') {
+      // These sections load their own data internally.
       setLoading(false)
       return
     }
@@ -143,6 +144,12 @@ export function AdminView() {
         >
           <ShieldCheck className="h-4 w-4" /> KYC
         </button>
+        <button
+          onClick={() => { setSection('users') }}
+          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${section === 'users' ? 'bg-gold/15 text-gold' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          <Users className="h-4 w-4" /> Users
+        </button>
       </div>
 
       {/* Pending alert */}
@@ -164,6 +171,8 @@ export function AdminView() {
 
       {section === 'kyc' ? (
         <KycAdmin refreshKey={kycRefreshKey} />
+      ) : section === 'users' ? (
+        <UsersAdmin />
       ) : (
         <>
           <Tabs value={statusTab} onValueChange={(v) => setStatusTab(v as StatusTab)}>

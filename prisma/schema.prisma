@@ -12,10 +12,13 @@ model User {
   id              String   @id @default(cuid())
   uid             String   @unique // 6-digit unique user id
   email           String   @unique
+  username        String?  @unique // unique display name (required for new signups)
   name            String?
   passwordHash    String?  // null for google users
   provider        String   @default("credentials") // credentials | google
   avatarUrl       String?
+  isBlocked       Boolean  @default(false) // admin can block an account
+  blockedReason   String?
   kycLevel        String   @default("none") // none | normal | high
   kycStatus       String   @default("none") // none | pending | approved | rejected
   kycSubmittedAt  DateTime?

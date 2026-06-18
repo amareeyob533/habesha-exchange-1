@@ -85,42 +85,52 @@
   --sidebar-ring: #F0B90B;
 }
 
-/* ============ LIGHT THEME ============ */
+/* ============ LIGHT THEME (soft, warm, eye-comfortable) ============ */
 .light {
-  --background: #FBFAF6;
-  --foreground: #15151B;
-  --card: #FFFFFF;
-  --card-foreground: #15151B;
-  --popover: #FFFFFF;
-  --popover-foreground: #15151B;
-  --primary: #C8901A;
-  --primary-foreground: #FFFFFF;
-  --secondary: #F1EFE8;
-  --secondary-foreground: #15151B;
-  --muted: #F4F2EC;
-  --muted-foreground: #6B6B75;
-  --accent: #F1EFE8;
-  --accent-foreground: #15151B;
-  --destructive: #E0364E;
-  --border: rgba(0, 0, 0, 0.09);
-  --input: rgba(0, 0, 0, 0.1);
-  --ring: #C8901A;
-  --gold: #C8901A;
-  --up: #0BA56A;
-  --down: #E0364E;
-  --chart-1: #C8901A;
-  --chart-2: #0BA56A;
-  --chart-3: #E0364E;
-  --chart-4: #00A0A7;
-  --chart-5: #8B5CF6;
-  --sidebar: #F6F4EE;
-  --sidebar-foreground: #15151B;
-  --sidebar-primary: #C8901A;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F1EFE8;
-  --sidebar-accent-foreground: #15151B;
-  --sidebar-border: rgba(0, 0, 0, 0.09);
-  --sidebar-ring: #C8901A;
+  /* Warm linen background — not glaring white */
+  --background: #F4F1EA;
+  /* Soft charcoal text — not harsh black, reduces eye strain */
+  --foreground: #3A372E;
+  /* Cards slightly lighter than bg for gentle separation */
+  --card: #FBF9F4;
+  --card-foreground: #3A372E;
+  --popover: #FBF9F4;
+  --popover-foreground: #3A372E;
+  /* Rich warm gold (not muddy) */
+  --primary: #A8780C;
+  --primary-foreground: #FBF9F4;
+  /* Soft warm gray for secondary surfaces */
+  --secondary: #EAE5DB;
+  --secondary-foreground: #3A372E;
+  --muted: #EFEAE0;
+  /* Warm muted gray text */
+  --muted-foreground: #7A7468;
+  --accent: #EAE5DB;
+  --accent-foreground: #3A372E;
+  /* Softer, less alarming destructive */
+  --destructive: #B43A4C;
+  /* Warm soft borders (not pure black) */
+  --border: rgba(80, 70, 50, 0.12);
+  --input: rgba(80, 70, 50, 0.14);
+  --ring: #A8780C;
+  --gold: #A8780C;
+  /* Calmer up/down colors for light mode */
+  --up: #2E8B57;
+  --down: #B43A4C;
+  --chart-1: #A8780C;
+  --chart-2: #2E8B57;
+  --chart-3: #B43A4C;
+  --chart-4: #2A8A8F;
+  --chart-5: #7C5BB8;
+  /* Sidebar slightly deeper warm tone for hierarchy */
+  --sidebar: #EDE8DD;
+  --sidebar-foreground: #3A372E;
+  --sidebar-primary: #A8780C;
+  --sidebar-primary-foreground: #FBF9F4;
+  --sidebar-accent: #E4DECF;
+  --sidebar-accent-foreground: #3A372E;
+  --sidebar-border: rgba(80, 70, 50, 0.12);
+  --sidebar-ring: #A8780C;
 }
 
 @layer base {
@@ -134,6 +144,8 @@
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    /* Smooth, gentle transition when toggling themes */
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   }
 }
 
@@ -150,6 +162,21 @@
 }
 .bg-gold-glow {
   background: radial-gradient(circle at 50% 50%, rgba(240, 185, 11, 0.25), transparent 70%);
+}
+
+/* Light-mode gold: deeper, richer, less glaring on warm backgrounds */
+.light .text-gold-gradient {
+  background: linear-gradient(135deg, #D9A82C 0%, #A8780C 50%, #85600A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.light .bg-gold-gradient {
+  background: linear-gradient(135deg, #C99422 0%, #A8780C 50%, #85600A 100%);
+}
+.light .bg-gold-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(168, 120, 12, 0.12), transparent 70%);
 }
 
 /* ============ SCROLLBAR ============ */
@@ -170,6 +197,16 @@
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(240, 185, 11, 0.25) transparent;
+}
+/* Light-mode scrollbar: softer warm gray instead of gold */
+.light .custom-scroll::-webkit-scrollbar-thumb {
+  background: rgba(120, 108, 88, 0.3);
+}
+.light .custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 108, 88, 0.5);
+}
+.light * {
+  scrollbar-color: rgba(120, 108, 88, 0.3) transparent;
 }
 
 /* ============ ANIMATIONS ============ */

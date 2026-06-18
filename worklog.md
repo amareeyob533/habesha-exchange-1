@@ -284,3 +284,34 @@ Verified in browser:
 
 Stage Summary:
 - Balances now use a formal white color in dark mode and dark color in light mode (text-foreground), with tabular-nums for professional digit alignment. The theme toggle works cleanly. Lint clean, server stable on :3000.
+
+---
+Task ID: 20
+Agent: main
+Task: Make light mode eye-comfortable (was harsh inverted-filter look)
+
+Problem: Old light theme used near-pure-white bg (#FBFAF6) + near-black text (#15151B) + pure-black borders = harsh, glaring, "inverted filter" feel.
+
+Changes in src/app/globals.css:
+- Light theme palette redesigned with soft, warm, eye-comfortable tones:
+  - Background: warm linen #F4F1EA (not glaring white)
+  - Foreground: soft charcoal #3A372E (not harsh black — reduces eye strain)
+  - Card: #FBF9F4 (slightly lighter warm for gentle separation)
+  - Secondary/muted: soft warm gray #EAE5DB / #EFEAE0
+  - Muted-foreground: warm gray #7A7468
+  - Borders: warm soft rgba(80,70,50,0.12) (not pure black)
+  - Gold: richer warm #A8780C (not muddy)
+  - Up/down: calmer sea-green #2E8B57 / muted red #B43A4C (less alarming)
+  - Sidebar: slightly deeper warm #EDE8DD for hierarchy
+- Added light-mode-specific gold gradient overrides (.light .text-gold-gradient etc.) — deeper/richer gold that reads well on warm backgrounds instead of glaring bright gold.
+- Light-mode scrollbar: soft warm gray instead of gold.
+- Added smooth 0.3s transition on background/color/border when toggling themes.
+
+Verified in browser (VLM eye-comfort ratings):
+- Light mode landing: 8/10 — "soft warm off-white background, dark gray text, comfortable"
+- Light mode dashboard: 8/10 — "warm off-white inviting, highly readable, gold accents premium"
+- Light mode markets: 8/10 — comfortable, clear
+- Dark mode (unchanged): 8/10 — still sleek/premium
+
+Stage Summary:
+- Light mode is now soft, warm, and eye-comfortable (warm linen backgrounds, soft charcoal text, gentle warm borders, calmer gold/green/red). No longer looks like an inverted color filter. Smooth transition between themes. Lint clean, server stable on :3000.

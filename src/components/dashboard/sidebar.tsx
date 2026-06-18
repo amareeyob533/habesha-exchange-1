@@ -1,0 +1,76 @@
+'use client'
+
+import { motion } from 'framer-motion'
+import { LogoWord } from '@/components/common/logo'
+import { useUI, type ViewKey } from '@/hooks/use-ui'
+import { cn } from '@/lib/utils'
+import { LayoutDashboard, LineChart, Wallet, Receipt, ShieldCheck, LifeBuoy, User, X } from 'lucide-react'
+
+const NAV: { key: ViewKey; label: string; icon: any }[] = [
+  { key: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { key: 'markets', label: 'Markets', icon: LineChart },
+  { key: 'wallet', label: 'Wallet', icon: Wallet },
+  { key: 'transactions', label: 'Transactions', icon: Receipt },
+  { key: 'kyc', label: 'Verification', icon: ShieldCheck },
+  { key: 'support', label: 'Support', icon: LifeBuoy },
+  { key: 'profile', label: 'Profile', icon: User },
+]
+
+export function Sidebar() {
+  const { view, setView, sidebarOpen, setSidebarOpen } = useUI()
+  return (
+    <>
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 bg-background/70 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-sidebar transition-transform duration-300 lg:translate-x-0',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+        )}
+      >
+        <div className="flex h-16 items-center justify-between px-5">
+          <LogoWord />
+          <button className="text-muted-foreground lg:hidden" onClick={() => setSidebarOpen(false)}>
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <nav className="flex-1 space-y-1 px-3 py-4">
+          {NAV.map((item) => {
+            const active = view === item.key
+            return (
+              <button
+                key={item.key}
+                onClick={() => setView(item.key)}
+                className={cn(
+                  'group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                  active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60',
+                )}
+              >
+                {active && (
+                  <motion.div
+                    layoutId="sidebar-active"
+                    className="absolute inset-0 rounded-xl border border-gold/30 bg-gold/10"
+                    transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                  />
+                )}
+                <item.icon className={cn('relative h-[18px] w-[18px]', active && 'text-gold')} />
+                <span className="relative">{item.label}</span>
+              </button>
+            )
+          })}
+        </nav>
+        <div className="border-t border-border p-4">
+          <div className="rounded-xl border border-gold/20 bg-gold/5 p-3 text-xs text-muted-foreground">
+            <div className="font-semibold text-gold">Need help?</div>
+            <p className="mt-1">Contact our 24/7 support team anytime.</p>
+            <button onClick={() => setView('support')} className="mt-2 font-semibold text-gold hover:underline">
+              Open support →
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
+  )
+}

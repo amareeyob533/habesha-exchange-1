@@ -1,0 +1,122 @@
+// Habesha Exchange — Prisma schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  uid             String   @unique // 6-digit unique user id
+  email           String   @unique
+  name            String?
+  passwordHash    String?  // null for google users
+  provider        String   @default("credentials") // credentials | google
+  avatarUrl       String?
+  kycLevel        String   @default("none") // none | normal | high
+  kycStatus       String   @default("none") // none | pending | approved | rejected
+  kycSubmittedAt  DateTime?
+  kycDocUrl       String?
+  kycSelfieUrl    String?
+  country         String?
+  phone           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  balances             Balance[]
+  transactions         Transaction[]
+  deposits             Deposit[]
+  withdrawals          Withdrawal[]
+  transfersSent        Transfer[]    @relation("TransferFrom")
+  transfersReceived    Transfer[]    @relation("TransferTo")
+  notifications        Notification[]
+  supportMessages      SupportMessage[]
+}
+
+model Balance {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   // USDT | USDC | BTC | TON | HABESHA
+  amount    Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, token])
+}
+
+model Transaction {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type            String   // deposit | withdraw | transfer_in | transfer_out | airdrop
+  token           String
+  amount          Float
+  status          String   @default("completed") // pending | completed | failed
+  counterpartyUid String?  // for internal transfers
+  network         String?
+  address         String?
+  note            String?
+  createdAt       DateTime @default(now())
+}
+
+model Deposit {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String
+  network   String
+  amount    Float
+  status    String   @default("pending") // pending | approved | rejected
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Withdrawal {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String
+  network   String   // internal | TRON | ETHEREUM | BTC NETWORK | TON NETWORK
+  amount    Float
+  address   String   // wallet address or target UID for internal
+  status    String   @default("pending") // pending | completed | rejected
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Transfer {
+  id          String   @id @default(cuid())
+  fromUserId  String
+  fromUser    User     @relation("TransferFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId    String
+  toUser      User     @relation("TransferTo", fields: [toUserId], references: [id], onDelete: Cascade)
+  token       String
+  amount      Float
+  status      String   @default("completed")
+  createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("info") // info | success | warning
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model SupportMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject   String
+  message   String
+  status    String   @default("open") // open | resolved
+  createdAt DateTime @default(now())
+}

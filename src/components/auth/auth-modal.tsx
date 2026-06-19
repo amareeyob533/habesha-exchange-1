@@ -84,7 +84,7 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
       await signup(semail, spass, sname, susername)
       toast({
         title: 'Account created! 🎉',
-        description: 'You received $299.9 in Habesha Token as a welcome bonus.',
+        description: 'You received $15 in Habesha Token as a welcome bonus.',
       })
       onOpenChange(false)
     } catch (err: any) {
@@ -240,7 +240,7 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
                     </Field>
                     <div className="flex items-start gap-2 rounded-lg border border-gold/20 bg-gold/5 p-2.5 text-[11px] text-muted-foreground">
                       <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold" />
-                      <span>New accounts receive <b className="text-gold">$299.9</b> worth of Habesha Token as a welcome bonus.</span>
+                      <span>New accounts receive <b className="text-gold">$15</b> worth of Habesha Token as a welcome bonus.</span>
                     </div>
                     <Button type="submit" disabled={loading} className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground hover:opacity-95">
                       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Create Account <ArrowRight className="ml-1 h-4 w-4" /></>}

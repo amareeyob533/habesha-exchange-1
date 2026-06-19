@@ -29,7 +29,7 @@ export interface TokenConfig {
 }
 
 export const HABESHA_PRICE = 6.4321674
-export const HABESHA_AIRDROP_USD = 299.9
+export const HABESHA_AIRDROP_USD = 15
 
 export const TOKENS: TokenConfig[] = [
   {

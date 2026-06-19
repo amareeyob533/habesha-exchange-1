@@ -109,7 +109,7 @@ export function LandingPage() {
           className="text-center"
         >
           <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-3 py-1 text-xs font-medium text-gold">
-            <Gift className="h-3.5 w-3.5" /> New users get $299.9 in Habesha Token
+            <Gift className="h-3.5 w-3.5" /> New users get $15 in Habesha Token
           </div>
           <h1 className="mx-auto max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
             Trade crypto with <span className="text-gold-gradient">confidence</span> on Habesha Exchange
@@ -166,7 +166,7 @@ export function LandingPage() {
             { icon: Wallet, title: 'Multi-Network Wallets', desc: 'Deposit via TRON, Ethereum, Bitcoin and TON networks with verified addresses.' },
             { icon: Users, title: 'Internal Transfers', desc: 'Send funds instantly to any user by their 6-digit UID — zero fees, zero delay.' },
             { icon: TrendingUp, title: 'Live Markets', desc: 'Track BTC, USDT, USDC, TON and Habesha Token with real-time pricing.' },
-            { icon: Gift, title: 'Welcome Bonus', desc: 'Every new account is credited with $299.9 in Habesha Token automatically.' },
+            { icon: Gift, title: 'Welcome Bonus', desc: 'Every new account is credited with $15 in Habesha Token automatically.' },
           ].map((f, i) => (
             <motion.div
               key={f.title}
@@ -266,7 +266,7 @@ export function LandingPage() {
               <h3 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">The exclusive token of the ecosystem</h3>
               <p className="mt-3 text-muted-foreground">
                 Habesha Token is fixed at <b className="text-gold">$6.4321674</b> and not yet listed publicly. Every new member receives
-                <b className="text-gold"> $299.9</b> worth instantly. Transferable between Habesha Exchange users — no external withdrawals.
+                <b className="text-gold"> $15</b> worth instantly. Transferable between Habesha Exchange users — no external withdrawals.
               </p>
               <Button className="bg-gold-gradient mt-6 font-semibold text-primary-foreground hover:opacity-95" onClick={() => openAuth('signup')}>
                 Claim your bonus <ArrowRight className="ml-1 h-4 w-4" />
@@ -279,7 +279,7 @@ export function LandingPage() {
               </div>
               <div className="rounded-2xl border border-border bg-background/60 p-4">
                 <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Welcome Bonus</div>
-                <div className="mt-1 text-2xl font-extrabold text-gold-gradient">$299.9</div>
+                <div className="mt-1 text-2xl font-extrabold text-gold-gradient">$15</div>
               </div>
             </div>
           </div>

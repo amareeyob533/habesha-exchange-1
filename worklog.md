@@ -512,3 +512,21 @@ Verified E2E (curl + browser):
 
 Stage Summary:
 - KYC picture + video upload now works. The route file is back in place. User should commit + push to GitHub (make sure the upload/ directory + route.ts is included this time — git should track it now). Lint clean.
+
+---
+Task ID: 30
+Agent: main
+Task: Lower new-user welcome bonus from $299.9 to $15 worth of Habesha Token
+
+Changes:
+- src/lib/tokens.ts: HABESHA_AIRDROP_USD changed from 299.9 to 15.
+- src/app/api/auth/signup/route.ts: comment updated ($15). (Amount uses the constant, so already correct.)
+- src/app/api/auth/google/route.ts: uses the constant — already correct.
+- src/components/auth/auth-modal.tsx: signup success toast + signup-form info box updated to "$15".
+- src/components/landing/landing-page.tsx: hero badge, features card, Habesha highlight section, bonus stat card all updated to "$15".
+- src/components/modals/token-detail-modal.tsx: "Sign up to trade" hint updated to "$15".
+
+Verified: new signup credits exactly 2.332029 HABESHA (= $15 / $6.4321674), USD value $15.00. ✓
+
+Stage Summary:
+- New users now receive $15 worth of Habesha Token (down from $299.9). All UI text + the backend airdrop amount updated consistently. Lint clean.

@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     // Initialize balances for all tokens
     await ensureBalances(user.id, TOKEN_SYMBOLS)
 
-    // Airdrop free Habesha tokens ($299.9 worth at fixed price)
+    // Airdrop free Habesha tokens ($15 worth at fixed price)
     const airdropAmount = HABESHA_AIRDROP_USD / HABESHA_PRICE
     await db.balance.update({
       where: { userId_token: { userId: user.id, token: 'HABESHA' } },

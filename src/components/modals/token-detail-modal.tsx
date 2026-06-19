@@ -132,7 +132,7 @@ export function TokenDetailModal() {
             </div>
             {!user && (
               <p className="text-center text-[11px] text-muted-foreground">
-                Sign up to trade · New users get <b className="text-gold">$299.9</b> in Habesha Token
+                Sign up to trade · New users get <b className="text-gold">$15</b> in Habesha Token
               </p>
             )}
           </>

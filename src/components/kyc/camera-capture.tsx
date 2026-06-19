@@ -105,7 +105,11 @@ export function CameraCapture({ onCaptured, duration = 4, label = 'Live Face Cap
     }
 
     try {
-      const recorder = new MediaRecorder(streamRef.current, { mimeType })
+      const recorder = new MediaRecorder(streamRef.current, {
+        mimeType,
+        // Limit bitrate so a 4s clip stays small enough for upload/storage.
+        videoBitsPerSecond: 1_500_000, // ~1.5 Mbps → ~750KB per 4s clip
+      })
       recorderRef.current = recorder
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data)

@@ -108,6 +108,16 @@ This means Prisma can't find a valid Postgres URL. You need to connect a Vercel 
 3. This auto-creates `POSTGRES_PRISMA_URL` and `POSTGRES_URL_NON_POOLING`
 4. Redeploy (Deployments tab → click the latest → **Redeploy**)
 
+### "EROFS: read-only file system" during KYC upload (camera/video)
+Vercel's serverless filesystem is read-only, so the app cannot write uploaded files to `/public`. The app handles this automatically in two ways:
+- **Default (zero config):** KYC videos/photos are stored as base64 in the `KycMedia` database table and served via `/api/kyc/media?id=...`. This works with no extra setup — KYC just works.
+- **Recommended for production (larger files, faster):** Add Vercel Blob storage:
+  1. Vercel project → **Storage** tab → **Create Database** → **Blob**
+  2. Click **Connect Project** → this auto-sets `BLOB_READ_WRITE_TOKEN`
+  3. Redeploy. The app auto-detects the token and uses Blob for KYC uploads.
+
+> The camera records at a low bitrate (~1.5 Mbps, ~750KB per 4-second clip), so even the zero-config database fallback works fine for KYC.
+
 ### Build fails with "Environment variable not found"
 - All `NEXT_PUBLIC_*` variables must be set in Vercel's Environment Variables BEFORE building
 - After adding them, trigger a new deploy (Deployments tab → Redeploy)

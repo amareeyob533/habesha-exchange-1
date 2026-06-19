@@ -432,3 +432,23 @@ Fix:
 
 Stage Summary:
 - User needs to: (1) make sure the Vercel Postgres database is connected to the project (Storage tab → Connect Project) so POSTGRES_PRISMA_URL + POSTGRES_URL_NON_POOLING get auto-set, (2) push the updated schema to GitHub, (3) Vercel rebuilds — prisma db push will now find the correct URL and create the tables. Lint clean.
+
+---
+Task ID: 26
+Agent: main
+Task: Fix "EROFS: read-only file system" KYC upload error on Vercel
+
+Root cause: Vercel's serverless filesystem is read-only. The old /api/kyc/upload route wrote files to /public/uploads/kyc/ (local disk), which fails on Vercel → "EROFS: read-only file system, open '/var/task/public/uploads/kyc/...'". (The upload route file had also been lost from the repo.)
+
+Fix (Vercel-compatible file storage):
+- prisma/schema.prisma: added KycMedia model (id, userId, kind, mimeType, fileName, data [base64 data URL or external URL], size) + relation on User.
+- src/app/api/kyc/upload/route.ts (NEW): two-strategy storage:
+  1. If BLOB_READ_WRITE_TOKEN is set → use Vercel Blob (@vercel/blob, installed). Returns public Blob URL.
+  2. Otherwise → store file as base64 data URL in KycMedia DB table, return relative /api/kyc/media?id=<id> URL. Zero-config — works on Vercel immediately.
+- src/app/api/kyc/media/route.ts (NEW): GET ?id=<mediaId> serves the stored media. Owner-or-admin authorized. If data is external URL → redirect; if base64 → return binary with correct Content-Type.
+- src/components/kyc/camera-capture.tsx: MediaRecorder now capped at 1.5 Mbps video bitrate (~750KB per 4s clip) so uploads stay small for DB storage.
+- upload max size lowered to 12MB.
+- DEPLOY.md: added troubleshooting for the EROFS error + Vercel Blob setup instructions.
+
+Stage Summary:
+- KYC camera uploads now work on Vercel with ZERO extra config (base64→DB fallback). For better performance/larger files, user can add Vercel Blob (Storage → Create Blob → Connect Project → auto-sets BLOB_READ_WRITE_TOKEN). The admin can view KYC videos/photos via the /api/kyc/media route. Lint clean.

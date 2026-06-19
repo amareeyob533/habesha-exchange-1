@@ -40,6 +40,7 @@ model User {
   transfersReceived    Transfer[]    @relation("TransferTo")
   notifications        Notification[]
   supportMessages      SupportMessage[]
+  kycMedia             KycMedia[]
 }
 
 model Balance {
@@ -128,5 +129,20 @@ model SupportMessage {
   subject   String
   message   String
   status    String   @default("open") // open | resolved
+  createdAt DateTime @default(now())
+}
+
+// KYC media storage (base64 fallback when Vercel Blob is not configured).
+// On Vercel's read-only filesystem we can't write to /public, so we store
+// the captured selfie video + ID photo as base64 data URLs here.
+model KycMedia {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String   // video | image
+  mimeType  String
+  fileName  String
+  data      String   // base64 data URL (data:<mime>;base64,<...>) OR a Blob URL when Blob is configured
+  size      Int
   createdAt DateTime @default(now())
 }

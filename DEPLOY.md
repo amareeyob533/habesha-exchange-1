@@ -101,6 +101,15 @@ Once the site is live:
 - Verify these env vars exist in Settings → Environment Variables: `POSTGRES_PRISMA_URL` and `POSTGRES_URL_NON_POOLING` (Vercel auto-sets these when you connect the database)
 - If they're missing, go to Storage tab → click your database → **Connect Project** → select your project
 
+### "Environment variable not found: POSTGRES_URL_NON_POOLING" (or POSTGRES_PRISMA_URL)
+Some Vercel Postgres setups don't set all the env vars Prisma expects. The build now auto-handles this: `scripts/build.mjs` fills in any missing Postgres env vars from whichever ones ARE set, so the build never fails on a missing var. As long as at least ONE of these is set, the build works:
+- `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, `POSTGRES_URL`, or `DATABASE_URL`
+
+If you still see this error, it means NONE of those are set — the database isn't connected:
+1. Vercel project → **Storage** tab → click your Postgres database → **Connect Project** → select your project
+2. Verify in **Settings → Environment Variables** that at least `POSTGRES_PRISMA_URL` appears
+3. Redeploy
+
 ### "Error validating datasource `db`: the URL must start with the protocol `postgresql://` or `postgres://`"
 This means Prisma can't find a valid Postgres URL. You need to connect a Vercel Postgres database:
 1. Vercel project → **Storage** tab → **Create Database** → **Postgres (Neon)**

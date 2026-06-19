@@ -19,12 +19,10 @@ function extToMime(ext: string): string {
  *
  * Stores the file and returns { url, kind }.
  *
- * Storage strategy (works on Vercel's read-only filesystem):
- *  1. If BLOB_READ_WRITE_TOKEN is set → use Vercel Blob (recommended for production).
- *  2. Otherwise → store as base64 data URL in the KycMedia DB table, and return a
- *     /api/kyc/media?id=<id> URL that the admin can view. (Works with zero config.)
- *
- * Both modes work on Vercel — no local filesystem writes.
+ * Storage strategy (works on Vercel's read-only filesystem AND local SQLite):
+ *  1. If BLOB_READ_WRITE_TOKEN is set → use Vercel Blob (production).
+ *  2. Otherwise → store as base64 data URL in the KycMedia DB table, return a
+ *     /api/kyc/media?id=<id> URL. (Zero config — works everywhere.)
  */
 export async function POST(req: NextRequest) {
   try {
@@ -37,7 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
     }
     if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: 'File too large (max 25MB)' }, { status: 400 })
+      return NextResponse.json({ error: 'File too large (max 12MB)' }, { status: 400 })
     }
     const ext = (file.name.split('.').pop() || '').toLowerCase()
     if (!IMAGE_EXTS.includes(ext) && !VIDEO_EXTS.includes(ext)) {
@@ -80,7 +78,6 @@ export async function POST(req: NextRequest) {
         size: file.size,
       },
     })
-    // Return a relative URL that the media route serves (works on any origin).
     const url = `/api/kyc/media?id=${media.id}`
     return NextResponse.json({ url, kind })
   } catch (err: any) {

@@ -488,3 +488,27 @@ Fix (bulletproof, handles ALL Postgres providers):
 
 Stage Summary:
 - The build now auto-handles missing Postgres env vars. As long as at least ONE Postgres URL env var is set (POSTGRES_PRISMA_URL / POSTGRES_URL_NON_POOLING / POSTGRES_URL / DATABASE_URL), the build succeeds. User pushes to GitHub → Vercel rebuilds → build.mjs fills gaps → prisma db push creates tables → next build completes. Lint clean.
+
+---
+Task ID: 29
+Agent: main
+Task: Fix KYC upload failing — upload route file was missing from repo
+
+Root cause: The file src/app/api/kyc/upload/route.ts was MISSING (lost during a GitHub commit/push — likely an empty directory wasn't tracked by git, or it got removed). So /api/kyc/upload returned 404 → "Upload failed" in the KYC modal. This was NOT a PostgreSQL vs SQLite issue.
+
+Fix:
+- Recreated src/app/api/kyc/upload/route.ts: handles multipart file upload, validates ext/size, stores via Vercel Blob (if BLOB_READ_WRITE_TOKEN set) OR base64 in KycMedia DB table (zero-config fallback). Returns {url, kind}.
+- Verified src/app/api/kyc/media/route.ts still exists (serves stored media, owner-or-admin auth).
+- Confirmed KycMedia model + relation on User exist in schema.
+- bun run db:push to ensure KycMedia table exists locally.
+
+Verified E2E (curl + browser):
+- Image upload → 200, returns /api/kyc/media?id=... ✓
+- Video upload (.webm) → 200, returns /api/kyc/media?id=... ✓
+- Media serving (with cookie) → 200, correct content-type (image/jpeg 143681 bytes; video/webm 31 bytes) ✓
+- KYC submit with all 3 media URLs → pending ✓
+- Admin sees pending KYC with selfieVideoUrl/selfieUrl/docUrl, can fetch video → 200 video/webm ✓
+- Endpoints exist (401 unauthorized, not 404) ✓
+
+Stage Summary:
+- KYC picture + video upload now works. The route file is back in place. User should commit + push to GitHub (make sure the upload/ directory + route.ts is included this time — git should track it now). Lint clean.

@@ -2,12 +2,13 @@
 
 import { useAuth } from '@/hooks/use-auth'
 import { useUI } from '@/hooks/use-ui'
+import { useLiveRate } from '@/hooks/use-live-rate'
 import { formatUsd, timeAgo } from '@/lib/format'
+import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
-import { ArrowDownToLine, ArrowUpFromLine, Send, Plus, TrendingUp, ShoppingCart, LineChart, ArrowLeftRight } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, Send, Plus, TrendingUp, ShoppingCart, LineChart, ArrowLeftRight, TrendingDown, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MiniMarketOverview } from '@/components/dashboard/views/mini-market'
-import { BUY_ETB_RATE } from '@/lib/buy-config'
 
 export function OverviewView() {
   const { user, totalUsd, notifications } = useAuth()
@@ -48,7 +49,7 @@ export function OverviewView() {
           </div>
         </motion.div>
 
-        {/* Quick Buy USDT card */}
+        {/* Quick Buy USDT card with LIVE fluctuating rate */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -61,13 +62,15 @@ export function OverviewView() {
               <div className="flex items-center gap-2 text-sm font-semibold">
                 <ShoppingCart className="h-4 w-4 text-gold" /> Buy USDT
               </div>
-              <span className="rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-bold text-gold">LIVE</span>
+              <span className="flex items-center gap-1 rounded-full bg-up/15 px-2 py-0.5 text-[10px] font-bold text-up">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-up opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-up" />
+                </span>
+                LIVE
+              </span>
             </div>
-            <div className="mt-4 text-center">
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">1 USDT =</div>
-              <div className="text-4xl font-extrabold text-gold-gradient">{BUY_ETB_RATE} ETB</div>
-              <div className="mt-1 text-[11px] text-muted-foreground">Pay via CBE · Telebirr · Abay · EMPSA</div>
-            </div>
+            <LiveRateDisplay />
             <Button className="shimmer-btn bg-gold-gradient mt-4 h-11 w-full font-bold text-primary-foreground shadow-gold hover:opacity-95" onClick={() => openBuy()}>
               Buy Now <ShoppingCart className="ml-1 h-4 w-4" />
             </Button>

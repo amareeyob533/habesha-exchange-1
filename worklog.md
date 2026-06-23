@@ -570,3 +570,45 @@ Verified:
 
 Stage Summary:
 - All KYC is removed (modal, camera, view, admin section, API routes, schema table, all UI references). Users can now sign up, deposit, withdraw, and trade with no verification required. Lint clean.
+
+---
+Task ID: 32
+Agent: main
+Task: Build Buy USDT system (users buy USDT with ETB via bank transfer, admin approves)
+
+Schema: added BuyOrder (usdtAmount, birrAmount, rate, bank, screenshotUrl, transactionCode, status) + PaymentProof (base64 screenshot storage) models + relations on User.
+
+Backend:
+- src/lib/buy-config.ts (NEW): BUY_ETB_RATE=192, BUY_BANKS list (CBE/Telebirr/Abay/EMPSA) with account name + number placeholders (admin edits later).
+- src/app/api/buy/route.ts (NEW): POST creates buy order (validates USDT/ETB ratio, bank, requires screenshot) + notifies user; GET lists user's orders.
+- src/app/api/buy/upload/route.ts (NEW): uploads payment screenshot (Vercel Blob if configured, else base64 in PaymentProof DB table).
+- src/app/api/buy/proof/route.ts (NEW): serves screenshot (owner-or-admin auth).
+- src/app/api/admin/buys/route.ts (NEW): admin lists buy orders by status.
+- src/app/api/admin/buys/approve/route.ts (NEW): admin approves → credits USDT to buyer's balance + creates 'buy' transaction + notifies user "Buy Order Approved ✓".
+- src/app/api/admin/buys/reject/route.ts (NEW): admin rejects → notifies user.
+
+Frontend:
+- src/components/modals/buy-modal.tsx (NEW): 5-step flow:
+  1. Amount: USDT/ETB currency toggle, live conversion preview (1 USDT = 192 ETB).
+  2. Bank: select CBE/Telebirr/Abay/EMPSA.
+  3. Account: shows bank account name + copyable account number, 20-second countdown before the "I've Made the Payment" button is enabled (user must copy first).
+  4. Upload: NON-closable popup (overlay click + ESC prevented) — user must upload payment screenshot (required) + optional transaction code, then "Confirm & Submit".
+  5. Done: "Buy Order Submitted — pending admin approval".
+- src/hooks/use-ui.ts: added buyOpen + openBuy.
+- src/components/dashboard/topbar.tsx: added "Buy" button beside Deposit.
+- src/components/dashboard/views/overview.tsx: added "Buy" button beside Deposit/Withdraw/Transfer.
+- src/components/dashboard/dashboard-shell.tsx: renders BuyModal.
+- src/components/dashboard/views/admin-buys.tsx (NEW): admin Buys panel — cards per order showing user, USDT/ETB amounts, bank, payment screenshot (viewable), optional txn code, Approve (credits USDT) / Reject buttons.
+- src/components/dashboard/views/admin.tsx: added 'buys' Section + "Buys" toggle tab + renders BuysAdmin.
+
+Verified E2E (curl + browser):
+- Screenshot upload → proof URL ✓
+- Buy order: 50 USDT = 9600 ETB via CBE → pending ✓
+- Admin sees pending order with screenshot + txn code ✓
+- Admin approves → 50 USDT credited to buyer (100 → 150) + "Buy Order Approved ✓" notification ✓
+- Browser: Buy button in topbar → modal step 1 (USDT/ETB toggle + live preview "50 USDT ↔ 9,600 ETB") ✓
+- Step 2 bank select (CBE/Telebirr/Abay/EMPSA) ✓
+- Step 3 bank account with copyable number "1000200030004" + 20s countdown → "I've Made the Payment" appears ✓
+
+Stage Summary:
+- Buy USDT system is complete and verified. Users: pick amount (USDT or ETB with live conversion) → pick bank → copy account number (20s wait) → upload payment screenshot + optional txn code (non-closable until uploaded) → submit → admin approves in Admin → Buys tab → USDT credited. Lint clean, server stable.

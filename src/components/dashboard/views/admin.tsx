@@ -138,6 +138,12 @@ export function AdminView() {
           <ArrowUpFromLine className="h-4 w-4" /> Withdrawals
         </button>
         <button
+          onClick={() => { setSection('buys') }}
+          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${section === 'buys' ? 'bg-gold/15 text-gold' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          <ShoppingCart className="h-4 w-4" /> Buys
+        </button>
+        <button
           onClick={() => { setSection('users') }}
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${section === 'users' ? 'bg-gold/15 text-gold' : 'text-muted-foreground hover:text-foreground'}`}
         >
@@ -164,6 +170,8 @@ export function AdminView() {
 
       {section === 'users' ? (
         <UsersAdmin />
+      ) : section === 'buys' ? (
+        <BuysAdmin refreshKey={0} />
       ) : (
         <>
           <Tabs value={statusTab} onValueChange={(v) => setStatusTab(v as StatusTab)}>

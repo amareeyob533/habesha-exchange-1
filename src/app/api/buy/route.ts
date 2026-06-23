@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
-import { BUY_ETB_RATE, BUY_BANKS } from '@/lib/buy-config'
+import { BUY_BANKS } from '@/lib/buy-config'
+
+// The rate fluctuates client-side between 190.99 and 192.76.
+// The server accepts any rate in that range (the client sends the current live rate).
+const RATE_MIN = 190.99
+const RATE_MAX = 192.76
 
 /** GET /api/buy — list the current user's buy orders */
 export async function GET() {
@@ -24,7 +29,7 @@ export async function POST(req: NextRequest) {
     const { user, response } = await requireAuth()
     if (!user) return response!
 
-    const { usdtAmount, birrAmount, bank, screenshotUrl, transactionCode } = await req.json()
+    const { usdtAmount, birrAmount, bank, screenshotUrl, transactionCode, rate: clientRate } = await req.json()
     const usdt = Number(usdtAmount)
     const birr = Number(birrAmount)
     if (!usdt || usdt <= 0) {
@@ -33,23 +38,23 @@ export async function POST(req: NextRequest) {
     if (!birr || birr <= 0) {
       return NextResponse.json({ error: 'Enter a valid ETB amount' }, { status: 400 })
     }
+    // Use the client-provided live rate (validated to be within the allowed range).
+    const rate = clientRate && clientRate >= RATE_MIN && clientRate <= RATE_MAX ? clientRate : (RATE_MIN + RATE_MAX) / 2
     // Validate the ETB/USDT ratio matches the rate (allow tiny rounding).
-    const expectedBirr = usdt * BUY_ETB_RATE
-    if (Math.abs(birr - expectedBirr) > 1) {
-      return NextResponse.json({ error: `ETB amount must be ${expectedBirr} for ${usdt} USDT` }, { status: 400 })
+    const expectedBirr = usdt * rate
+    if (Math.abs(birr - expectedBirr) > 2) {
+      return NextResponse.json({ error: `ETB amount must be ~${expectedBirr.toFixed(2)} for ${usdt} USDT at rate ${rate.toFixed(5)}` }, { status: 400 })
     }
     if (!bank || !BUY_BANKS.some((b) => b.code === bank)) {
       return NextResponse.json({ error: 'Select a valid bank' }, { status: 400 })
     }
-    // Screenshot is optional; the transaction code is also optional.
-    // At least one proof is recommended but not enforced.
 
     const order = await db.buyOrder.create({
       data: {
         userId: user.id,
         usdtAmount: usdt,
         birrAmount: birr,
-        rate: BUY_ETB_RATE,
+        rate,
         bank,
         screenshotUrl,
         transactionCode: transactionCode?.trim() || null,

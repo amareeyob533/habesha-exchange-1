@@ -142,3 +142,92 @@ function QuickStat({ icon: Icon, label, value, onClick }: { icon: any; label: st
     </button>
   )
 }
+
+/**
+ * Live USDT/ETB rate display with fluctuating price, sparkline, direction arrow,
+ * and next-update countdown. The rate changes between 190.99 and 192.76 at
+ * random intervals (2/10/30 min).
+ */
+function LiveRateDisplay() {
+  const { rate, prevRate, direction, history, nextUpdateIn } = useLiveRate()
+  const isUp = direction === 'up'
+  const isDown = direction === 'down'
+  const change = rate - prevRate
+  const mins = Math.floor(nextUpdateIn / 60000)
+  const secs = Math.floor((nextUpdateIn % 60000) / 1000)
+  const countdown = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`
+
+  // Build mini sparkline from history
+  const w = 200, h = 36
+  const rates = history.map((p) => p.rate)
+  const min = Math.min(...rates, 190.99)
+  const max = Math.max(...rates, 192.76)
+  const range = max - min || 1
+  const stepX = rates.length > 1 ? w / (rates.length - 1) : w
+  const pathD = rates.map((p, i) => `${i === 0 ? 'M' : 'L'} ${i * stepX} ${h - ((p - min) / range) * h}`).join(' ')
+  const areaD = `${pathD} L ${w} ${h} L 0 ${h} Z`
+
+  return (
+    <div className="mt-4">
+      {/* Rate display */}
+      <div className="flex items-center justify-center gap-2">
+        <motion.div
+          key={rate.toFixed(5)}
+          initial={{ opacity: 0.6, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex items-baseline gap-1"
+        >
+          <span className="text-[11px] uppercase tracking-wider text-muted-foreground">1 USDT =</span>
+          <span className="text-4xl font-extrabold tabular-nums text-gold-gradient">{rate.toFixed(5)}</span>
+          <span className="text-sm font-bold text-muted-foreground">ETB</span>
+        </motion.div>
+      </div>
+
+      {/* Direction + change */}
+      <div className="mt-1 flex items-center justify-center gap-2 text-xs">
+        <span
+          className={cn(
+            'flex items-center gap-1 font-bold',
+            isUp ? 'text-up' : isDown ? 'text-down' : 'text-muted-foreground',
+          )}
+        >
+          {isUp && <TrendingUp className="h-3 w-3" />}
+          {isDown && <TrendingDown className="h-3 w-3" />}
+          {!isUp && !isDown && <span className="h-3 w-3 text-center">—</span>}
+          {isUp ? '+' : ''}{change.toFixed(5)} ETB
+        </span>
+        <span className="text-muted-foreground">·</span>
+        <span className={cn('font-semibold', isUp ? 'text-up' : isDown ? 'text-down' : 'text-muted-foreground')}>
+          {isUp ? '+' : ''}{prevRate > 0 ? ((change / prevRate) * 100).toFixed(3) : '0.000'}%
+        </span>
+      </div>
+
+      {/* Mini sparkline */}
+      {rates.length > 1 && (
+        <div className="mt-3 flex justify-center">
+          <svg width={w} height={h} className="overflow-visible">
+            <defs>
+              <linearGradient id="rate-spark" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#F0B90B" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="#F0B90B" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <path d={areaD} fill="url(#rate-spark)" />
+            <path d={pathD} fill="none" stroke="#F0B90B" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+            {/* Last point dot */}
+            <circle cx={(rates.length - 1) * stepX} cy={h - ((rates[rates.length - 1] - min) / range) * h} r={2.5} fill="#F0B90B" />
+          </svg>
+        </div>
+      )}
+
+      {/* Next update countdown + range */}
+      <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
+        <span className="flex items-center gap-1">
+          <Clock className="h-3 w-3" /> Next update in {countdown}
+        </span>
+        <span>Range: 190.99 – 192.76 ETB</span>
+      </div>
+    </div>
+  )
+}

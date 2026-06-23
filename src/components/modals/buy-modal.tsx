@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useUI } from '@/hooks/use-ui'
 import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/hooks/use-toast'
+import { useLiveRate } from '@/hooks/use-live-rate'
 import { apiFetch, uploadFile } from '@/lib/api-client'
-import { BUY_ETB_RATE, BUY_BANKS } from '@/lib/buy-config'
+import { BUY_BANKS } from '@/lib/buy-config'
 import { ShoppingCart, Copy, Check, Loader2, Clock, Upload, ChevronRight, ArrowLeftRight, CheckCircle2, Image as ImageIcon } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -21,6 +22,7 @@ export function BuyModal() {
   const { buyOpen, openBuy } = useUI()
   const { fetchMe } = useAuth()
   const { toast } = useToast()
+  const { rate: liveRate } = useLiveRate()
   const [step, setStep] = useState<Step>('amount')
   const [currency, setCurrency] = useState<Currency>('USDT')
   const [amount, setAmount] = useState('')
@@ -52,8 +54,8 @@ export function BuyModal() {
   }, [open])
 
   // Derived amounts
-  const usdtAmount = currency === 'USDT' ? Number(amount) || 0 : (Number(amount) || 0) / BUY_ETB_RATE
-  const birrAmount = currency === 'ETB' ? Number(amount) || 0 : (Number(amount) || 0) * BUY_ETB_RATE
+  const usdtAmount = currency === 'USDT' ? Number(amount) || 0 : (Number(amount) || 0) / liveRate
+  const birrAmount = currency === 'ETB' ? Number(amount) || 0 : (Number(amount) || 0) * liveRate
   const bank = BUY_BANKS.find((b) => b.code === bankCode)
 
   // 20-second countdown on the account step
@@ -99,7 +101,7 @@ export function BuyModal() {
     try {
       await apiFetch('/api/buy', {
         method: 'POST',
-        body: JSON.stringify({ usdtAmount: usdtAmount, birrAmount: birrAmount, bank: bankCode, screenshotUrl, transactionCode: txnCode }),
+        body: JSON.stringify({ usdtAmount: usdtAmount, birrAmount: birrAmount, bank: bankCode, screenshotUrl, transactionCode: txnCode, rate: liveRate }),
       })
       await fetchMe()
       setStep('done')
@@ -119,7 +121,7 @@ export function BuyModal() {
           </div>
           <div>
             <DialogTitle className="text-lg font-bold">Buy USDT</DialogTitle>
-            <DialogDescription className="text-xs">Pay in ETB via bank transfer — 1 USDT = {BUY_ETB_RATE} ETB</DialogDescription>
+            <DialogDescription className="text-xs">Pay in ETB via bank transfer — 1 USDT = {liveRate} ETB</DialogDescription>
           </div>
         </div>
 
@@ -160,7 +162,7 @@ export function BuyModal() {
                     <ArrowLeftRight className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="font-bold text-gold">{birrAmount.toLocaleString('en-US', { maximumFractionDigits: 2 })} ETB</span>
                   </div>
-                  <div className="mt-1 text-[11px] text-muted-foreground">Rate: 1 USDT = {BUY_ETB_RATE} ETB</div>
+                  <div className="mt-1 text-[11px] text-muted-foreground">Rate: 1 USDT = {liveRate} ETB</div>
                 </div>
               )}
 

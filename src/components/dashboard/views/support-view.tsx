@@ -11,7 +11,7 @@ const FAQ = [
   { q: 'How long do deposits take?', a: 'Deposits are confirmed by our team and usually credited within minutes after you click "I Deposited".' },
   { q: 'Can I withdraw Habesha Token?', a: 'No. Habesha Token can only be transferred internally between Habesha Exchange users via their 6-digit UID.' },
   { q: 'How do internal transfers work?', a: 'Enter the recipient\'s 6-digit UID and the amount — funds move instantly with zero fees.' },
-  { q: 'What are the KYC levels?', a: 'Normal KYC (face check, $100k limit) and High KYC (ID + selfie, unlimited). Complete KYC to enable deposits & withdrawals.' },
+  { q: 'How do bank withdrawals work?', a: 'Exchange your tokens to USDT, then choose Withdraw → Bank, pick your bank (CBE, Telebirr, Abay, EMPSA), and enter your account details. Funds arrive in ETB at 1 USDT = 192 ETB.' },
 ]
 
 export function SupportView() {

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import { processAutoApprovals } from '@/lib/auto-approve'
 import { TOKENS } from '@/lib/tokens'
 
 export async function GET() {
@@ -10,7 +9,6 @@ export async function GET() {
     if (!sessionUser) {
       return NextResponse.json({ user: null }, { status: 200 })
     }
-    await processAutoApprovals(sessionUser.id)
 
     const user = await db.user.findUnique({
       where: { id: sessionUser.id },
@@ -57,8 +55,6 @@ export async function GET() {
         name: user.name,
         avatarUrl: user.avatarUrl,
         provider: user.provider,
-        kycStatus: user.kycStatus,
-        kycLevel: user.kycLevel,
         country: user.country,
         phone: user.phone,
         createdAt: user.createdAt,

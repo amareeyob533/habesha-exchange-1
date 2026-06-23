@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       },
       select: {
         id: true, uid: true, username: true, email: true, name: true,
-        isBlocked: true, kycStatus: true, kycLevel: true, createdAt: true,
+        isBlocked: true, createdAt: true,
         avatarUrl: true,
       },
       take: 20,

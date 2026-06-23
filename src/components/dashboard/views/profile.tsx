@@ -2,18 +2,16 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
-import { useUI } from '@/hooks/use-ui'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useToast } from '@/hooks/use-toast'
-import { Copy, Check, LogOut, ShieldCheck, ShieldAlert, Clock, Mail, Calendar, KeyRound } from 'lucide-react'
+import { Copy, Check, LogOut, ShieldCheck, Mail, Calendar, KeyRound } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export function ProfileView() {
   const { user, updateProfile, logout } = useAuth()
-  const { openKyc } = useUI()
   const { toast } = useToast()
   const [name, setName] = useState(user?.name || '')
   const [country, setCountry] = useState(user?.country || '')
@@ -63,21 +61,9 @@ export function ProfileView() {
               UID {user?.uid}
               {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             </button>
-            <div className="mt-3 flex items-center gap-1.5">
-              {user?.kycStatus === 'approved' ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-up/15 px-2 py-0.5 text-[11px] font-bold text-up">
-                  <ShieldCheck className="h-3 w-3" /> {user?.kycLevel === 'high' ? 'High KYC' : 'Normal KYC'}
-                </span>
-              ) : user?.kycStatus === 'pending' ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-gold/15 px-2 py-0.5 text-[11px] font-bold text-gold">
-                  <Clock className="h-3 w-3" /> KYC Pending
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 rounded-full bg-down/15 px-2 py-0.5 text-[11px] font-bold text-down">
-                  <ShieldAlert className="h-3 w-3" /> Unverified
-                </span>
-              )}
-            </div>
+            {user?.username && (
+              <div className="mt-2 text-xs text-muted-foreground">@{user.username}</div>
+            )}
           </div>
 
           <div className="mt-5 space-y-2 border-t border-border pt-4 text-sm">
@@ -123,11 +109,6 @@ export function ProfileView() {
             <p className="mt-1 text-xs text-muted-foreground">
               Your password is stored with bcrypt hashing. Your UID <b className="text-gold">{user?.uid}</b> is used for instant internal transfers — share it only with people you trust.
             </p>
-            {user?.kycStatus !== 'approved' && (
-              <Button variant="outline" size="sm" className="mt-3 border-gold/30 text-gold" onClick={openKyc}>
-                Complete KYC Verification
-              </Button>
-            )}
           </div>
         </motion.div>
       </div>

@@ -530,3 +530,43 @@ Verified: new signup credits exactly 2.332029 HABESHA (= $15 / $6.4321674), USD 
 
 Stage Summary:
 - New users now receive $15 worth of Habesha Token (down from $299.9). All UI text + the backend airdrop amount updated consistently. Lint clean.
+
+---
+Task ID: 31
+Agent: main
+Task: Remove ALL KYC features from the website
+
+Deleted files:
+- src/components/modals/kyc-modal.tsx, src/components/kyc/ (camera-capture), src/components/dashboard/views/kyc-view.tsx, src/components/dashboard/views/admin-kyc.tsx
+- src/lib/kyc-actions.ts, src/lib/auto-approve.ts
+- src/app/api/kyc/ (route.ts, upload/, media/), src/app/api/admin/kyc/ (route.ts, approve/, reject/)
+
+Schema: removed KycMedia model + kycMedia relation on User (db push --accept-data-loss dropped the table). Kept kyc* columns on User to avoid breaking existing data (now unused).
+
+Code cleanup:
+- use-ui.ts: removed kycOpen/openKyc + 'kyc' from ViewKey.
+- use-auth.ts: removed kycStatus/kycLevel from AuthUser.
+- api.ts: removed processAutoApprovals import + call.
+- auth routes (me/login/signup/google): removed kyc fields from responses + processAutoApprovals import; welcome notification no longer mentions KYC.
+- admin/users routes: removed kyc fields from search/detail.
+- sidebar: removed "Verification" nav item.
+- overview: removed "Verify your account" banner + KYC status row (replaced with Username row).
+- profile: removed KYC status badge + "Complete KYC Verification" button + unused imports.
+- topbar: removed "Verification (KYC)" dropdown menu item.
+- dashboard-shell: removed KycModal + KycView render.
+- admin panel: removed KYC tab + KycAdmin render (now 3 tabs: Deposits, Withdrawals, Users).
+- admin-users: removed KYC badge, KYC info row, entire KYC media section, kyc fields from interfaces.
+- landing page: replaced KYC security section with Instant Transfers + Bank Withdrawals cards; removed KYC from "Secure by Design" feature.
+- support-view: replaced KYC FAQ with bank-withdrawals FAQ.
+
+Verified:
+- Signup works without KYC ✓; /me returns no kyc fields ✓
+- Deposit + Withdraw work without KYC ✓
+- /api/kyc/* and /api/admin/kyc/* return 404 ✓
+- Sidebar has no Verification ✓; Overview has no Verify Now banner ✓
+- Topbar dropdown has no Verification ✓; Profile has no KYC status ✓
+- No auto-approve/processAutoApprovals refs left ✓
+- Lint clean, no browser errors ✓
+
+Stage Summary:
+- All KYC is removed (modal, camera, view, admin section, API routes, schema table, all UI references). Users can now sign up, deposit, withdraw, and trade with no verification required. Lint clean.

@@ -29,8 +29,6 @@ export interface AuthUser {
   name: string | null
   avatarUrl: string | null
   provider: string
-  kycStatus: string
-  kycLevel: string
   country?: string | null
   phone?: string | null
   createdAt: string

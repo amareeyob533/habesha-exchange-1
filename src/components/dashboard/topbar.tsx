@@ -85,7 +85,6 @@ export function Topbar() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setView('profile')}>Profile</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setView('kyc')}>Verification (KYC)</DropdownMenuItem>
             <DropdownMenuItem onClick={() => setView('support')}>Support</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-down focus:text-down" onClick={logout}>

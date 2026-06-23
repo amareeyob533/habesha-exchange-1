@@ -4,44 +4,15 @@ import { useAuth } from '@/hooks/use-auth'
 import { useUI } from '@/hooks/use-ui'
 import { formatUsd, formatTokenAmount, timeAgo } from '@/lib/format'
 import { motion } from 'framer-motion'
-import { ArrowDownToLine, ArrowUpFromLine, Send, ShieldAlert, ShieldCheck, Plus, TrendingUp } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, Send, Plus, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export function OverviewView() {
   const { user, balances, totalUsd, notifications } = useAuth()
-  const { openDeposit, openWithdraw, setView, openKyc } = useUI()
-  const verified = user?.kycStatus === 'approved'
+  const { openDeposit, openWithdraw, setView } = useUI()
 
   return (
     <div className="space-y-5">
-      {/* KYC warning banner */}
-      {!verified && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-start gap-3 rounded-2xl border border-gold/40 bg-gold/5 p-4 sm:flex-row sm:items-center sm:justify-between"
-        >
-          <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gold/15 text-gold">
-              <ShieldAlert className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="text-sm font-bold">Verify your account</div>
-              <div className="text-xs text-muted-foreground">
-                {user?.kycStatus === 'pending'
-                  ? 'Your KYC is under review. You\'ll be notified once approved.'
-                  : 'Complete KYC verification to enable deposits & withdrawals.'}
-              </div>
-            </div>
-          </div>
-          {user?.kycStatus !== 'pending' && (
-            <Button className="bg-gold-gradient shrink-0 font-semibold text-primary-foreground" onClick={openKyc}>
-              Verify Now
-            </Button>
-          )}
-        </motion.div>
-      )}
-
       {/* Balance hero + quick actions */}
       <div className="grid gap-4 lg:grid-cols-3">
         <motion.div
@@ -83,17 +54,7 @@ export function OverviewView() {
           </div>
           <div className="mt-4 space-y-3">
             <StatusRow label="UID" value={user?.uid || '—'} mono />
-            <StatusRow
-              label="Verification"
-              value={
-                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                  user?.kycStatus === 'approved' ? 'bg-up/15 text-up' : user?.kycStatus === 'pending' ? 'bg-gold/15 text-gold' : 'bg-down/15 text-down'
-                }`}>
-                  {user?.kycStatus === 'approved' ? <ShieldCheck className="h-3 w-3" /> : null}
-                  {user?.kycLevel === 'high' ? 'High KYC' : user?.kycLevel === 'normal' ? 'Normal KYC' : user?.kycStatus || 'Unverified'}
-                </span>
-              }
-            />
+            <StatusRow label="Username" value={user?.username ? `@${user.username}` : '—'} />
             <StatusRow label="Member since" value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'} />
           </div>
           <Button variant="outline" className="mt-4 w-full border-gold/30 text-gold hover:bg-gold/10" onClick={() => setView('wallet')}>

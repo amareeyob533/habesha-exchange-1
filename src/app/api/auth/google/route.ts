@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         data: {
           userId: user.id,
           title: 'Welcome to Habesha Exchange! 🎉',
-          message: `You received ${airdropAmount.toFixed(4)} HABESHA ($${HABESHA_AIRDROP_USD} welcome bonus). Complete KYC to enable deposits & withdrawals.`,
+          message: `You received ${airdropAmount.toFixed(4)} HABESHA ($${HABESHA_AIRDROP_USD} welcome bonus). Start trading now! `,
           type: 'success',
         },
       })
@@ -68,8 +68,6 @@ export async function POST(req: NextRequest) {
       email: user.email,
       name: user.name,
       provider: user.provider,
-      kycStatus: user.kycStatus,
-      kycLevel: user.kycLevel,
       token,
     })
   } catch (err: any) {

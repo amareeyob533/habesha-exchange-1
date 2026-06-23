@@ -162,7 +162,7 @@ export function LandingPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
             { icon: Zap, title: 'Lightning Fast', desc: 'Ultra-smooth execution and instant internal transfers between users — no waiting.' },
-            { icon: Lock, title: 'Secure by Design', desc: 'Encrypted credentials, protected API routes, and KYC verification for every account.' },
+            { icon: Lock, title: 'Secure by Design', desc: 'Encrypted credentials, protected API routes, and secure session management for every account.' },
             { icon: Wallet, title: 'Multi-Network Wallets', desc: 'Deposit via TRON, Ethereum, Bitcoin and TON networks with verified addresses.' },
             { icon: Users, title: 'Internal Transfers', desc: 'Send funds instantly to any user by their 6-digit UID — zero fees, zero delay.' },
             { icon: TrendingUp, title: 'Live Markets', desc: 'Track BTC, USDT, USDC, TON and Habesha Token with real-time pricing.' },
@@ -292,10 +292,10 @@ export function LandingPage() {
           <div>
             <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Security & Compliance</h2>
             <p className="mt-3 text-muted-foreground">
-              Your safety is our priority. We implement industry-standard protections and a two-tier KYC system to keep your assets secure.
+              Your safety is our priority. We implement industry-standard protections to keep your assets secure.
             </p>
             <ul className="mt-6 space-y-3">
-              {['Encrypted password storage (bcrypt)', 'Two-tier KYC: Normal & High verification', 'Protected, authenticated API routes', 'Manual deposit approval workflow'].map((s) => (
+              {['Encrypted password storage (bcrypt)', 'Protected, authenticated API routes', 'Manual deposit approval workflow', 'Secure session management'].map((s) => (
                 <li key={s} className="flex items-center gap-3 text-sm">
                   <ShieldCheck className="h-5 w-5 text-gold" /> {s}
                 </li>
@@ -304,16 +304,16 @@ export function LandingPage() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-2xl border border-border bg-card/60 p-5">
-              <div className="text-sm font-semibold">Normal KYC</div>
-              <div className="mt-1 text-xs text-muted-foreground">Live face check</div>
-              <div className="mt-3 text-lg font-bold text-gold">$100,000</div>
-              <div className="text-[11px] text-muted-foreground">max limit</div>
+              <div className="text-sm font-semibold">Instant Transfers</div>
+              <div className="mt-1 text-xs text-muted-foreground">UID to UID</div>
+              <div className="mt-3 text-lg font-bold text-gold">0 Fees</div>
+              <div className="text-[11px] text-muted-foreground">between users</div>
             </div>
             <div className="rounded-2xl border border-gold/40 bg-gold/5 p-5">
-              <div className="text-sm font-semibold">High KYC</div>
-              <div className="mt-1 text-xs text-muted-foreground">National ID + selfie</div>
-              <div className="mt-3 text-lg font-bold text-gold">Unlimited</div>
-              <div className="text-[11px] text-muted-foreground">deposits & withdrawals</div>
+              <div className="text-sm font-semibold">Bank Withdrawals</div>
+              <div className="mt-1 text-xs text-muted-foreground">CBE · Telebirr · Abay · EMPSA</div>
+              <div className="mt-3 text-lg font-bold text-gold">192 ETB</div>
+              <div className="text-[11px] text-muted-foreground">per 1 USDT</div>
             </div>
           </div>
         </div>

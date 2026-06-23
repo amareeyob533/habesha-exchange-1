@@ -8,13 +8,11 @@ import { WalletView } from '@/components/dashboard/views/wallet'
 import { MarketsView } from '@/components/dashboard/views/markets'
 import { ExchangeView } from '@/components/dashboard/views/exchange'
 import { TransactionsView } from '@/components/dashboard/views/transactions'
-import { KycView } from '@/components/dashboard/views/kyc-view'
 import { SupportView } from '@/components/dashboard/views/support-view'
 import { ProfileView } from '@/components/dashboard/views/profile'
 import { AdminView } from '@/components/dashboard/views/admin'
 import { DepositModal } from '@/components/modals/deposit-modal'
 import { WithdrawModal } from '@/components/modals/withdraw-modal'
-import { KycModal } from '@/components/modals/kyc-modal'
 import { SupportModal } from '@/components/modals/support-modal'
 import { NotificationPanel } from '@/components/dashboard/notification-panel'
 import { BottomNav } from '@/components/dashboard/bottom-nav'
@@ -27,7 +25,7 @@ export function DashboardShell() {
   const { view } = useUI()
   const { fetchMe, user } = useAuth()
 
-  // Periodic refresh so auto-approvals (KYC 30s, deposits 60s) surface live.
+  // Periodic refresh so notifications + balance changes surface live.
   useEffect(() => {
     const id = setInterval(() => fetchMe(), 8000)
     return () => clearInterval(id)
@@ -52,7 +50,6 @@ export function DashboardShell() {
               {view === 'markets' && <MarketsView />}
               {view === 'exchange' && <ExchangeView />}
               {view === 'transactions' && <TransactionsView />}
-              {view === 'kyc' && <KycView />}
               {view === 'support' && <SupportView />}
               {view === 'profile' && <ProfileView />}
               {view === 'admin' && <AdminView />}
@@ -82,7 +79,6 @@ export function DashboardShell() {
       {/* Modals */}
       <DepositModal />
       <WithdrawModal />
-      <KycModal />
       <SupportModal />
       <NotificationPanel />
     </div>

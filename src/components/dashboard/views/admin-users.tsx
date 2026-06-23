@@ -24,8 +24,8 @@ import {
 } from '@/components/ui/dialog'
 import { motion } from 'framer-motion'
 import {
-  Search, Loader2, ShieldCheck, ShieldOff, Ban, Trash2, Send, Gift,
-  Video, IdCard, Lock, Unlock, AlertTriangle, Mail, AtSign, Hash,
+  Search, Loader2, ShieldCheck, Ban, Trash2, Send, Gift,
+  Lock, Unlock, AlertTriangle, Mail, AtSign, Hash,
 } from 'lucide-react'
 
 interface SearchUser {
@@ -36,8 +36,6 @@ interface SearchUser {
   name: string | null
   avatarUrl: string | null
   isBlocked: boolean
-  kycStatus: string
-  kycLevel: string
   createdAt: string
   totalUsd: number
 }
@@ -47,8 +45,6 @@ interface UserDetail {
     id: string; uid: string; username: string | null; email: string; name: string | null
     avatarUrl: string | null; isBlocked: boolean; blockedReason: string | null
     provider: string; country: string | null; phone: string | null; createdAt: string
-    kycStatus: string; kycLevel: string; kycRequestedLevel: string | null
-    kycSubmittedAt: string | null; kycDocUrl: string | null; kycSelfieUrl: string | null; kycSelfieVideoUrl: string | null
   }
   balances: { symbol: string; name: string; amount: number; usdValue: number; price: number; color: string; icon: string }[]
   totalUsd: number
@@ -175,7 +171,7 @@ export function UsersAdmin() {
         <h2 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
           <ShieldCheck className="h-6 w-6 text-gold" /> User Management
         </h2>
-        <p className="text-sm text-muted-foreground">Search by username, UID, email, or name — then view KYC, balances, block, delete, notify, or reward.</p>
+        <p className="text-sm text-muted-foreground">Search by username, UID, email, or name — then view balances, block, delete, notify, or reward.</p>
       </div>
 
       {/* Search bar */}
@@ -212,9 +208,6 @@ export function UsersAdmin() {
                   <div className="flex items-center gap-2">
                     <span className="font-bold truncate">@{u.username || '—'}</span>
                     {u.isBlocked && <span className="rounded bg-down/15 px-1.5 py-0.5 text-[9px] font-bold text-down">BLOCKED</span>}
-                    <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${u.kycStatus === 'approved' ? 'bg-up/15 text-up' : u.kycStatus === 'pending' ? 'bg-gold/15 text-gold' : 'bg-secondary text-muted-foreground'}`}>
-                      {u.kycLevel === 'high' ? 'HIGH KYC' : u.kycLevel === 'normal' ? 'KYC' : 'NO KYC'}
-                    </span>
                   </div>
                   <div className="truncate text-[11px] text-muted-foreground">{u.email} · UID {u.uid}</div>
                 </div>
@@ -251,7 +244,6 @@ export function UsersAdmin() {
                   <Info icon={AtSign} label="Username" value={`@${detail.user.username || '—'}`} />
                   <Info icon={Mail} label="Email" value={detail.user.email} />
                   <Info icon={Hash} label="UID" value={detail.user.uid} />
-                  <Info icon={ShieldCheck} label="KYC" value={`${detail.user.kycStatus} (${detail.user.kycLevel})`} />
                   <Info icon={Mail} label="Phone" value={detail.user.phone || '—'} />
                   <Info icon={Mail} label="Provider" value={detail.user.provider} />
                 </div>
@@ -287,39 +279,6 @@ export function UsersAdmin() {
                       </div>
                     ))}
                   </div>
-                </div>
-
-                {/* KYC media */}
-                <div>
-                  <div className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">KYC Verification Data</div>
-                  {detail.user.kycStatus === 'none' ? (
-                    <div className="rounded-lg border border-dashed border-border p-4 text-center text-[11px] text-muted-foreground">No KYC submission</div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="text-[11px] text-muted-foreground">
-                        Status: <b className={detail.user.kycStatus === 'approved' ? 'text-up' : detail.user.kycStatus === 'pending' ? 'text-gold' : 'text-down'}>{detail.user.kycStatus}</b> ·
-                        Requested: <b>{detail.user.kycRequestedLevel || '—'}</b>
-                      </div>
-                      {detail.user.kycSelfieVideoUrl && (
-                        <div>
-                          <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground"><Video className="h-3 w-3 text-gold" /> Live Face Video</div>
-                          <video src={detail.user.kycSelfieVideoUrl} controls playsInline className="w-full rounded-lg border border-border bg-black" />
-                        </div>
-                      )}
-                      {detail.user.kycSelfieUrl && (
-                        <div>
-                          <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground"><Video className="h-3 w-3 text-gold" /> Selfie Frame</div>
-                          <img src={detail.user.kycSelfieUrl} alt="Selfie" className="w-full max-w-[200px] rounded-lg border border-border" />
-                        </div>
-                      )}
-                      {detail.user.kycDocUrl && (
-                        <div>
-                          <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground"><IdCard className="h-3 w-3 text-gold" /> National ID Photo</div>
-                          <img src={detail.user.kycDocUrl} alt="ID document" className="w-full rounded-lg border border-border" />
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
 
                 {/* Recent transactions */}
@@ -365,7 +324,7 @@ export function UsersAdmin() {
                       </Button>
                     )}
                     <Button variant="outline" className="h-10 border-down/40 text-down hover:bg-down/10" disabled={acting === 'delete'} onClick={() => {
-                      if (confirm(`Permanently delete @${detail.user.username}? This removes ALL their data (balances, KYC, transactions). This cannot be undone.`)) act('delete')
+                      if (confirm(`Permanently delete @${detail.user.username}? This removes ALL their data (balances, transactions). This cannot be undone.`)) act('delete')
                     }}>
                       {acting === 'delete' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="mr-1 h-4 w-4" />} Delete
                     </Button>

@@ -25,8 +25,6 @@ export async function POST(req: NextRequest) {
       email: user.email,
       name: user.name,
       provider: user.provider,
-      kycStatus: user.kycStatus,
-      kycLevel: user.kycLevel,
       token,
     })
   } catch (err: any) {

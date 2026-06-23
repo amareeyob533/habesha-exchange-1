@@ -5,7 +5,7 @@ import { LogoWord } from '@/components/common/logo'
 import { useUI, type ViewKey } from '@/hooks/use-ui'
 import { useAuth } from '@/hooks/use-auth'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, LineChart, Wallet, ArrowLeftRight, Receipt, LifeBuoy, User, X, ShieldAlert } from 'lucide-react'
+import { LayoutDashboard, LineChart, Wallet, ArrowLeftRight, Receipt, LifeBuoy, User, Settings, X, ShieldAlert } from 'lucide-react'
 
 const NAV: { key: ViewKey; label: string; icon: any }[] = [
   { key: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -15,6 +15,7 @@ const NAV: { key: ViewKey; label: string; icon: any }[] = [
   { key: 'transactions', label: 'Transactions', icon: Receipt },
   { key: 'support', label: 'Support', icon: LifeBuoy },
   { key: 'profile', label: 'Profile', icon: User },
+  { key: 'settings', label: 'Settings', icon: Settings },
 ]
 
 const ADMIN_NAV = { key: 'admin' as ViewKey, label: 'Admin · Approvals', icon: ShieldAlert }

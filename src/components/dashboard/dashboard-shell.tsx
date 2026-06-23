@@ -10,6 +10,7 @@ import { ExchangeView } from '@/components/dashboard/views/exchange'
 import { TransactionsView } from '@/components/dashboard/views/transactions'
 import { SupportView } from '@/components/dashboard/views/support-view'
 import { ProfileView } from '@/components/dashboard/views/profile'
+import { SettingsView } from '@/components/dashboard/views/settings'
 import { AdminView } from '@/components/dashboard/views/admin'
 import { DepositModal } from '@/components/modals/deposit-modal'
 import { WithdrawModal } from '@/components/modals/withdraw-modal'
@@ -53,6 +54,7 @@ export function DashboardShell() {
               {view === 'transactions' && <TransactionsView />}
               {view === 'support' && <SupportView />}
               {view === 'profile' && <ProfileView />}
+              {view === 'settings' && <SettingsView />}
               {view === 'admin' && <AdminView />}
             </motion.div>
           </AnimatePresence>

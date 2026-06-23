@@ -6,7 +6,7 @@ import { useLiveRate } from '@/hooks/use-live-rate'
 import { formatUsd, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
-import { ArrowDownToLine, ArrowUpFromLine, Send, Plus, TrendingUp, ShoppingCart, LineChart, ArrowLeftRight, TrendingDown, Clock } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, Send, Plus, TrendingUp, ShoppingCart, LineChart, ArrowLeftRight, TrendingDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MiniMarketOverview } from '@/components/dashboard/views/mini-market'
 
@@ -149,13 +149,10 @@ function QuickStat({ icon: Icon, label, value, onClick }: { icon: any; label: st
  * random intervals (2/10/30 min).
  */
 function LiveRateDisplay() {
-  const { rate, prevRate, direction, history, nextUpdateIn } = useLiveRate()
+  const { rate, prevRate, direction, history } = useLiveRate()
   const isUp = direction === 'up'
   const isDown = direction === 'down'
   const change = rate - prevRate
-  const mins = Math.floor(nextUpdateIn / 60000)
-  const secs = Math.floor((nextUpdateIn % 60000) / 1000)
-  const countdown = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`
 
   // Build mini sparkline from history
   const w = 200, h = 36
@@ -221,13 +218,8 @@ function LiveRateDisplay() {
         </div>
       )}
 
-      {/* Next update countdown + range */}
-      <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <Clock className="h-3 w-3" /> Next update in {countdown}
-        </span>
-        <span>Range: 190.99 – 192.76 ETB</span>
-      </div>
+      {/* Bank options */}
+      <div className="mt-2 text-center text-[11px] text-muted-foreground">Pay via CBE · Telebirr · Abay · EMPSA</div>
     </div>
   )
 }

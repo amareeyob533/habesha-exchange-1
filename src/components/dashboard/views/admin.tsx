@@ -7,8 +7,9 @@ import { timeAgo, formatTokenAmount, shortAddr } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { motion } from 'framer-motion'
-import { Check, X, Loader2, RefreshCw, ShieldAlert, Inbox, Clock, ArrowDownToLine, ArrowUpFromLine, Users } from 'lucide-react'
+import { Check, X, Loader2, RefreshCw, ShieldAlert, Inbox, Clock, ArrowDownToLine, ArrowUpFromLine, Users, ShoppingCart } from 'lucide-react'
 import { UsersAdmin } from '@/components/dashboard/views/admin-users'
+import { BuysAdmin } from '@/components/dashboard/views/admin-buys'
 
 interface AdminDeposit {
   id: string
@@ -33,7 +34,7 @@ interface AdminWithdrawal {
   user: { uid: string; email: string; name: string | null }
 }
 
-type Section = 'deposits' | 'withdrawals' | 'users'
+type Section = 'deposits' | 'withdrawals' | 'buys' | 'users'
 type StatusTab = 'pending' | 'approved' | 'rejected' | 'all'
 
 export function AdminView() {
@@ -46,7 +47,7 @@ export function AdminView() {
   const [acting, setActing] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    if (section === 'users') {
+    if (section === 'users' || section === 'buys') {
       // These sections load their own data internally.
       setLoading(false)
       return

@@ -39,6 +39,8 @@ model User {
   transfersReceived    Transfer[]    @relation("TransferTo")
   notifications        Notification[]
   supportMessages      SupportMessage[]
+  buyOrders            BuyOrder[]
+  paymentProofs        PaymentProof[]
 }
 
 model Balance {
@@ -130,3 +132,31 @@ model SupportMessage {
   createdAt DateTime @default(now())
 }
 
+
+// Buy USDT orders — users buy USDT with ETB via bank transfer.
+model BuyOrder {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usdtAmount      Float
+  birrAmount      Float
+  rate            Float    // ETB per USDT at order time
+  bank            String   // CBE | Telebirr | Abay Bank | EMPSA
+  screenshotUrl   String?  // payment proof screenshot
+  transactionCode String?  // optional bank transaction code
+  status          String   @default("pending") // pending | approved | rejected
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Payment proof screenshots for buy orders (base64 storage).
+model PaymentProof {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mimeType  String
+  fileName  String
+  data      String   // base64 data URL or external URL
+  size      Int
+  createdAt DateTime @default(now())
+}

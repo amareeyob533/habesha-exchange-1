@@ -13,6 +13,7 @@ import { ProfileView } from '@/components/dashboard/views/profile'
 import { AdminView } from '@/components/dashboard/views/admin'
 import { DepositModal } from '@/components/modals/deposit-modal'
 import { WithdrawModal } from '@/components/modals/withdraw-modal'
+import { BuyModal } from '@/components/modals/buy-modal'
 import { SupportModal } from '@/components/modals/support-modal'
 import { NotificationPanel } from '@/components/dashboard/notification-panel'
 import { BottomNav } from '@/components/dashboard/bottom-nav'
@@ -79,6 +80,7 @@ export function DashboardShell() {
       {/* Modals */}
       <DepositModal />
       <WithdrawModal />
+      <BuyModal />
       <SupportModal />
       <NotificationPanel />
     </div>

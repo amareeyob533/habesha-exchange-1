@@ -50,6 +50,13 @@ export function Topbar() {
         >
           Deposit
         </Button>
+        <Button
+          size="sm"
+          className="hidden bg-gold-gradient font-semibold text-primary-foreground hover:opacity-95 sm:inline-flex"
+          onClick={() => useUI.getState().openBuy()}
+        >
+          Buy
+        </Button>
 
         <button
           onClick={openNotif}

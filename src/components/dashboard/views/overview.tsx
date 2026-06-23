@@ -4,12 +4,12 @@ import { useAuth } from '@/hooks/use-auth'
 import { useUI } from '@/hooks/use-ui'
 import { formatUsd, formatTokenAmount, timeAgo } from '@/lib/format'
 import { motion } from 'framer-motion'
-import { ArrowDownToLine, ArrowUpFromLine, Send, Plus, TrendingUp } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, Send, Plus, TrendingUp, ShoppingCart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export function OverviewView() {
   const { user, balances, totalUsd, notifications } = useAuth()
-  const { openDeposit, openWithdraw, setView } = useUI()
+  const { openDeposit, openWithdraw, setView, openBuy } = useUI()
 
   return (
     <div className="space-y-5">
@@ -35,6 +35,9 @@ export function OverviewView() {
               </Button>
               <Button variant="outline" className="border-gold/30 text-gold hover:bg-gold/10" onClick={() => openWithdraw('USDT')}>
                 <ArrowUpFromLine className="mr-1 h-4 w-4" /> Withdraw
+              </Button>
+              <Button variant="outline" onClick={() => openBuy()}>
+                <ShoppingCart className="mr-1 h-4 w-4" /> Buy
               </Button>
               <Button variant="outline" onClick={() => openWithdraw('USDT')}>
                 <Send className="mr-1 h-4 w-4" /> Transfer

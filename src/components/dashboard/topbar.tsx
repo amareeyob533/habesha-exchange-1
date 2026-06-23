@@ -24,7 +24,7 @@ export function Topbar() {
   const initials = (user?.name || user?.email || 'U').slice(0, 2).toUpperCase()
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-xl sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/40 glass-strong px-4 sm:px-6">
       <button className="lg:hidden" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
         <Menu className="h-5 w-5" />
       </button>

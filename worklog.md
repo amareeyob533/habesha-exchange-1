@@ -631,3 +631,32 @@ Verified: buy order with NO screenshot (only transaction code) → succeeds (ok:
 
 Stage Summary:
 - The payment screenshot is now optional in the Buy USDT flow. Users can submit a buy order with just the transaction code, with both, or with neither. The modal is also no longer force-locked on the upload step. Lint clean.
+
+---
+Task ID: 34
+Agent: main
+Task: Premium visual upgrade — glassmorphism, animated mesh background, enhanced hero
+
+Changes:
+- src/app/globals.css: added premium design utilities:
+  - Refined gold gradient (4-stop, more vibrant)
+  - Premium glassmorphism: .glass-card (blur 16px + saturate) + .glass-strong (blur 20px)
+  - Premium shadows: .shadow-gold, .shadow-gold-lg, .shadow-premium
+  - Animated gradient mesh background: .mesh-bg with 3 floating colored orbs (gold/green/purple) that drift slowly
+  - Gradient border cards: .gradient-border (gold→green gradient border via mask compositing)
+  - Shimmer button effect: .shimmer-btn (light sweep on hover)
+- src/app/layout.tsx: added the animated mesh background (3 floating orbs) globally on every page
+- src/components/landing/landing-page.tsx:
+  - Header: glassmorphic (glass-strong), nav links hover gold, "Get Started" button has shimmer + shadow-gold
+  - Hero: floating logo with gold glow + animate-float, larger 7xl headline, shimmer CTA button, glassmorphic stat cards with gradient borders + staggered entrance animations
+  - Feature cards: glassmorphic + gradient borders + hover shadow-gold + larger icons (12x12) with hover scale + bg change
+- src/components/dashboard/topbar.tsx: glassmorphic header (glass-strong)
+- src/components/dashboard/sidebar.tsx: glassmorphic sidebar (glass-strong)
+- src/components/dashboard/views/overview.tsx: balance hero card uses gradient-border + glass-card
+
+Verified visually (VLM rated both 8/10):
+- Landing hero: "sharp graphics, cohesive dark theme, glassmorphism, rich gradients, floating logo, bold typography, premium feel"
+- Dashboard: "glassmorphic panels, sleek sidebar, premium accents, visually cohesive"
+
+Stage Summary:
+- Complete visual upgrade with glassmorphism, animated floating background orbs, gradient borders, shimmer buttons, and a more dramatic hero with floating logo. Both landing + dashboard rated 8/10. Lint clean.

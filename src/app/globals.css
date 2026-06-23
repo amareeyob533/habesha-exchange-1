@@ -151,7 +151,7 @@
 
 /* ============ GOLD GRADIENT ============ */
 .text-gold-gradient {
-  background: linear-gradient(135deg, #FCE38A 0%, #F0B90B 45%, #C8901A 100%);
+  background: linear-gradient(135deg, #FCE38A 0%, #F0B90B 40%, #E89B0A 70%, #D49B0A 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -177,6 +177,110 @@
 }
 .light .bg-gold-glow {
   background: radial-gradient(circle at 50% 50%, rgba(168, 120, 12, 0.12), transparent 70%);
+}
+
+/* ============ PREMIUM GLASSMORPHISM ============ */
+.glass-card {
+  background: color-mix(in oklch, var(--card) 75%, transparent);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+}
+.glass-strong {
+  background: color-mix(in oklch, var(--card) 88%, transparent);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+}
+
+/* ============ PREMIUM SHADOWS ============ */
+.shadow-gold {
+  box-shadow: 0 4px 20px rgba(240, 185, 11, 0.15), 0 1px 3px rgba(240, 185, 11, 0.1);
+}
+.shadow-gold-lg {
+  box-shadow: 0 8px 40px rgba(240, 185, 11, 0.2), 0 2px 8px rgba(240, 185, 11, 0.1);
+}
+.shadow-premium {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25), 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+.light .shadow-premium {
+  box-shadow: 0 4px 24px rgba(80, 70, 50, 0.08), 0 1px 4px rgba(80, 70, 50, 0.06);
+}
+
+/* ============ ANIMATED GRADIENT MESH BACKGROUND ============ */
+.mesh-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.mesh-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+  animation: orb-float 20s ease-in-out infinite;
+}
+.mesh-orb-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, #F0B90B, transparent 70%);
+  top: -10%; left: -5%;
+  animation-delay: 0s;
+}
+.mesh-orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, #0ECB81, transparent 70%);
+  bottom: -5%; right: 10%;
+  animation-delay: -7s;
+}
+.mesh-orb-3 {
+  width: 350px; height: 350px;
+  background: radial-gradient(circle, #B47AFF, transparent 70%);
+  top: 40%; right: -5%;
+  animation-delay: -14s;
+}
+.light .mesh-orb { opacity: 0.08; }
+
+@keyframes orb-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -40px) scale(1.1); }
+  66% { transform: translate(-20px, 30px) scale(0.95); }
+}
+
+/* ============ GRADIENT BORDER CARD ============ */
+.gradient-border {
+  position: relative;
+  background: var(--card);
+  border-radius: var(--radius-lg);
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(240, 185, 11, 0.3), rgba(240, 185, 11, 0.05) 50%, rgba(14, 203, 129, 0.15));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ============ SHIMMER BUTTON ============ */
+.shimmer-btn {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.6s ease;
+}
+.shimmer-btn:hover::after {
+  left: 100%;
 }
 
 /* ============ SCROLLBAR ============ */

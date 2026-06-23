@@ -48,21 +48,21 @@ export function LandingPage() {
       <div className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[560px] w-[560px] -translate-x-1/2 rounded-full bg-gold-glow blur-3xl" />
 
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-border/40 glass-strong">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <LogoWord />
           <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-            <a href="#markets" className="transition-colors hover:text-foreground">Markets</a>
-            <a href="#features" className="transition-colors hover:text-foreground">Features</a>
-            <a href="#tokens" className="transition-colors hover:text-foreground">Tokens</a>
-            <a href="#security" className="transition-colors hover:text-foreground">Security</a>
+            <a href="#markets" className="transition-colors hover:text-gold">Markets</a>
+            <a href="#features" className="transition-colors hover:text-gold">Features</a>
+            <a href="#tokens" className="transition-colors hover:text-gold">Tokens</a>
+            <a href="#security" className="transition-colors hover:text-gold">Security</a>
           </nav>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Button variant="ghost" className="hidden sm:inline-flex" onClick={() => openAuth('login')}>
               Sign In
             </Button>
-            <Button className="bg-gold-gradient font-semibold text-primary-foreground hover:opacity-95" onClick={() => openAuth('signup')}>
+            <Button className="shimmer-btn bg-gold-gradient font-bold text-primary-foreground shadow-gold hover:opacity-95" onClick={() => openAuth('signup')}>
               Get Started
             </Button>
             <button className="md:hidden" onClick={() => setMobileNav((s) => !s)} aria-label="Menu">
@@ -101,34 +101,55 @@ export function LandingPage() {
       )}
 
       {/* Hero */}
-      <section className="relative mx-auto w-full max-w-7xl px-4 pb-10 pt-16 sm:px-6 sm:pt-24">
+      <section className="relative mx-auto w-full max-w-7xl px-4 pb-10 pt-20 sm:px-6 sm:pt-28">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="text-center"
         >
-          <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-3 py-1 text-xs font-medium text-gold">
-            <Gift className="h-3.5 w-3.5" /> New users get $15 in Habesha Token
-          </div>
-          <h1 className="mx-auto max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
-            Trade crypto with <span className="text-gold-gradient">confidence</span> on Habesha Exchange
+          {/* Floating logo with glow */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="mx-auto mb-8 flex justify-center"
+          >
+            <div className="relative">
+              <div className="bg-gold-glow absolute inset-0 -z-10 scale-150 rounded-full blur-2xl" />
+              <LogoMark className="h-20 w-20 rounded-3xl shadow-gold-lg ring-2 ring-gold/20 animate-float" />
+            </div>
+          </motion.div>
+
+          {/* Premium badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-4 py-1.5 text-xs font-semibold text-gold backdrop-blur-sm"
+          >
+            <Gift className="h-3.5 w-3.5" /> New users get $15 in Habesha Token — instantly
+          </motion.div>
+
+          <h1 className="mx-auto max-w-4xl text-5xl font-extrabold leading-[1.02] tracking-tight sm:text-7xl">
+            Trade crypto with{' '}
+            <span className="text-gold-gradient">confidence</span>
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg">
+          <p className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg">
             A premium, secure and lightning-fast exchange built for everyone. Trade BTC, USDT, USDC, TON and the exclusive Habesha Token — all in one place.
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button size="lg" className="bg-gold-gradient h-12 px-8 text-base font-semibold text-primary-foreground hover:opacity-95" onClick={() => openAuth('signup')}>
-              Create Free Account <ArrowRight className="ml-1 h-4 w-4" />
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button size="lg" className="shimmer-btn bg-gold-gradient h-14 px-10 text-base font-bold text-primary-foreground shadow-gold-lg hover:opacity-95" onClick={() => openAuth('signup')}>
+              Create Free Account <ArrowRight className="ml-1 h-5 w-5" />
             </Button>
-            <Button size="lg" variant="outline" className="h-12 px-8 text-base font-semibold" onClick={() => openAuth('login')}>
+            <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold glass-card" onClick={() => openAuth('login')}>
               Sign In
             </Button>
           </div>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-muted-foreground">
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-gold" /> Bank-grade security</span>
-            <span className="flex items-center gap-1.5"><Zap className="h-4 w-4 text-gold" /> Instant internal transfers</span>
-            <span className="flex items-center gap-1.5"><Globe2 className="h-4 w-4 text-gold" /> Global access</span>
+            <span className="flex items-center gap-1.5"><Zap className="h-4 w-4 text-gold" /> Instant transfers</span>
+            <span className="flex items-center gap-1.5"><Globe2 className="h-4 w-4 text-gold" /> Bank withdrawals in ETB</span>
           </div>
         </motion.div>
 
@@ -136,19 +157,25 @@ export function LandingPage() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.15 }}
-          className="mx-auto mt-14 grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-4"
+          transition={{ duration: 0.7, delay: 0.25 }}
+          className="mx-auto mt-16 grid max-w-4xl grid-cols-2 gap-3 sm:grid-cols-4"
         >
           {[
             { label: '24h Volume', value: '$1.2B' },
             { label: 'Active Users', value: '320K+' },
             { label: 'Tokens Listed', value: '5+' },
             { label: 'Uptime', value: '99.99%' },
-          ].map((s) => (
-            <div key={s.label} className="rounded-2xl border border-border bg-card/60 p-4 text-center backdrop-blur">
-              <div className="text-xl font-extrabold text-gold-gradient sm:text-2xl">{s.value}</div>
+          ].map((s, i) => (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 + i * 0.08 }}
+              className="glass-card gradient-border rounded-2xl p-5 text-center"
+            >
+              <div className="text-2xl font-extrabold text-gold-gradient sm:text-3xl">{s.value}</div>
               <div className="mt-1 text-[11px] uppercase tracking-wider text-muted-foreground">{s.label}</div>
-            </div>
+            </motion.div>
           ))}
         </motion.div>
       </section>
@@ -174,9 +201,9 @@ export function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.05 }}
-              className="group rounded-2xl border border-border bg-card/60 p-6 transition-colors hover:border-gold/40"
+              className="group glass-card gradient-border rounded-2xl p-6 transition-all hover:shadow-gold"
             >
-              <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gold/10 text-gold ring-1 ring-gold/20 transition-transform group-hover:scale-110">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gold/10 text-gold ring-1 ring-gold/20 transition-all group-hover:scale-110 group-hover:bg-gold/20">
                 <f.icon className="h-5 w-5" />
               </div>
               <h3 className="text-lg font-bold">{f.title}</h3>

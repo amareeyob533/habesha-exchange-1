@@ -18,7 +18,7 @@ export function OverviewView() {
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-gold/10 via-card to-card p-6 lg:col-span-2"
+          className="relative overflow-hidden rounded-2xl gradient-border glass-card p-6 lg:col-span-2"
         >
           <div className="bg-gold-glow pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full opacity-40" />
           <div className="relative">

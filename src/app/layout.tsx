@@ -29,7 +29,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
-        <Providers>{children}</Providers>
+        <Providers>
+          {/* Animated gradient mesh background */}
+          <div className="mesh-bg">
+            <div className="mesh-orb mesh-orb-1" />
+            <div className="mesh-orb mesh-orb-2" />
+            <div className="mesh-orb mesh-orb-3" />
+          </div>
+          {children}
+        </Providers>
       </body>
     </html>
   );

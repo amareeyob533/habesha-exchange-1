@@ -220,6 +220,26 @@ function LiveRateDisplay() {
 
       {/* Bank options */}
       <div className="mt-2 text-center text-[11px] text-muted-foreground">Pay via CBE · Telebirr · Abay · EMPSA</div>
+
+      {/* Cinematic bank image */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3, duration: 0.6 }}
+        className="relative mt-4 overflow-hidden rounded-xl"
+      >
+        <div className="bg-gold-glow pointer-events-none absolute inset-0 opacity-20" />
+        <img
+          src="/national-bank.jpg"
+          alt="National Bank of Ethiopia"
+          className="w-full object-cover"
+          style={{ maxHeight: '120px', objectPosition: 'center' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
+        <div className="absolute bottom-2 left-3 text-[10px] font-semibold text-foreground/80">
+          Regulated financial ecosystem
+        </div>
+      </motion.div>
     </div>
   )
 }

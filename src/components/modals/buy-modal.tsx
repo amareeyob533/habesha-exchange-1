@@ -95,10 +95,6 @@ export function BuyModal() {
   }
 
   async function submitOrder() {
-    if (!screenshotUrl) {
-      toast({ variant: 'destructive', title: 'Screenshot required', description: 'Please upload your payment screenshot.' })
-      return
-    }
     setSubmitting(true)
     try {
       await apiFetch('/api/buy', {
@@ -115,13 +111,8 @@ export function BuyModal() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && step !== 'upload' && close()}>
-      <DialogContent
-        className="max-w-[460px] border-border bg-card"
-        // Prevent closing via overlay click / ESC during the upload step (user must upload or go back)
-        onPointerDownOutside={(e) => step === 'upload' && e.preventDefault()}
-        onEscapeKeyDown={(e) => step === 'upload' && e.preventDefault()}
-      >
+    <Dialog open={open} onOpenChange={(v) => !v && close()}>
+      <DialogContent className="max-w-[460px] border-border bg-card">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/10 text-gold ring-1 ring-gold/20">
             <ShoppingCart className="h-5 w-5" />
@@ -249,17 +240,17 @@ export function BuyModal() {
             </motion.div>
           )}
 
-          {/* STEP 4: Upload screenshot (non-closable until done) */}
+          {/* STEP 4: Upload screenshot (optional) + transaction code */}
           {step === 'upload' && (
             <motion.div key="upload" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
               <div className="flex items-start gap-2 rounded-lg border border-gold/40 bg-gold/5 p-3 text-[11px] text-muted-foreground">
                 <Upload className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-                <span>Upload a screenshot of your payment to confirm your buy order. This is required — you cannot close this step without uploading proof. A transaction code is optional.</span>
+                <span>Upload a screenshot of your payment and/or enter the transaction code to confirm your buy order. Both are optional but recommended so the admin can verify your payment faster.</span>
               </div>
 
-              {/* Screenshot upload */}
+              {/* Screenshot upload (optional) */}
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Payment Screenshot (required)</Label>
+                <Label className="text-xs text-muted-foreground">Payment Screenshot (optional)</Label>
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
@@ -291,7 +282,7 @@ export function BuyModal() {
 
               <Button
                 className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground"
-                disabled={!screenshotUrl || submitting}
+                disabled={submitting}
                 onClick={submitOrder}
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm & Submit'}

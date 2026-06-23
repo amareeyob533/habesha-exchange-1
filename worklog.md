@@ -612,3 +612,22 @@ Verified E2E (curl + browser):
 
 Stage Summary:
 - Buy USDT system is complete and verified. Users: pick amount (USDT or ETB with live conversion) → pick bank → copy account number (20s wait) → upload payment screenshot + optional txn code (non-closable until uploaded) → submit → admin approves in Admin → Buys tab → USDT credited. Lint clean, server stable.
+
+---
+Task ID: 33
+Agent: main
+Task: Make the payment screenshot optional in the buy flow
+
+Changes:
+- src/app/api/buy/route.ts: removed the screenshotUrl-required validation. Orders can be created with or without a screenshot (and with or without a transaction code).
+- src/components/modals/buy-modal.tsx:
+  - submitOrder no longer requires screenshotUrl; the "Confirm & Submit" button is always enabled (only disabled while submitting).
+  - Removed the non-closable overlay/ESC prevention on the upload step — the modal can now be closed normally at any step.
+  - "Payment Screenshot" label changed from "(required)" to "(optional)".
+  - Info banner updated: "Both are optional but recommended so the admin can verify your payment faster."
+  - Step comment updated.
+
+Verified: buy order with NO screenshot (only transaction code) → succeeds (ok: true). Lint clean.
+
+Stage Summary:
+- The payment screenshot is now optional in the Buy USDT flow. Users can submit a buy order with just the transaction code, with both, or with neither. The modal is also no longer force-locked on the upload step. Lint clean.

@@ -41,9 +41,8 @@ export async function POST(req: NextRequest) {
     if (!bank || !BUY_BANKS.some((b) => b.code === bank)) {
       return NextResponse.json({ error: 'Select a valid bank' }, { status: 400 })
     }
-    if (!screenshotUrl) {
-      return NextResponse.json({ error: 'Payment screenshot is required' }, { status: 400 })
-    }
+    // Screenshot is optional; the transaction code is also optional.
+    // At least one proof is recommended but not enforced.
 
     const order = await db.buyOrder.create({
       data: {

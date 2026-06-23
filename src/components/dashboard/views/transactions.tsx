@@ -95,7 +95,7 @@ export function TransactionsView() {
         </TabsList>
       </Tabs>
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="overflow-hidden glass-card rounded-2xl shadow-premium">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center text-sm text-muted-foreground">
             <RefreshCw className="mb-2 h-7 w-7 opacity-30" />

@@ -84,7 +84,7 @@ export function LandingPage() {
 
       {/* Ticker */}
       {tokens.length > 0 && (
-        <div className="overflow-hidden border-b border-border/60 bg-secondary/30">
+        <div className="overflow-hidden border-b border-border/40 glass-card">
           <div className="flex w-max animate-ticker gap-8 py-2.5">
             {[...tokens, ...tokens, ...tokens].map((t, i) => (
               <div key={i} className="flex items-center gap-2 text-xs whitespace-nowrap">
@@ -230,7 +230,7 @@ export function LandingPage() {
             />
           </div>
         </div>
-        <div className="overflow-hidden rounded-2xl border border-border bg-card/60">
+        <div className="overflow-hidden rounded-2xl glass-card shadow-premium">
           <div className="grid grid-cols-12 gap-2 border-b border-border px-5 py-3 text-[11px] uppercase tracking-wider text-muted-foreground">
             <div className="col-span-5 sm:col-span-4">Token</div>
             <div className="col-span-3 sm:col-span-3 text-right">Price</div>
@@ -282,31 +282,31 @@ export function LandingPage() {
       </section>
 
       {/* Habesha Token highlight */}
-      <section className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6">
-        <div className="relative overflow-hidden rounded-3xl border border-gold/30 bg-gradient-to-br from-gold/10 via-card to-card p-8 sm:p-12">
-          <LogoMark className="bg-gold-glow pointer-events-none absolute -right-10 -top-10 h-56 w-56 rounded-full opacity-20 blur-2xl" />
-          <div className="relative flex flex-col items-start gap-6 lg:flex-row lg:items-center lg:justify-between">
+      <section className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6">
+        <div className="relative overflow-hidden rounded-3xl gradient-border glass-card p-8 sm:p-14 shadow-gold-lg">
+          <LogoMark className="bg-gold-glow pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full opacity-15 blur-3xl animate-float" />
+          <div className="relative flex flex-col items-start gap-8 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-bold text-gold">
+              <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-xs font-bold text-gold backdrop-blur-sm">
                 <LogoMark className="h-4 w-4 rounded" /> HABESHA TOKEN
               </div>
-              <h3 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">The exclusive token of the ecosystem</h3>
-              <p className="mt-3 text-muted-foreground">
+              <h3 className="mt-5 text-3xl font-extrabold tracking-tight sm:text-5xl">The exclusive token of the ecosystem</h3>
+              <p className="mt-4 text-base text-muted-foreground">
                 Habesha Token is fixed at <b className="text-gold">$6.4321674</b> and not yet listed publicly. Every new member receives
                 <b className="text-gold"> $15</b> worth instantly. Transferable between Habesha Exchange users — no external withdrawals.
               </p>
-              <Button className="bg-gold-gradient mt-6 font-semibold text-primary-foreground hover:opacity-95" onClick={() => openAuth('signup')}>
+              <Button className="shimmer-btn bg-gold-gradient mt-7 h-12 px-8 font-bold text-primary-foreground shadow-gold hover:opacity-95" onClick={() => openAuth('signup')}>
                 Claim your bonus <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
-            <div className="grid w-full max-w-xs grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-border bg-background/60 p-4">
+            <div className="grid w-full max-w-xs grid-cols-2 gap-4">
+              <div className="glass-card gradient-border rounded-2xl p-5">
                 <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Fixed Price</div>
-                <div className="mt-1 text-2xl font-extrabold text-gold-gradient">$6.43</div>
+                <div className="mt-1 text-3xl font-extrabold text-gold-gradient">$6.43</div>
               </div>
-              <div className="rounded-2xl border border-border bg-background/60 p-4">
+              <div className="glass-card gradient-border rounded-2xl p-5">
                 <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Welcome Bonus</div>
-                <div className="mt-1 text-2xl font-extrabold text-gold-gradient">$15</div>
+                <div className="mt-1 text-3xl font-extrabold text-gold-gradient">$15</div>
               </div>
             </div>
           </div>
@@ -315,31 +315,32 @@ export function LandingPage() {
 
       {/* Security */}
       <section id="security" className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6">
-        <div className="grid items-center gap-8 lg:grid-cols-2">
+        <div className="grid items-center gap-10 lg:grid-cols-2">
           <div>
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Security & Compliance</h2>
-            <p className="mt-3 text-muted-foreground">
+            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Security & <span className="text-gold-gradient">Compliance</span></h2>
+            <p className="mt-4 text-muted-foreground">
               Your safety is our priority. We implement industry-standard protections to keep your assets secure.
             </p>
-            <ul className="mt-6 space-y-3">
+            <ul className="mt-8 space-y-4">
               {['Encrypted password storage (bcrypt)', 'Protected, authenticated API routes', 'Manual deposit approval workflow', 'Secure session management'].map((s) => (
                 <li key={s} className="flex items-center gap-3 text-sm">
-                  <ShieldCheck className="h-5 w-5 text-gold" /> {s}
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/10 ring-1 ring-gold/20"><ShieldCheck className="h-4 w-4 text-gold" /></div>
+                  {s}
                 </li>
               ))}
             </ul>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl border border-border bg-card/60 p-5">
-              <div className="text-sm font-semibold">Instant Transfers</div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="glass-card gradient-border rounded-2xl p-6 transition-all hover:shadow-gold">
+              <div className="text-sm font-bold">Instant Transfers</div>
               <div className="mt-1 text-xs text-muted-foreground">UID to UID</div>
-              <div className="mt-3 text-lg font-bold text-gold">0 Fees</div>
+              <div className="mt-4 text-2xl font-extrabold text-gold-gradient">0 Fees</div>
               <div className="text-[11px] text-muted-foreground">between users</div>
             </div>
-            <div className="rounded-2xl border border-gold/40 bg-gold/5 p-5">
-              <div className="text-sm font-semibold">Bank Withdrawals</div>
+            <div className="glass-card gradient-border rounded-2xl p-6 transition-all hover:shadow-gold">
+              <div className="text-sm font-bold">Bank Withdrawals</div>
               <div className="mt-1 text-xs text-muted-foreground">CBE · Telebirr · Abay · EMPSA</div>
-              <div className="mt-3 text-lg font-bold text-gold">192 ETB</div>
+              <div className="mt-4 text-2xl font-extrabold text-gold-gradient">192 ETB</div>
               <div className="text-[11px] text-muted-foreground">per 1 USDT</div>
             </div>
           </div>
@@ -348,32 +349,32 @@ export function LandingPage() {
 
       {/* CTA */}
       <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6">
-        <div className="relative overflow-hidden rounded-3xl border border-border bg-card/60 p-10 text-center">
-          <div className="bg-gold-glow pointer-events-none absolute inset-0 opacity-40" />
+        <div className="relative overflow-hidden rounded-3xl gradient-border glass-card p-12 text-center shadow-gold-lg">
+          <div className="bg-gold-glow pointer-events-none absolute inset-0 opacity-30" />
           <div className="relative">
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Start trading in under a minute</h2>
-            <p className="mx-auto mt-3 max-w-xl text-muted-foreground">Join thousands of traders on Habesha Exchange and claim your welcome bonus today.</p>
-            <Button size="lg" className="bg-gold-gradient mt-6 h-12 px-8 text-base font-semibold text-primary-foreground hover:opacity-95" onClick={() => openAuth('signup')}>
-              Create Free Account <ArrowRight className="ml-1 h-4 w-4" />
+            <h2 className="text-3xl font-extrabold tracking-tight sm:text-5xl">Start trading in under a minute</h2>
+            <p className="mx-auto mt-4 max-w-xl text-base text-muted-foreground">Join thousands of traders on Habesha Exchange and claim your welcome bonus today.</p>
+            <Button size="lg" className="shimmer-btn bg-gold-gradient mt-8 h-14 px-10 text-base font-bold text-primary-foreground shadow-gold hover:opacity-95" onClick={() => openAuth('signup')}>
+              Create Free Account <ArrowRight className="ml-1 h-5 w-5" />
             </Button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-border/60 bg-background/80">
+      <footer className="mt-auto border-t border-border/40 glass-strong">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-8 sm:px-6 md:flex-row md:justify-between">
           <div className="flex items-center gap-3">
-            <LogoMark className="h-8 w-8 rounded-lg" />
+            <LogoMark className="h-9 w-9 rounded-xl shadow-gold" />
             <div>
               <div className="text-sm font-bold"><span className="text-gold-gradient">HABESHA</span> EXCHANGE</div>
               <div className="text-[11px] text-muted-foreground">© {new Date().getFullYear()} Habesha Exchange. All rights reserved.</div>
             </div>
           </div>
           <div className="flex items-center gap-6 text-xs text-muted-foreground">
-            <a href="#" className="hover:text-foreground">Terms</a>
-            <a href="#" className="hover:text-foreground">Privacy</a>
-            <a href="#" className="hover:text-foreground">Support</a>
+            <a href="#" className="transition-colors hover:text-gold">Terms</a>
+            <a href="#" className="transition-colors hover:text-gold">Privacy</a>
+            <a href="#" className="transition-colors hover:text-gold">Support</a>
           </div>
         </div>
       </footer>

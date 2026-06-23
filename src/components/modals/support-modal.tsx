@@ -49,7 +49,7 @@ export function SupportModal() {
 
   return (
     <Dialog open={supportOpen} onOpenChange={(v) => !v && close()}>
-      <DialogContent className="max-w-[440px] border-border bg-card">
+      <DialogContent className="max-w-[440px] glass-strong border-border/40">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/10 text-gold ring-1 ring-gold/20">
             <LifeBuoy className="h-5 w-5" />

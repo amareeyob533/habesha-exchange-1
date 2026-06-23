@@ -59,7 +59,7 @@ export function BuysAdmin({ refreshKey }: { refreshKey: number }) {
 
   if (orders.length === 0) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="overflow-hidden glass-card rounded-2xl shadow-premium">
         <div className="flex flex-col items-center justify-center py-16 text-center text-sm text-muted-foreground">
           <Inbox className="mb-2 h-8 w-8 opacity-30" />
           No pending buy orders
@@ -76,7 +76,7 @@ export function BuysAdmin({ refreshKey }: { refreshKey: number }) {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.04 }}
-          className="overflow-hidden rounded-2xl border border-border bg-card"
+          className="overflow-hidden glass-card rounded-2xl shadow-premium"
         >
           <div className="flex items-center justify-between border-b border-border bg-secondary/30 px-4 py-3">
             <div>

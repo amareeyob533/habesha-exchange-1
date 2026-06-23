@@ -54,7 +54,7 @@ export function MarketsView() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="overflow-hidden glass-card rounded-2xl shadow-premium">
         <div className="grid grid-cols-12 gap-2 border-b border-border px-5 py-3 text-[11px] uppercase tracking-wider text-muted-foreground">
           <div className="col-span-4">Token</div>
           <div className="col-span-3 text-right">Price</div>

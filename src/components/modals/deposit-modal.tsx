@@ -47,7 +47,7 @@ export function DepositModal() {
   }
   return (
     <Dialog open={open} onOpenChange={(v) => !v && close()}>
-      <DialogContent className="max-w-[460px] border-border bg-card">
+      <DialogContent className="max-w-[460px] glass-strong border-border/40">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/10 text-gold ring-1 ring-gold/20">
             <ArrowDownToLine className="h-5 w-5" />

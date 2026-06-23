@@ -24,7 +24,7 @@ export function SupportView() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-gold/30 bg-gold/5 p-5">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl glass-card gradient-border p-5 shadow-gold">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#25D366]/15 text-[#25D366]">
             <MessageCircle className="h-5 w-5" />
           </div>
@@ -36,7 +36,7 @@ export function SupportView() {
           <div className="mt-2 text-center text-xs text-muted-foreground">{WHATSAPP}</div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl border border-border bg-card p-5">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl glass-card p-5 shadow-premium">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gold/15 text-gold">
             <LifeBuoy className="h-5 w-5" />
           </div>
@@ -47,7 +47,7 @@ export function SupportView() {
           </Button>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-2xl border border-border bg-card p-5">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-2xl glass-card p-5 shadow-premium">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-foreground">
             <Clock className="h-5 w-5" />
           </div>
@@ -59,7 +59,7 @@ export function SupportView() {
         </motion.div>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="rounded-2xl glass-card p-5 shadow-premium">
         <h3 className="text-lg font-bold">Frequently Asked Questions</h3>
         <div className="mt-3 space-y-2">
           {FAQ.map((f) => (

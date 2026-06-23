@@ -188,7 +188,7 @@ export function UsersAdmin() {
 
       {/* Search results */}
       {query.trim() && (
-        <div className="overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="overflow-hidden glass-card rounded-2xl shadow-premium">
           {results.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center text-sm text-muted-foreground">
               <Search className="mb-2 h-7 w-7 opacity-30" />

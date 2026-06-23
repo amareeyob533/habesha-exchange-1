@@ -124,7 +124,7 @@ export function AdminView() {
       </div>
 
       {/* Section toggle: Deposits / Withdrawals / Users */}
-      <div className="inline-flex rounded-xl border border-border bg-card p-1">
+      <div className="inline-flex rounded-xl glass-card p-1">
         <button
           onClick={() => { setSection('deposits'); setStatusTab('pending') }}
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${section === 'deposits' ? 'bg-up/15 text-up' : 'text-muted-foreground hover:text-foreground'}`}
@@ -189,7 +189,7 @@ export function AdminView() {
             <WithdrawalsTable withdrawals={withdrawals} acting={acting} onAct={actWithdrawal} />
           )}
 
-          <div className="rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground">
+          <div className="rounded-xl glass-card p-4 text-xs text-muted-foreground">
             <b className="text-foreground">How this works:</b>
             {section === 'deposits' ? (
               <> When a user clicks "I Deposited", their balance is <b>not</b> credited. The deposit appears here as <b className="text-gold">Pending</b>. Click <b className="text-up">Approve</b> to credit their balance instantly, or <b className="text-down">Reject</b> to decline.</>
@@ -223,9 +223,9 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function DepositsTable({ deposits, acting, onAct }: { deposits: AdminDeposit[]; acting: string | null; onAct: (id: string, action: 'approve' | 'reject') => void }) {
-  if (deposits.length === 0) return <div className="overflow-hidden rounded-2xl border border-border bg-card"><EmptyState label="No deposits" /></div>
+  if (deposits.length === 0) return <div className="overflow-hidden glass-card rounded-2xl shadow-premium"><EmptyState label="No deposits" /></div>
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+    <div className="overflow-hidden glass-card rounded-2xl shadow-premium">
       <div className="hidden grid-cols-12 gap-2 border-b border-border px-5 py-3 text-[11px] uppercase tracking-wider text-muted-foreground sm:grid">
         <div className="col-span-2">User</div>
         <div className="col-span-2">Amount</div>
@@ -266,9 +266,9 @@ function DepositsTable({ deposits, acting, onAct }: { deposits: AdminDeposit[]; 
 }
 
 function WithdrawalsTable({ withdrawals, acting, onAct }: { withdrawals: AdminWithdrawal[]; acting: string | null; onAct: (id: string, action: 'approve' | 'reject') => void }) {
-  if (withdrawals.length === 0) return <div className="overflow-hidden rounded-2xl border border-border bg-card"><EmptyState label="No withdrawals" /></div>
+  if (withdrawals.length === 0) return <div className="overflow-hidden glass-card rounded-2xl shadow-premium"><EmptyState label="No withdrawals" /></div>
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+    <div className="overflow-hidden glass-card rounded-2xl shadow-premium">
       <div className="hidden grid-cols-12 gap-2 border-b border-border px-5 py-3 text-[11px] uppercase tracking-wider text-muted-foreground sm:grid">
         <div className="col-span-2">User</div>
         <div className="col-span-2">Amount</div>

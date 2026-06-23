@@ -132,7 +132,7 @@ export function ExchangeView() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           onSubmit={submit}
-          className="space-y-3 rounded-2xl border border-border bg-card p-5"
+          className="space-y-3 glass-card gradient-border rounded-2xl p-5 shadow-premium"
         >
           {/* From */}
           <div className="rounded-xl border border-border bg-secondary/30 p-3">
@@ -237,11 +237,11 @@ export function ExchangeView() {
           </Button>
         </motion.form>
 
-        <div className="mt-4 rounded-xl border border-gold/20 bg-gold/5 p-4 text-xs text-muted-foreground">
+        <div className="mt-4 rounded-xl glass-card gradient-border p-4 text-xs text-muted-foreground">
           <b className="text-gold">Tip:</b> To withdraw to an Ethiopian bank (ETB cash-out), first exchange your tokens to <b className="text-gold">USDT</b> here, then use <b className="text-gold">Withdraw → Bank</b>. Rate: 1 USDT = 192 ETB.
         </div>
 
-        <div className="mt-2 rounded-xl border border-gold/20 bg-gold/5 p-4 text-xs text-muted-foreground">
+        <div className="mt-2 rounded-xl glass-card gradient-border p-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5 font-semibold text-gold">
             <Lock className="h-3.5 w-3.5" /> Habesha Token — Not Listed Yet
           </div>

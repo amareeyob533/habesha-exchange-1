@@ -13,13 +13,13 @@ export function WalletView() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-border bg-gradient-to-br from-gold/10 via-card to-card p-6">
+      <div className="glass-card gradient-border rounded-2xl p-6">
         <div className="text-xs uppercase tracking-wider text-muted-foreground">Total Estimated Value</div>
         <div className="mt-1 text-3xl font-extrabold tracking-tight tabular-nums"><span className="text-foreground">{formatUsd(totalUsd)}</span></div>
         <div className="mt-3 text-xs text-muted-foreground">{balances.length} assets · UID <b className="text-gold">{user?.uid}</b></div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="overflow-hidden glass-card rounded-2xl shadow-premium">
         <div className="grid grid-cols-12 gap-2 border-b border-border px-4 py-3 text-[11px] uppercase tracking-wider text-muted-foreground">
           <div className="col-span-4 sm:col-span-3">Asset</div>
           <div className="col-span-4 text-right sm:col-span-3">Balance</div>

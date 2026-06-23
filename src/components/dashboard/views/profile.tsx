@@ -50,7 +50,7 @@ export function ProfileView() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Identity card */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-border bg-card p-6 lg:col-span-1">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl glass-card gradient-border p-6 lg:col-span-1">
           <div className="flex flex-col items-center text-center">
             <Avatar className="h-20 w-20 ring-2 ring-gold/30">
               <AvatarFallback className="bg-gold/15 text-xl font-bold text-gold">{initials}</AvatarFallback>
@@ -78,7 +78,7 @@ export function ProfileView() {
         </motion.div>
 
         {/* Edit form */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl border border-border bg-card p-6 lg:col-span-2">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-2xl glass-card gradient-border p-6 lg:col-span-2">
           <h3 className="text-lg font-bold">Edit Profile</h3>
           <form onSubmit={save} className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -104,7 +104,7 @@ export function ProfileView() {
             </div>
           </form>
 
-          <div className="mt-6 rounded-xl border border-gold/20 bg-gold/5 p-4">
+          <div className="mt-6 rounded-xl glass-card gradient-border p-4">
             <div className="flex items-center gap-2 text-sm font-bold text-gold"><ShieldCheck className="h-4 w-4" /> Account Security</div>
             <p className="mt-1 text-xs text-muted-foreground">
               Your password is stored with bcrypt hashing. Your UID <b className="text-gold">{user?.uid}</b> is used for instant internal transfers — share it only with people you trust.

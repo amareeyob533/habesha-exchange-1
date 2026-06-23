@@ -50,7 +50,7 @@ export function OverviewView() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="rounded-2xl border border-border bg-card p-6"
+          className="glass-card gradient-border rounded-2xl p-6"
         >
           <div className="flex items-center justify-between">
             <div className="text-sm font-semibold">Account Status</div>
@@ -79,7 +79,7 @@ export function OverviewView() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
-              className="group rounded-2xl border border-border bg-card p-4 transition-colors hover:border-gold/40"
+              className="group glass-card rounded-2xl p-4 transition-all hover:shadow-gold hover:border-gold/30"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -110,7 +110,7 @@ export function OverviewView() {
       </div>
 
       {/* Recent activity */}
-      <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="glass-card rounded-2xl p-5">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-lg font-bold">Recent Activity</h3>
           <button onClick={() => setView('transactions')} className="text-xs font-medium text-gold hover:underline">View all →</button>

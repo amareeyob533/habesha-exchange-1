@@ -7,6 +7,7 @@ import { formatUsd } from '@/lib/format'
 import { motion } from 'framer-motion'
 import { ArrowDownToLine, ArrowUpFromLine, Send, TrendingUp, TrendingDown, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { TokenIcon } from '@/components/common/token-icon'
 import { Input } from '@/components/ui/input'
 
 interface TokenRow {
@@ -16,6 +17,7 @@ interface TokenRow {
   change24h: number
   color: string
   icon: string
+  iconUrl?: string | null
   fixed?: boolean
   internalOnly?: boolean
   listed: boolean
@@ -77,9 +79,7 @@ export function MarketsView() {
               className="grid cursor-pointer grid-cols-12 items-center gap-2 border-b border-border/50 px-5 py-4 last:border-0 transition-colors hover:bg-secondary/40"
             >
               <div className="col-span-4 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full text-base font-bold" style={{ backgroundColor: `${t.color}22`, color: t.color }}>
-                  {t.icon}
-                </div>
+                <TokenIcon symbol={t.symbol} iconUrl={t.iconUrl} icon={t.icon} color={t.color} size={40} />
                 <div>
                   <div className="flex flex-wrap items-center gap-1.5 font-bold">
                     {t.symbol}

@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/api-client'
 import { formatUsd, formatTokenAmount } from '@/lib/format'
 import { ArrowLeftRight, Loader2, ArrowDown, RefreshCw, ShieldAlert, Lock, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { TokenIcon } from '@/components/common/token-icon'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -24,6 +25,7 @@ interface TokenInfo {
   price: number
   color: string
   icon: string
+  iconUrl?: string | null
   internalOnly?: boolean
 }
 
@@ -157,7 +159,7 @@ export function ExchangeView() {
                     // Habesha Token cannot be a source (not listed yet) → disabled in "From".
                     <SelectItem key={t.symbol} value={t.symbol} disabled={!!t.internalOnly}>
                       <span className="flex items-center gap-2">
-                        <span style={{ color: t.color }}>{t.icon}</span> {t.symbol}
+                        <TokenIcon symbol={t.symbol} iconUrl={t.iconUrl} icon={t.icon} color={t.color} size={20} className="inline-block" /> {t.symbol}
                         {t.internalOnly && <Lock className="h-3 w-3 text-muted-foreground" />}
                       </span>
                     </SelectItem>
@@ -204,7 +206,7 @@ export function ExchangeView() {
                 <SelectContent>
                   {tokens.map((t) => (
                     <SelectItem key={t.symbol} value={t.symbol}>
-                      <span className="flex items-center gap-2"><span style={{ color: t.color }}>{t.icon}</span> {t.symbol}</span>
+                      <span className="flex items-center gap-2"><TokenIcon symbol={t.symbol} iconUrl={t.iconUrl} icon={t.icon} color={t.color} size={20} className="inline-block" /> {t.symbol}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>

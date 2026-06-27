@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api-client'
 import { generatePriceHistory } from '@/lib/price-history'
 import { formatUsd } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { TokenIcon } from '@/components/common/token-icon'
 
 interface TokenInfo {
   symbol: string
@@ -14,6 +15,7 @@ interface TokenInfo {
   change24h: number
   color: string
   icon: string
+  iconUrl?: string | null
 }
 
 const FALLBACK: TokenInfo[] = [
@@ -79,9 +81,7 @@ function MiniTokenCard({ token, delay, onClick }: { token: TokenInfo; delay: num
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold" style={{ backgroundColor: `${token.color}22`, color: token.color }}>
-            {token.icon}
-          </div>
+          <TokenIcon symbol={token.symbol} iconUrl={token.iconUrl} icon={token.icon} color={token.color} size={36} />
           <div>
             <div className="text-sm font-bold">{token.symbol}</div>
             <div className="text-[10px] text-muted-foreground">{token.name}</div>

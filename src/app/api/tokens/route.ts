@@ -10,6 +10,7 @@ export async function GET() {
       change24h: t.change24h,
       color: t.color,
       icon: t.icon,
+      iconUrl: t.iconUrl || null,
       fixed: !!t.fixed,
       internalOnly: !!t.internalOnly,
       listed: t.listed,

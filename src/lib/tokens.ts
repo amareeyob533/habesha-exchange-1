@@ -20,6 +20,7 @@ export interface TokenConfig {
   name: string
   color: string
   icon: string // emoji / glyph fallback
+  iconUrl?: string // real token icon image
   price: number // USD price
   fixed?: boolean // fixed price (HABESHA)
   change24h: number // simulated % change
@@ -37,6 +38,7 @@ export const TOKENS: TokenConfig[] = [
     name: 'Tether USD',
     color: '#26A17B',
     icon: '₮',
+    iconUrl: '/tokens/usdt.png',
     price: 1.0,
     change24h: 0.01,
     networks: [
@@ -50,6 +52,7 @@ export const TOKENS: TokenConfig[] = [
     name: 'USD Coin',
     color: '#2775CA',
     icon: '$',
+    iconUrl: '/tokens/usdc.png',
     price: 1.0,
     change24h: -0.02,
     networks: [
@@ -62,6 +65,7 @@ export const TOKENS: TokenConfig[] = [
     name: 'Bitcoin',
     color: '#F7931A',
     icon: '₿',
+    iconUrl: '/tokens/btc.png',
     price: 97500,
     change24h: 2.34,
     networks: [
@@ -74,6 +78,7 @@ export const TOKENS: TokenConfig[] = [
     name: 'Toncoin',
     color: '#0098EA',
     icon: '◆',
+    iconUrl: '/tokens/ton.png',
     price: 5.42,
     change24h: 4.12,
     networks: [
@@ -86,6 +91,7 @@ export const TOKENS: TokenConfig[] = [
     name: 'Habesha Token',
     color: '#F0B90B',
     icon: 'H',
+    iconUrl: '/tokens/habesha.jpg',
     price: HABESHA_PRICE,
     fixed: true,
     change24h: 0,

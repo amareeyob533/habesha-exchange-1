@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { LogoWord, LogoMark } from '@/components/common/logo'
+import { TokenIcon } from '@/components/common/token-icon'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { useUI } from '@/hooks/use-ui'
 import { apiFetch } from '@/lib/api-client'
@@ -253,9 +254,7 @@ export function LandingPage() {
               className="grid cursor-pointer grid-cols-12 items-center gap-2 border-b border-border/50 px-5 py-4 last:border-0 transition-colors hover:bg-secondary/40"
             >
               <div className="col-span-5 flex items-center gap-3 sm:col-span-4">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold" style={{ backgroundColor: `${t.color}22`, color: t.color }}>
-                  {t.icon}
-                </div>
+                <TokenIcon symbol={t.symbol} iconUrl={(t as any).iconUrl} icon={t.icon} color={t.color} size={36} />
                 <div>
                   <div className="flex flex-wrap items-center gap-1.5 font-semibold">
                     {t.symbol}

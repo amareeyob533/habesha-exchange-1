@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { apiFetch } from '@/lib/api-client'
 import { formatUsd } from '@/lib/format'
 import { TokenChart } from '@/components/markets/token-chart'
+import { TokenIcon } from '@/components/common/token-icon'
 import { ArrowDownToLine, ArrowUpFromLine, Send, TrendingUp, TrendingDown, Info, Lock } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -18,6 +19,7 @@ interface TokenInfo {
   change24h: number
   color: string
   icon: string
+  iconUrl?: string | null
   fixed?: boolean
   internalOnly?: boolean
   listed: boolean
@@ -66,9 +68,7 @@ export function TokenDetailModal() {
           <>
             {/* Header */}
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold" style={{ backgroundColor: `${token.color}22`, color: token.color }}>
-                {token.icon}
-              </div>
+              <TokenIcon symbol={token.symbol} iconUrl={token.iconUrl} icon={token.icon} color={token.color} size={48} />
               <div className="flex-1">
                 <DialogTitle className="flex items-center gap-2 text-lg font-bold">
                   {token.symbol}

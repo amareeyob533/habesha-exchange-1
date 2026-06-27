@@ -6,6 +6,7 @@ import { formatUsd, formatTokenAmount } from '@/lib/format'
 import { motion } from 'framer-motion'
 import { ArrowDownToLine, ArrowUpFromLine, Send, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { TokenIcon } from '@/components/common/token-icon'
 
 export function WalletView() {
   const { balances, totalUsd, user } = useAuth()
@@ -35,9 +36,7 @@ export function WalletView() {
             className="grid grid-cols-12 items-center gap-2 border-b border-border/50 px-4 py-3.5 last:border-0 transition-colors hover:bg-secondary/30"
           >
             <div className="col-span-4 flex items-center gap-2.5 sm:col-span-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold" style={{ backgroundColor: `${b.color}22`, color: b.color }}>
-                {b.icon}
-              </div>
+              <TokenIcon symbol={b.symbol} iconUrl={b.iconUrl} icon={b.icon} color={b.color} size={36} />
               <div>
                 <div className="flex items-center gap-1.5 text-sm font-bold">
                   {b.symbol}

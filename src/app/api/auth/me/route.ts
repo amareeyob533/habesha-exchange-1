@@ -42,6 +42,7 @@ export async function GET() {
         price: t.price,
         color: t.color,
         icon: t.icon,
+        iconUrl: t.iconUrl || null,
       }
     })
     const totalUsd = balances.reduce((s, b) => s + b.usdValue, 0)

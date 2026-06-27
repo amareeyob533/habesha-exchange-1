@@ -23,6 +23,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { motion } from 'framer-motion'
+import { TokenIcon } from '@/components/common/token-icon'
 import {
   Search, Loader2, ShieldCheck, Ban, Trash2, Send, Gift,
   Lock, Unlock, AlertTriangle, Mail, AtSign, Hash,
@@ -267,7 +268,7 @@ export function UsersAdmin() {
                   <div className="space-y-1.5">
                     {detail.balances.map((b) => (
                       <div key={b.symbol} className="flex items-center gap-2 rounded-lg border border-border bg-secondary/20 px-3 py-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold" style={{ backgroundColor: `${b.color}22`, color: b.color }}>{b.icon}</div>
+                        <TokenIcon symbol={b.symbol} iconUrl={(b as any).iconUrl} icon={b.icon} color={b.color} size={28} />
                         <div className="flex-1">
                           <div className="text-xs font-bold">{b.symbol}</div>
                           <div className="text-[10px] text-muted-foreground">{b.name}</div>

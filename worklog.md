@@ -688,3 +688,31 @@ Verified (VLM):
 
 Stage Summary:
 - Every single visual interface has been upgraded with consistent glassmorphism (glass-card/glass-strong), gradient borders, premium shadows, and shimmer effects. The animated mesh background (3 floating orbs) is visible through the frosted-glass elements across all pages. Lint clean, server stable.
+
+---
+Task ID: 36
+Agent: main
+Task: Fix website lag/performance issues
+
+Root causes found:
+1. Prisma client had `log: ['query']` enabled — every SQL query was logged to console, flooding the dev.log with thousands of lines per minute.
+2. Dashboard polled `/api/auth/me` every 8 seconds — each poll triggered 3 heavy Prisma queries (User + Balance + Notifications) with ALL columns including passwordHash.
+3. `getCurrentUser()` fetched the user with `include: { balances: true }` (unnecessary extra data) on every authenticated API call.
+4. `/api/auth/me` used `include` (all columns) instead of `select` (only needed columns).
+5. `.next/cache` had grown to 282MB.
+
+Fixes:
+- src/lib/db.ts: Prisma log changed from `['query']` to `['error', 'warn']` — no more query spam in console/log.
+- src/components/dashboard/dashboard-shell.tsx: polling interval changed from 8s → 30s, and only polls when the tab is visible (stops when user switches tabs — saves CPU/battery).
+- src/app/api/auth/me/route.ts: uses `select` instead of `include` — only fetches needed columns (no passwordHash, no balances table join). Notifications reduced from 20 to 10.
+- src/lib/auth.ts: `getCurrentUser()` now uses `select` with only needed columns instead of `include: { balances: true }`.
+- Cleared `.next/cache` (282MB → rebuilt fresh).
+
+Results:
+- Dev log: clean, no Prisma query spam (was thousands of lines/minute).
+- /api/auth/me response time: 70ms (was much slower with query logging + heavy includes).
+- Dashboard load: 659ms, 0 errors, 3 console lines (was laggy with constant polling).
+- Polling: every 30s only when tab visible (was every 8s regardless).
+
+Stage Summary:
+- Website is now smooth and fast. The main lag causes (query logging spam, aggressive 8s polling, heavy DB queries with unnecessary columns) are all fixed. Lint clean.

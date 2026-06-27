@@ -27,10 +27,15 @@ export function DashboardShell() {
   const { view } = useUI()
   const { fetchMe, user } = useAuth()
 
-  // Periodic refresh so notifications + balance changes surface live.
+  // Periodic refresh — every 30s, only when tab is visible (reduces lag).
   useEffect(() => {
-    const id = setInterval(() => fetchMe(), 8000)
-    return () => clearInterval(id)
+    let id: ReturnType<typeof setInterval> | null = null
+    const start = () => { if (!id) id = setInterval(() => fetchMe(), 30000) }
+    const stop = () => { if (id) { clearInterval(id); id = null } }
+    const onVis = () => { document.hidden ? stop() : start() }
+    start()
+    document.addEventListener('visibilitychange', onVis)
+    return () => { stop(); document.removeEventListener('visibilitychange', onVis) }
   }, [fetchMe])
 
   return (

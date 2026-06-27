@@ -102,7 +102,14 @@ export async function getCurrentUser() {
   if (!session) return null
   const user = await db.user.findUnique({
     where: { id: session.userId },
-    include: { balances: true },
+    select: {
+      id: true, uid: true, email: true, username: true, name: true,
+      passwordHash: true, provider: true, avatarUrl: true,
+      isBlocked: true, blockedReason: true,
+      kycLevel: true, kycStatus: true, kycSubmittedAt: true,
+      kycRequestedLevel: true, kycDocUrl: true, kycSelfieUrl: true, kycSelfieVideoUrl: true,
+      country: true, phone: true, createdAt: true, updatedAt: true,
+    },
   })
   return user
 }

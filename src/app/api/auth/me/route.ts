@@ -12,9 +12,12 @@ export async function GET() {
 
     const user = await db.user.findUnique({
       where: { id: sessionUser.id },
-      include: {
-        balances: true,
-        notifications: { orderBy: { createdAt: 'desc' }, take: 20 },
+      select: {
+        id: true, uid: true, email: true, username: true, name: true,
+        avatarUrl: true, provider: true, isBlocked: true, blockedReason: true,
+        country: true, phone: true, createdAt: true,
+        balances: { select: { token: true, amount: true } },
+        notifications: { orderBy: { createdAt: 'desc' }, take: 10, select: { id: true, title: true, message: true, type: true, read: true, createdAt: true } },
       },
     })
     if (!user) {

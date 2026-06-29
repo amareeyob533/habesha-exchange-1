@@ -338,8 +338,8 @@ export function LandingPage() {
             </div>
             <div className="glass-card gradient-border rounded-2xl p-6 transition-all hover:shadow-gold">
               <div className="text-sm font-bold">Bank Withdrawals</div>
-              <div className="mt-1 text-xs text-muted-foreground">CBE · Telebirr · Abay · EMPSA</div>
-              <div className="mt-4 text-2xl font-extrabold text-gold-gradient">192 ETB</div>
+              <div className="mt-1 text-xs text-muted-foreground">CBE · Telebirr · Abay · M-PESA</div>
+              <div className="mt-4 text-2xl font-extrabold text-gold-gradient">~186 ETB</div>
               <div className="text-[11px] text-muted-foreground">per 1 USDT</div>
             </div>
           </div>

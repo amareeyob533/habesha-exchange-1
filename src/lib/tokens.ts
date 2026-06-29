@@ -7,12 +7,12 @@ export interface NetworkInfo {
 }
 
 // Bank withdrawal configuration (ETB cash-out to Ethiopian banks).
-export const ETB_RATE = 192 // 1 USD = 192 ETB (per requirement)
+export const ETB_RATE = 186 // 1 USD = ~186 ETB (base rate, actual fluctuates 185-187)
 export const BANKS = [
   { code: 'CBE', name: 'Commercial Bank of Ethiopia (CBE)', short: 'CBE' },
   { code: 'Telebirr', name: 'Telebirr', short: 'Telebirr' },
   { code: 'Abay Bank', name: 'Abay Bank', short: 'Abay Bank' },
-  { code: 'EMPSA', name: 'EMPSA', short: 'EMPSA' },
+  { code: 'M-PESA', name: 'M-PESA', short: 'M-PESA' },
 ] as const
 
 export interface TokenConfig {

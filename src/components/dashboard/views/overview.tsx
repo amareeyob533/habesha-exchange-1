@@ -145,7 +145,7 @@ function QuickStat({ icon: Icon, label, value, onClick }: { icon: any; label: st
 
 /**
  * Live USDT/ETB rate display with fluctuating price, sparkline, direction arrow,
- * and next-update countdown. The rate changes between 190.99 and 192.76 at
+ * and next-update countdown. The rate changes between 185 and 187 at
  * random intervals (2/10/30 min).
  */
 function LiveRateDisplay() {
@@ -157,8 +157,8 @@ function LiveRateDisplay() {
   // Build mini sparkline from history
   const w = 200, h = 36
   const rates = history.map((p) => p.rate)
-  const min = Math.min(...rates, 190.99)
-  const max = Math.max(...rates, 192.76)
+  const min = Math.min(...rates, 185)
+  const max = Math.max(...rates, 187)
   const range = max - min || 1
   const stepX = rates.length > 1 ? w / (rates.length - 1) : w
   const pathD = rates.map((p, i) => `${i === 0 ? 'M' : 'L'} ${i * stepX} ${h - ((p - min) / range) * h}`).join(' ')
@@ -219,7 +219,7 @@ function LiveRateDisplay() {
       )}
 
       {/* Bank options */}
-      <div className="mt-2 text-center text-[11px] text-muted-foreground">Pay via CBE · Telebirr · Abay · EMPSA</div>
+      <div className="mt-2 text-center text-[11px] text-muted-foreground">Pay via CBE · Telebirr · Abay · M-PESA</div>
 
       {/* Cinematic bank image */}
       <motion.div

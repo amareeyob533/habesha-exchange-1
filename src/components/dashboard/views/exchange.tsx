@@ -240,7 +240,7 @@ export function ExchangeView() {
         </motion.form>
 
         <div className="mt-4 rounded-xl glass-card gradient-border p-4 text-xs text-muted-foreground">
-          <b className="text-gold">Tip:</b> To withdraw to an Ethiopian bank (ETB cash-out), first exchange your tokens to <b className="text-gold">USDT</b> here, then use <b className="text-gold">Withdraw → Bank</b>. Rate: 1 USDT = 192 ETB.
+          <b className="text-gold">Tip:</b> To withdraw to an Ethiopian bank (ETB cash-out), first exchange your tokens to <b className="text-gold">USDT</b> here, then use <b className="text-gold">Withdraw → Bank</b>. Rate: 1 USDT = ~186 ETB.
         </div>
 
         <div className="mt-2 rounded-xl glass-card gradient-border p-4 text-xs text-muted-foreground">

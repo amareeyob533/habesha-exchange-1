@@ -3,10 +3,10 @@ import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
 import { BUY_BANKS } from '@/lib/buy-config'
 
-// The rate fluctuates client-side between 190.99 and 192.76.
+// The rate fluctuates client-side between 185 and 187.
 // The server accepts any rate in that range (the client sends the current live rate).
-const RATE_MIN = 190.99
-const RATE_MAX = 192.76
+const RATE_MIN = 185
+const RATE_MAX = 187
 
 /** GET /api/buy — list the current user's buy orders */
 export async function GET() {

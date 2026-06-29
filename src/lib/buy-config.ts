@@ -1,7 +1,6 @@
 // Buy USDT configuration — bank accounts + ETB rate.
-// The admin can edit these account numbers later.
 
-export const BUY_ETB_RATE = 192 // 1 USDT = 192 ETB
+export const BUY_ETB_RATE = 186 // 1 USDT = ~186 ETB (base rate, actual fluctuates)
 
 export interface BuyBank {
   code: string
@@ -11,31 +10,30 @@ export interface BuyBank {
 }
 
 // Bank accounts where users send ETB to buy USDT.
-// TODO(admin): replace these placeholder account numbers with your real ones.
 export const BUY_BANKS: BuyBank[] = [
   {
     code: 'CBE',
     name: 'Commercial Bank of Ethiopia (CBE)',
-    accountName: 'Habesha Exchange',
-    accountNumber: '1000200030004',
+    accountName: 'Melesech Aschale',
+    accountNumber: '1000031904904',
   },
   {
     code: 'Telebirr',
     name: 'Telebirr',
-    accountName: 'Habesha Exchange',
-    accountNumber: '0912345678',
+    accountName: 'Amare Yalew',
+    accountNumber: '0906045336',
   },
   {
     code: 'Abay Bank',
     name: 'Abay Bank',
-    accountName: 'Habesha Exchange',
-    accountNumber: '5600010001234',
+    accountName: 'Melesech Aschale',
+    accountNumber: '4209117438414016',
   },
   {
-    code: 'EMPSA',
-    name: 'EMPSA',
-    accountName: 'Habesha Exchange',
-    accountNumber: 'EMPSA001234',
+    code: 'M-PESA',
+    name: 'M-PESA',
+    accountName: 'To be added',
+    accountNumber: 'To be added',
   },
 ]
 

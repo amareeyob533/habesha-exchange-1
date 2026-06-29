@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { apiFetch, getStoredToken } from '@/lib/api-client'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { motion } from 'framer-motion'
-import { Clock, CheckCircle2, ArrowDownToLine, ArrowUpFromLine, ShoppingCart } from 'lucide-react'
+import { Clock, CheckCircle2, XCircle, ArrowDownToLine, ArrowUpFromLine, ShoppingCart } from 'lucide-react'
 import { timeAgo } from '@/lib/format'
 
 interface PendingItem {
@@ -12,12 +12,12 @@ interface PendingItem {
   type: string
   description: string
   amount: string
-  status: string
+  status: string // pending | approved | rejected
   createdAt: string
   updatedAt: string
 }
 
-const SEEN_KEY = 'habesha_seen_approved'
+const SEEN_KEY = 'habesha_seen_resolved'
 
 function getSeenIds(): Set<string> {
   try {
@@ -32,7 +32,6 @@ function markSeen(id: string) {
   try {
     const seen = getSeenIds()
     seen.add(id)
-    // Keep only last 50 entries to avoid bloat
     const arr = Array.from(seen).slice(-50)
     localStorage.setItem(SEEN_KEY, JSON.stringify(arr))
   } catch {}
@@ -42,6 +41,7 @@ export function PendingIcon() {
   const [items, setItems] = useState<PendingItem[]>([])
   const [open, setOpen] = useState(false)
   const [hasToken, setHasToken] = useState(false)
+  const [, forceUpdate] = useState(0)
 
   const load = useCallback(async () => {
     if (!getStoredToken()) { setHasToken(false); setItems([]); return }
@@ -63,45 +63,58 @@ export function PendingIcon() {
   }, [load])
 
   // Determine what to show:
-  // - pending items → show with rotating red/yellow glow + "pending" text
-  // - approved items NOT yet seen → show with solid green glow + "completed" text
-  // - approved items that have been seen → hide
+  // - pending items → rotating red/yellow glow + "pending" text
+  // - approved items NOT yet seen → solid green glow + "completed" text
+  // - rejected items NOT yet seen → solid red glow + "rejected" text
+  // - resolved items that have been seen → hide
   // - no items at all → hide
   const seenIds = getSeenIds()
   const pendingItems = items.filter((i) => i.status === 'pending')
-  const unseenApproved = items.filter((i) => i.status === 'approved' && !seenIds.has(i.id))
-  const visibleItems = [...pendingItems, ...unseenApproved]
+  const unseenResolved = items.filter((i) => (i.status === 'approved' || i.status === 'rejected') && !seenIds.has(i.id))
+  const visibleItems = [...pendingItems, ...unseenResolved]
 
   const hasPending = pendingItems.length > 0
-  const hasUnseenApproved = unseenApproved.length > 0
-  const shouldShow = hasPending || hasUnseenApproved
+  const hasUnseenApproved = unseenResolved.some((i) => i.status === 'approved')
+  const hasUnseenRejected = unseenResolved.some((i) => i.status === 'rejected')
+  const shouldShow = hasPending || hasUnseenApproved || hasUnseenRejected
 
-  // When user opens the panel, mark all approved items as seen
+  // Determine the display state (priority: pending > rejected > approved)
+  const displayState: 'pending' | 'approved' | 'rejected' = hasPending ? 'pending' : hasUnseenRejected ? 'rejected' : 'approved'
+
+  // When user opens the panel, mark all resolved items as seen
   const handleOpenChange = (v: boolean) => {
     setOpen(v)
     if (v) {
-      // Mark all currently-visible approved items as seen
-      for (const item of unseenApproved) {
+      // Mark all currently-visible resolved items as seen
+      for (const item of unseenResolved) {
         markSeen(item.id)
       }
+      // Force re-render so the seen IDs are re-evaluated
+      setTimeout(() => forceUpdate((n) => n + 1), 100)
     }
   }
 
   if (!hasToken || !shouldShow) return null
+
+  // Colors per state
+  const colors = {
+    pending: { border: 'rgba(255, 77, 109, 0.4)', bg: 'rgba(255, 77, 109, 0.08)', text: 'text-down', glow: '#FF4D6D' },
+    approved: { border: 'rgba(0, 214, 143, 0.4)', bg: 'rgba(0, 214, 143, 0.08)', text: 'text-up', glow: '#00D68F' },
+    rejected: { border: 'rgba(255, 77, 109, 0.4)', bg: 'rgba(255, 77, 109, 0.08)', text: 'text-down', glow: '#FF4D6D' },
+  }
+  const c = colors[displayState]
+  const labelText = displayState === 'pending' ? 'pending' : displayState === 'approved' ? 'completed' : 'rejected'
 
   return (
     <>
       <button
         onClick={() => setOpen(true)}
         className="relative inline-flex h-9 items-center gap-1.5 rounded-full border px-3 transition-colors"
-        style={{
-          borderColor: hasPending ? 'rgba(255, 77, 109, 0.4)' : 'rgba(0, 214, 143, 0.4)',
-          backgroundColor: hasPending ? 'rgba(255, 77, 109, 0.08)' : 'rgba(0, 214, 143, 0.08)',
-        }}
-        aria-label={hasPending ? 'Pending orders' : 'Completed orders'}
+        style={{ borderColor: c.border, backgroundColor: c.bg }}
+        aria-label={labelText}
       >
         {/* Rotating red/yellow glow when pending */}
-        {hasPending && (
+        {displayState === 'pending' && (
           <motion.div
             className="absolute inset-0 rounded-full"
             style={{
@@ -116,12 +129,12 @@ export function PendingIcon() {
           />
         )}
 
-        {/* Solid green glow when approved (no rotation, just steady green) */}
-        {!hasPending && hasUnseenApproved && (
+        {/* Solid glow when approved (green) or rejected (red) — no rotation */}
+        {displayState !== 'pending' && (
           <motion.div
             className="absolute inset-0 rounded-full"
             style={{
-              background: '#00D68F',
+              background: c.glow,
               padding: '2px',
               WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
               WebkitMaskComposite: 'xor',
@@ -133,10 +146,14 @@ export function PendingIcon() {
         )}
 
         {/* Icon + text */}
-        <Clock className={`relative h-4 w-4 ${hasPending ? 'text-down' : 'text-up'}`} />
-        <span className={`relative text-xs font-bold ${hasPending ? 'text-down' : 'text-up'}`}>
-          {hasPending ? 'pending' : 'completed'}
-        </span>
+        {displayState === 'approved' ? (
+          <CheckCircle2 className={`relative h-4 w-4 ${c.text}`} />
+        ) : displayState === 'rejected' ? (
+          <XCircle className={`relative h-4 w-4 ${c.text}`} />
+        ) : (
+          <Clock className={`relative h-4 w-4 ${c.text}`} />
+        )}
+        <span className={`relative text-xs font-bold ${c.text}`}>{labelText}</span>
       </button>
 
       {/* Panel */}
@@ -144,10 +161,12 @@ export function PendingIcon() {
         <SheetContent className="w-full border-border bg-card sm:max-w-md">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
-              {hasPending ? (
+              {displayState === 'pending' ? (
                 <><Clock className="h-4 w-4 text-down" /> Your Pending Orders</>
-              ) : (
+              ) : displayState === 'approved' ? (
                 <><CheckCircle2 className="h-4 w-4 text-up" /> Completed Orders</>
+              ) : (
+                <><XCircle className="h-4 w-4 text-down" /> Order Updates</>
               )}
             </SheetTitle>
           </SheetHeader>
@@ -160,31 +179,39 @@ export function PendingIcon() {
             ) : (
               visibleItems.map((item) => {
                 const isPending = item.status === 'pending'
+                const isApproved = item.status === 'approved'
+                const isRejected = item.status === 'rejected'
                 const Icon = item.type === 'deposit' ? ArrowDownToLine : item.type === 'withdrawal' ? ArrowUpFromLine : ShoppingCart
+                const badgeColor = isPending ? 'bg-down/15 text-down' : isApproved ? 'bg-up/15 text-up' : 'bg-down/15 text-down'
+                const borderColor = isPending ? 'border-down/30 bg-down/5' : isApproved ? 'border-up/30 bg-up/5' : 'border-down/30 bg-down/5'
+                const iconBg = isPending ? 'bg-down/15 text-down' : isApproved ? 'bg-up/15 text-up' : 'bg-down/15 text-down'
                 return (
-                  <div
-                    key={item.id}
-                    className={`rounded-xl border p-3 ${isPending ? 'border-down/30 bg-down/5' : 'border-up/30 bg-up/5'}`}
-                  >
+                  <div key={item.id} className={`rounded-xl border p-3 ${borderColor}`}>
                     <div className="flex items-start gap-2.5">
-                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${isPending ? 'bg-down/15 text-down' : 'bg-up/15 text-up'}`}>
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
                         <Icon className="h-4 w-4" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-semibold">{item.description}</div>
                         <div className="mt-0.5 text-[11px] text-muted-foreground">{timeAgo(item.createdAt)}</div>
                       </div>
-                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${isPending ? 'bg-down/15 text-down' : 'bg-up/15 text-up'}`}>
-                        {isPending ? 'Pending' : 'Approved'}
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${badgeColor}`}>
+                        {isPending ? 'Pending' : isApproved ? 'Approved' : 'Rejected'}
                       </span>
                     </div>
-                    {isPending ? (
+                    {isPending && (
                       <div className="mt-2 text-[11px] text-muted-foreground">
                         Your order is being reviewed by our team. Please allow some time for processing. We'll notify you once it's approved. Thank you for your patience.
                       </div>
-                    ) : (
+                    )}
+                    {isApproved && (
                       <div className="mt-2 text-[11px] text-up">
                         ✓ Your order has been approved and processed successfully.
+                      </div>
+                    )}
+                    {isRejected && (
+                      <div className="mt-2 text-[11px] text-down">
+                        ✕ Your order was rejected. If you believe this is an error, please contact our support team for assistance.
                       </div>
                     )}
                   </div>

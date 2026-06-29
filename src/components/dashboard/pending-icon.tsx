@@ -69,11 +69,12 @@ export function PendingIcon() {
   // - resolved items that have been seen → hide
   // - no items at all → hide
   const seenIds = getSeenIds()
-  const pendingItems = items.filter((i) => i.status === 'pending')
+  // Filter out items the user has already seen (opened the panel)
+  const unseenPending = items.filter((i) => i.status === 'pending' && !seenIds.has(i.id))
   const unseenResolved = items.filter((i) => (i.status === 'approved' || i.status === 'rejected') && !seenIds.has(i.id))
-  const visibleItems = [...pendingItems, ...unseenResolved]
+  const visibleItems = [...unseenPending, ...unseenResolved]
 
-  const hasPending = pendingItems.length > 0
+  const hasPending = unseenPending.length > 0
   const hasUnseenApproved = unseenResolved.some((i) => i.status === 'approved')
   const hasUnseenRejected = unseenResolved.some((i) => i.status === 'rejected')
   const shouldShow = hasPending || hasUnseenApproved || hasUnseenRejected
@@ -81,15 +82,17 @@ export function PendingIcon() {
   // Determine the display state (priority: pending > rejected > approved)
   const displayState: 'pending' | 'approved' | 'rejected' = hasPending ? 'pending' : hasUnseenRejected ? 'rejected' : 'approved'
 
-  // When user opens the panel, mark all resolved items as seen
+  // When user opens the panel, mark ALL currently visible items as seen
+  // (pending + approved + rejected). After closing, the icon disappears
+  // unless new items appear (polled every 5s).
   const handleOpenChange = (v: boolean) => {
     setOpen(v)
     if (v) {
-      // Mark all currently-visible resolved items as seen
-      for (const item of unseenResolved) {
+      // Mark ALL currently-visible items as seen (pending + resolved)
+      for (const item of visibleItems) {
         markSeen(item.id)
       }
-      // Force re-render so the seen IDs are re-evaluated
+      // Force re-render so the seen IDs are re-evaluated immediately
       setTimeout(() => forceUpdate((n) => n + 1), 100)
     }
   }

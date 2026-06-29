@@ -196,7 +196,6 @@ export function BuyModal() {
                   >
                     <div>
                       <div className="text-sm font-bold">{b.name}</div>
-                      <div className="text-[11px] text-muted-foreground">{b.accountName}</div>
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </button>

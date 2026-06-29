@@ -196,6 +196,7 @@ export function BuyModal() {
                   >
                     <div>
                       <div className="text-sm font-bold">{b.name}</div>
+                      <div className="text-[11px] text-muted-foreground">{b.accountName}</div>
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </button>
@@ -215,6 +216,8 @@ export function BuyModal() {
               <div className="rounded-xl border border-gold/30 bg-gold/5 p-4">
                 <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Send exactly this much ETB to</div>
                 <div className="mt-1 text-sm font-bold">{bank.name}</div>
+                <div className="mt-2 text-[11px] text-muted-foreground">Account Name</div>
+                <div className="text-sm font-semibold">{bank.accountName}</div>
                 <div className="mt-2 text-[11px] text-muted-foreground">Account Number</div>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 rounded-lg bg-background/60 p-2.5 font-mono text-sm font-bold">{bank.accountNumber}</div>

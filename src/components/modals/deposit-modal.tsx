@@ -72,6 +72,9 @@ function DepositForm({ initialSymbol, onClose }: { initialSymbol: string; onClos
   const [network, setNetwork] = useState('')
   const [amount, setAmount] = useState('')
   const [copied, setCopied] = useState(false)
+  const [countdownStarted, setCountdownStarted] = useState(false)
+  const [countdown, setCountdown] = useState(20)
+  const [canDeposit, setCanDeposit] = useState(false)
   const [status, setStatus] = useState<'idle' | 'checking' | 'pending' | 'done'>('idle')
 
   useEffect(() => {
@@ -85,10 +88,23 @@ function DepositForm({ initialSymbol, onClose }: { initialSymbol: string; onClos
   const effectiveNetwork = network || token?.networks[0]?.name || ''
   const net = token?.networks.find((n) => n.name === effectiveNetwork)
 
+  // 20-second countdown starts AFTER user copies the wallet address
+  useEffect(() => {
+    if (!countdownStarted) return
+    const id = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) { clearInterval(id); setCanDeposit(true); return 0 }
+        return c - 1
+      })
+    }, 1000)
+    return () => clearInterval(id)
+  }, [countdownStarted])
+
   function copyAddr() {
     if (!net) return
     navigator.clipboard.writeText(net.address)
     setCopied(true)
+    setCountdownStarted(true)
     toast({ title: 'Address copied', description: 'Deposit address copied to clipboard.' })
     setTimeout(() => setCopied(false), 1600)
   }
@@ -196,19 +212,30 @@ function DepositForm({ initialSymbol, onClose }: { initialSymbol: string; onClos
             )}
           </div>
 
-          <Button
-            className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground"
-            onClick={handleDeposited}
-            disabled={status === 'checking' || status === 'pending'}
-          >
-            {status === 'checking' ? (
-              <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Checking…</>
-            ) : status === 'pending' ? (
-              <><Clock className="mr-1 h-4 w-4" /> Pending…</>
-            ) : (
-              'I Deposited'
-            )}
-          </Button>
+          {/* Before copy: empty space. After copy: 20s countdown. After countdown: "I Deposited" button. */}
+          {!countdownStarted ? (
+            <div className="h-11" />
+          ) : !canDeposit ? (
+            <div className="flex h-11 items-center justify-center gap-2 rounded-xl border border-gold/30 bg-gold/5 text-sm">
+              <Clock className="h-4 w-4 text-gold" />
+              <span className="text-muted-foreground">Please wait…</span>
+              <span className="font-bold text-gold">{countdown}s</span>
+            </div>
+          ) : (
+            <Button
+              className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground"
+              onClick={handleDeposited}
+              disabled={status === 'checking' || status === 'pending'}
+            >
+              {status === 'checking' ? (
+                <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Checking…</>
+              ) : status === 'pending' ? (
+                <><Clock className="mr-1 h-4 w-4" /> Pending…</>
+              ) : (
+                'I Deposited'
+              )}
+            </Button>
+          )}
         </motion.div>
       )}
     </AnimatePresence>

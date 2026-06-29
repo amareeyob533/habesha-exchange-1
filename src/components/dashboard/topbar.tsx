@@ -7,7 +7,6 @@ import { useAuth } from '@/hooks/use-auth'
 import { useUI } from '@/hooks/use-ui'
 import { formatUsd } from '@/lib/format'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { PendingIcon } from '@/components/dashboard/pending-icon'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,20 +58,7 @@ export function Topbar() {
           Buy
         </Button>
 
-        <PendingIcon />
-
-        <button
-          onClick={openNotif}
-          className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-secondary/60 transition-colors hover:border-gold/60"
-          aria-label="Notifications"
-        >
-          <Bell className="h-4 w-4" />
-          {unread > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-down px-1 text-[9px] font-bold text-white">
-              {unread > 9 ? '9+' : unread}
-            </span>
-          )}
-        </button>
+        <GlowingNotifBell unread={unread} onClick={openNotif} notifications={notifications} />
 
         <ThemeToggle />
 
@@ -105,5 +91,65 @@ export function Topbar() {
         </DropdownMenu>
       </div>
     </header>
+  )
+}
+
+interface NotifItem {
+  id: string
+  title: string
+  message: string
+  type: string // info | success | warning
+  read: boolean
+  createdAt: string
+}
+
+/**
+ * Notification bell that glows based on the most urgent unread notification:
+ * - Yellow glow: pending/submitted messages (type: info)
+ * - Green glow: approved/reward/support messages (type: success)
+ * - Red glow: rejected/negative messages (type: warning)
+ */
+function GlowingNotifBell({ unread, onClick, notifications }: { unread: number; onClick: () => void; notifications: NotifItem[] }) {
+  // Determine glow color from unread notifications
+  const unreadNotifs = notifications.filter((n) => !n.read)
+  let glowColor: string | null = null
+  if (unreadNotifs.length > 0) {
+    // Priority: warning (red) > success (green) > info (yellow)
+    if (unreadNotifs.some((n) => n.type === 'warning')) glowColor = '#FF4D6D' // red
+    else if (unreadNotifs.some((n) => n.type === 'success')) glowColor = '#00D68F' // green
+    else glowColor = '#F0B90B' // yellow (info/pending)
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-secondary/60 transition-colors hover:border-gold/60"
+      aria-label="Notifications"
+    >
+      {/* Glowing ring */}
+      {glowColor && (
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          style={{
+            background: glowColor,
+            padding: '2px',
+            WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+            WebkitMaskComposite: 'xor',
+            maskComposite: 'exclude',
+          }}
+          animate={{ opacity: [0.4, 1, 0.4], boxShadow: [`0 0 6px ${glowColor}40`, `0 0 16px ${glowColor}80`, `0 0 6px ${glowColor}40`] }}
+          transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+        />
+      )}
+
+      <Bell className="relative h-4 w-4" style={glowColor ? { color: glowColor } : undefined} />
+
+      {/* Unread count badge */}
+      {unread > 0 && (
+        <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-down px-1 text-[9px] font-bold text-white">
+          {unread > 9 ? '9+' : unread}
+        </span>
+      )}
+    </button>
   )
 }

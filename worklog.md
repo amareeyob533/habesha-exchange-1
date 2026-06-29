@@ -751,3 +751,23 @@ Pending icon (new):
 
 Stage Summary:
 - Buy modal: no account name shown, countdown starts after copy. Pending icon: glowing red/yellow ring with "pending" text, shows pending orders panel, turns green on approval, disappears when no pending items. Lint clean.
+
+---
+Task ID: 39
+Agent: main
+Task: Fix pending icon — faster polling, green on approval, "completed" text, stays until viewed
+
+Changes:
+- src/app/api/pending/route.ts: now also returns recently-approved items (last 24h) with status "approved", including updatedAt field.
+- src/components/dashboard/pending-icon.tsx: complete rewrite:
+  - Polls every 5 seconds (was 20s) for near-instant updates
+  - When pending: rotating red/yellow conic gradient glow + "pending" text
+  - When approved (admin approved): glow STOPS rotating, turns solid green, text changes to "completed"
+  - Icon stays visible until the user OPENS the panel and sees the approved items
+  - When user opens panel: all approved items are marked as "seen" (stored in localStorage)
+  - After viewing + closing: unseen approved items are cleared, icon disappears if no pending remain
+  - If new pending order is created: icon reappears immediately (5s poll)
+  - localStorage key "habesha_seen_approved" tracks seen approved item IDs (max 50)
+
+Stage Summary:
+- Pending icon now updates within 5 seconds, turns green with "completed" text when admin approves, stays until user opens and sees the result, then disappears. Lint clean.

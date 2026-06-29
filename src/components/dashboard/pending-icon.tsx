@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { apiFetch } from '@/lib/api-client'
+import { apiFetch, getStoredToken } from '@/lib/api-client'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { getStoredToken } from '@/lib/api-client'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Clock, CheckCircle2, ArrowDownToLine, ArrowUpFromLine, ShoppingCart } from 'lucide-react'
 import { timeAgo } from '@/lib/format'
 
@@ -15,6 +14,28 @@ interface PendingItem {
   amount: string
   status: string
   createdAt: string
+  updatedAt: string
+}
+
+const SEEN_KEY = 'habesha_seen_approved'
+
+function getSeenIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(SEEN_KEY)
+    return new Set(raw ? JSON.parse(raw) : [])
+  } catch {
+    return new Set()
+  }
+}
+
+function markSeen(id: string) {
+  try {
+    const seen = getSeenIds()
+    seen.add(id)
+    // Keep only last 50 entries to avoid bloat
+    const arr = Array.from(seen).slice(-50)
+    localStorage.setItem(SEEN_KEY, JSON.stringify(arr))
+  } catch {}
 }
 
 export function PendingIcon() {
@@ -33,27 +54,40 @@ export function PendingIcon() {
     }
   }, [])
 
-  // Poll every 20s when tab is visible
+  // Poll every 5 seconds for fast updates (when tab is visible)
   useEffect(() => {
     const id = setInterval(() => {
       if (!document.hidden) load()
-    }, 20000)
+    }, 5000)
     return () => clearInterval(id)
   }, [load])
 
-  // Reload when panel closes (to clear items if they were viewed)
+  // Determine what to show:
+  // - pending items → show with rotating red/yellow glow + "pending" text
+  // - approved items NOT yet seen → show with solid green glow + "completed" text
+  // - approved items that have been seen → hide
+  // - no items at all → hide
+  const seenIds = getSeenIds()
+  const pendingItems = items.filter((i) => i.status === 'pending')
+  const unseenApproved = items.filter((i) => i.status === 'approved' && !seenIds.has(i.id))
+  const visibleItems = [...pendingItems, ...unseenApproved]
+
+  const hasPending = pendingItems.length > 0
+  const hasUnseenApproved = unseenApproved.length > 0
+  const shouldShow = hasPending || hasUnseenApproved
+
+  // When user opens the panel, mark all approved items as seen
   const handleOpenChange = (v: boolean) => {
     setOpen(v)
-    if (!v) {
-      // After viewing, still show until items are actually resolved by admin
-      setTimeout(load, 500)
+    if (v) {
+      // Mark all currently-visible approved items as seen
+      for (const item of unseenApproved) {
+        markSeen(item.id)
+      }
     }
   }
 
-  if (!hasToken || items.length === 0) return null
-
-  const hasPending = items.some((i) => i.status === 'pending')
-  const hasApproved = items.some((i) => i.status === 'approved' || i.status === 'completed')
+  if (!hasToken || !shouldShow) return null
 
   return (
     <>
@@ -64,9 +98,9 @@ export function PendingIcon() {
           borderColor: hasPending ? 'rgba(255, 77, 109, 0.4)' : 'rgba(0, 214, 143, 0.4)',
           backgroundColor: hasPending ? 'rgba(255, 77, 109, 0.08)' : 'rgba(0, 214, 143, 0.08)',
         }}
-        aria-label="Pending orders"
+        aria-label={hasPending ? 'Pending orders' : 'Completed orders'}
       >
-        {/* Glowing circle around the icon */}
+        {/* Rotating red/yellow glow when pending */}
         {hasPending && (
           <motion.div
             className="absolute inset-0 rounded-full"
@@ -81,11 +115,13 @@ export function PendingIcon() {
             transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
           />
         )}
-        {hasApproved && !hasPending && (
+
+        {/* Solid green glow when approved (no rotation, just steady green) */}
+        {!hasPending && hasUnseenApproved && (
           <motion.div
             className="absolute inset-0 rounded-full"
             style={{
-              background: 'conic-gradient(from 0deg, #00D68F 0deg, #00D68F 360deg)',
+              background: '#00D68F',
               padding: '2px',
               WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
               WebkitMaskComposite: 'xor',
@@ -98,25 +134,31 @@ export function PendingIcon() {
 
         {/* Icon + text */}
         <Clock className={`relative h-4 w-4 ${hasPending ? 'text-down' : 'text-up'}`} />
-        <span className={`relative text-xs font-bold ${hasPending ? 'text-down' : 'text-up'}`}>pending</span>
+        <span className={`relative text-xs font-bold ${hasPending ? 'text-down' : 'text-up'}`}>
+          {hasPending ? 'pending' : 'completed'}
+        </span>
       </button>
 
-      {/* Pending panel */}
+      {/* Panel */}
       <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetContent className="w-full border-border bg-card sm:max-w-md">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-gold" /> Your Pending Orders
+              {hasPending ? (
+                <><Clock className="h-4 w-4 text-down" /> Your Pending Orders</>
+              ) : (
+                <><CheckCircle2 className="h-4 w-4 text-up" /> Completed Orders</>
+              )}
             </SheetTitle>
           </SheetHeader>
           <div className="mt-4 max-h-[calc(100vh-6rem)] space-y-2 overflow-y-auto custom-scroll pr-1">
-            {items.length === 0 ? (
+            {visibleItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center text-sm text-muted-foreground">
                 <CheckCircle2 className="mb-2 h-8 w-8 text-up opacity-50" />
                 All caught up — no pending orders.
               </div>
             ) : (
-              items.map((item) => {
+              visibleItems.map((item) => {
                 const isPending = item.status === 'pending'
                 const Icon = item.type === 'deposit' ? ArrowDownToLine : item.type === 'withdrawal' ? ArrowUpFromLine : ShoppingCart
                 return (

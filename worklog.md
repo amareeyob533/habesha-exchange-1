@@ -716,3 +716,38 @@ Results:
 
 Stage Summary:
 - Website is now smooth and fast. The main lag causes (query logging spam, aggressive 8s polling, heavy DB queries with unnecessary columns) are all fixed. Lint clean.
+
+---
+Task ID: 38
+Agent: main
+Task: Buy modal fixes + Pending icon in topbar with glowing animation
+
+Buy modal changes:
+- Removed account name from bank selection step (only shows bank name now)
+- Removed account name from the account step display
+- Countdown now starts AFTER the user copies the account number (not on step entry)
+- Before copy: empty space (no countdown shown)
+- After copy: 20s countdown begins
+- After countdown: "I've Made the Payment" button appears
+- Going back to bank step resets the countdown state
+
+Pending icon (new):
+- src/app/api/pending/route.ts (NEW): returns user's pending deposits + withdrawals + buy orders
+- src/components/dashboard/pending-icon.tsx (NEW): 
+  - Shows in topbar next to notification bell
+  - Text "pending" beside a clock icon
+  - When items are pending: glowing conic gradient ring (half red #FF4D6D, half yellow #F0B90B) rotates around the icon
+  - When items are approved: ring turns all green #00D68F with pulsing opacity
+  - When no pending items: icon disappears entirely
+  - When clicked: opens a panel showing all pending + approved items with:
+    - Type icon (deposit/withdrawal/buy)
+    - Description with amount and details
+    - Status badge (Pending/Approved)
+    - Respectful message: "Your order is being reviewed by our team. Please allow some time for processing..."
+    - For approved: "✓ Your order has been approved and processed successfully."
+  - Polls every 20s when tab is visible
+  - Uses localStorage token check to avoid unnecessary API calls when logged out
+- Added to topbar.tsx next to the notification bell
+
+Stage Summary:
+- Buy modal: no account name shown, countdown starts after copy. Pending icon: glowing red/yellow ring with "pending" text, shows pending orders panel, turns green on approval, disappears when no pending items. Lint clean.

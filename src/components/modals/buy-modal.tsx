@@ -28,6 +28,7 @@ export function BuyModal() {
   const [amount, setAmount] = useState('')
   const [bankCode, setBankCode] = useState('')
   const [copied, setCopied] = useState(false)
+  const [countdownStarted, setCountdownStarted] = useState(false)
   const [countdown, setCountdown] = useState(20)
   const [canProceed, setCanProceed] = useState(false)
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null)
@@ -47,7 +48,7 @@ export function BuyModal() {
     if (!open) {
       const t = setTimeout(() => {
         setStep('amount'); setAmount(''); setBankCode(''); setCopied(false)
-        setCanProceed(false); setScreenshotUrl(null); setScreenshotName(''); setTxnCode(''); setCountdown(20)
+        setCanProceed(false); setCountdownStarted(false); setScreenshotUrl(null); setScreenshotName(''); setTxnCode(''); setCountdown(20)
       }, 300)
       return () => clearTimeout(t)
     }
@@ -58,9 +59,9 @@ export function BuyModal() {
   const birrAmount = currency === 'ETB' ? Number(amount) || 0 : (Number(amount) || 0) * liveRate
   const bank = BUY_BANKS.find((b) => b.code === bankCode)
 
-  // 20-second countdown on the account step
+  // 20-second countdown starts AFTER user copies the account number
   useEffect(() => {
-    if (step !== 'account') return
+    if (step !== 'account' || !countdownStarted) return
     setCountdown(20)
     setCanProceed(false)
     const id = setInterval(() => {
@@ -70,12 +71,13 @@ export function BuyModal() {
       })
     }, 1000)
     return () => clearInterval(id)
-  }, [step])
+  }, [step, countdownStarted])
 
   function copyAccount() {
     if (!bank) return
     navigator.clipboard.writeText(bank.accountNumber)
     setCopied(true)
+    setCountdownStarted(true)
     toast({ title: 'Account number copied', description: bank.accountNumber })
     setTimeout(() => setCopied(false), 1600)
   }
@@ -194,7 +196,6 @@ export function BuyModal() {
                   >
                     <div>
                       <div className="text-sm font-bold">{b.name}</div>
-                      <div className="text-[11px] text-muted-foreground">{b.accountName}</div>
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </button>
@@ -214,8 +215,6 @@ export function BuyModal() {
               <div className="rounded-xl border border-gold/30 bg-gold/5 p-4">
                 <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Send exactly this much ETB to</div>
                 <div className="mt-1 text-sm font-bold">{bank.name}</div>
-                <div className="mt-2 text-[11px] text-muted-foreground">Account Name</div>
-                <div className="text-sm font-semibold">{bank.accountName}</div>
                 <div className="mt-2 text-[11px] text-muted-foreground">Account Number</div>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 rounded-lg bg-background/60 p-2.5 font-mono text-sm font-bold">{bank.accountNumber}</div>
@@ -226,11 +225,13 @@ export function BuyModal() {
                 <div className="mt-2 text-[11px] text-muted-foreground">Amount to send: <b className="text-gold">{birrAmount.toLocaleString('en-US')} ETB</b></div>
               </div>
 
-              {/* Countdown or proceed button */}
-              {!canProceed ? (
+              {/* Empty space before copy, countdown after copy, proceed button after countdown */}
+              {!countdownStarted ? (
+                <div className="h-11" />
+              ) : !canProceed ? (
                 <div className="flex items-center justify-center gap-2 rounded-lg border border-gold/30 bg-gold/5 py-3 text-sm">
                   <Clock className="h-4 w-4 text-gold" />
-                  <span className="text-muted-foreground">Please copy the account number…</span>
+                  <span className="text-muted-foreground">Please wait…</span>
                   <span className="font-bold text-gold">{countdown}s</span>
                 </div>
               ) : (
@@ -238,7 +239,7 @@ export function BuyModal() {
                   I've Made the Payment <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
               )}
-              <button onClick={() => setStep('bank')} className="w-full text-center text-xs text-muted-foreground hover:text-foreground">← Change bank</button>
+              <button onClick={() => { setStep('bank'); setCountdownStarted(false); setCanProceed(false) }} className="w-full text-center text-xs text-muted-foreground hover:text-foreground">← Change bank</button>
             </motion.div>
           )}
 

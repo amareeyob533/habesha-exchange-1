@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useUI } from '@/hooks/use-ui'
 import { formatUsd } from '@/lib/format'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { PendingIcon } from '@/components/dashboard/pending-icon'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,6 +58,8 @@ export function Topbar() {
         >
           Buy
         </Button>
+
+        <PendingIcon />
 
         <button
           onClick={openNotif}

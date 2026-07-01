@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
@@ -19,6 +19,15 @@ export const metadata: Metadata = {
     "Habesha Exchange — a premium cryptocurrency exchange. Trade BTC, USDT, USDC, TON and the exclusive Habesha Token. Secure, fast and built for everyone.",
   keywords: ["Habesha Exchange", "crypto exchange", "bitcoin", "USDT", "Habesha Token", "trade crypto"],
   icons: { icon: "/habesha-mark.jpg" },
+};
+
+// CRITICAL: viewport meta tag — makes the website auto-fit phone screens
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#0A0E1A",
 };
 
 export default function RootLayout({

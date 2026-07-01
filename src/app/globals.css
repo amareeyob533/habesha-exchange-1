@@ -126,16 +126,24 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    box-sizing: border-box;
   }
   html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
   }
   body {
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    /* Smooth, gentle transition when toggling themes */
+    overflow-x: hidden;
+    width: 100%;
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  }
+  /* Prevent any element from causing horizontal scroll on mobile */
+  main, section, header, footer, nav, aside {
+    max-width: 100vw;
+    overflow-x: hidden;
   }
 }
 

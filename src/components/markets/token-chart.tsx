@@ -1,20 +1,30 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import {
-  AreaChart,
-  Area,
+  ComposedChart,
+  Bar,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts'
-import { generatePriceHistory, priceStats, type Timeframe, type PricePoint } from '@/lib/price-history'
+import { apiFetch } from '@/lib/api-client'
 import { formatUsd } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-const TIMEFRAMES: Timeframe[] = ['1D', '1W', '1M', '3M', '1Y']
+const TIMEFRAMES = ['1D', '1W', '1M', '3M', '1Y'] as const
+type Timeframe = typeof TIMEFRAMES[number]
+
+interface Candle {
+  t: number
+  o: number
+  h: number
+  l: number
+  c: number
+}
 
 interface TokenChartProps {
   symbol: string
@@ -25,16 +35,45 @@ interface TokenChartProps {
 
 export function TokenChart({ symbol, currentPrice, change24h, color }: TokenChartProps) {
   const [tf, setTf] = useState<Timeframe>('1W')
+  const [candles, setCandles] = useState<Candle[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const points = useMemo<PricePoint[]>(
-    () => generatePriceHistory(symbol, currentPrice, tf, change24h),
-    [symbol, currentPrice, tf, change24h],
-  )
-  const stats = useMemo(() => priceStats(points), [points])
+  // Fetch real OHLC candlestick data
+  useEffect(() => {
+    let cancelled = false
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        const data = await apiFetch<{ candles: Candle[]; source: string }>(`/api/ohlc?symbol=${symbol}&timeframe=${tf}`)
+        if (!cancelled) {
+          setCandles(data.candles || [])
+        }
+      } catch {
+        if (!cancelled) setCandles([])
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    fetchData()
+    return () => { cancelled = true }
+  }, [symbol, tf])
+
+  // Compute stats
+  const stats = useMemo(() => {
+    if (candles.length === 0) return { high: 0, low: 0, change: 0 }
+    const highs = candles.map((c) => c.h)
+    const lows = candles.map((c) => c.l)
+    const first = candles[0].o
+    const last = candles[candles.length - 1].c
+    return {
+      high: Math.max(...highs),
+      low: Math.min(...lows),
+      change: first > 0 ? ((last - first) / first) * 100 : 0,
+    }
+  }, [candles])
+
   const isUp = stats.change >= 0
-  const lineColor = symbol === 'HABESHA' ? '#F0B90B' : isUp ? '#0ECB81' : '#F6465D'
-
-  const data = points.map((p) => ({ t: p.t, price: p.price }))
+  const lineColor = symbol === 'HABESHA' ? '#F0B90B' : isUp ? '#00D68F' : '#FF4D6D'
 
   return (
     <div className="space-y-3">
@@ -42,7 +81,9 @@ export function TokenChart({ symbol, currentPrice, change24h, color }: TokenChar
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="text-2xl font-extrabold tracking-tight">
-            <span className={isUp ? 'text-up' : 'text-foreground'}>{formatUsd(currentPrice, { max: currentPrice > 1000 ? 2 : 6 })}</span>
+            <span className={isUp ? 'text-up' : 'text-foreground'}>
+              {formatUsd(currentPrice, { max: currentPrice > 1000 ? 2 : 6 })}
+            </span>
           </div>
           <div className={cn('mt-0.5 text-sm font-semibold', isUp ? 'text-up' : 'text-down')}>
             {isUp ? '▲' : '▼'} {Math.abs(stats.change).toFixed(2)}% · {tf}
@@ -65,51 +106,65 @@ export function TokenChart({ symbol, currentPrice, change24h, color }: TokenChar
         </div>
       </div>
 
-      {/* Chart */}
+      {/* Candlestick chart */}
       <div className="h-[240px] w-full sm:h-[280px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id={`grad-${symbol}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={lineColor} stopOpacity={0.35} />
-                <stop offset="100%" stopColor={lineColor} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-            <XAxis
-              dataKey="t"
-              tickFormatter={(t) => formatTick(t, tf)}
-              stroke="rgba(139,139,149,0.6)"
-              tick={{ fontSize: 10 }}
-              tickLine={false}
-              axisLine={false}
-              minTickGap={32}
-            />
-            <YAxis
-              domain={['auto', 'auto']}
-              tickFormatter={(v) => formatUsd(v, { max: v > 1000 ? 0 : v > 1 ? 2 : 4 })}
-              stroke="rgba(139,139,149,0.6)"
-              tick={{ fontSize: 10 }}
-              tickLine={false}
-              axisLine={false}
-              width={56}
-              orientation="right"
-            />
-            <Tooltip
-              content={<ChartTooltip symbol={symbol} />}
-              cursor={{ stroke: lineColor, strokeWidth: 1, strokeDasharray: '3 3' }}
-            />
-            <Area
-              type="monotone"
-              dataKey="price"
-              stroke={lineColor}
-              strokeWidth={2}
-              fill={`url(#grad-${symbol})`}
-              isAnimationActive
-              animationDuration={400}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        {loading ? (
+          <div className="flex h-full items-center justify-center">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-gold border-t-transparent" />
+          </div>
+        ) : candles.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+            No data available
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={candles} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id={`candle-up-${symbol}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#00D68F" stopOpacity={0.8} />
+                  <stop offset="100%" stopColor="#00D68F" stopOpacity={0.4} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+              <XAxis
+                dataKey="t"
+                tickFormatter={(t) => formatTick(t, tf)}
+                stroke="rgba(139,139,149,0.6)"
+                tick={{ fontSize: 10 }}
+                tickLine={false}
+                axisLine={false}
+                minTickGap={32}
+              />
+              <YAxis
+                domain={['auto', 'auto']}
+                tickFormatter={(v) => formatUsd(v, { max: v > 1000 ? 0 : v > 1 ? 2 : 4 })}
+                stroke="rgba(139,139,149,0.6)"
+                tick={{ fontSize: 10 }}
+                tickLine={false}
+                axisLine={false}
+                width={56}
+                orientation="right"
+              />
+              <Tooltip
+                content={<CandleTooltip symbol={symbol} />}
+                cursor={{ stroke: lineColor, strokeWidth: 1, strokeDasharray: '3 3' }}
+              />
+              {/* Candle wicks (high-low range) */}
+              <Bar
+                dataKey={(d: Candle) => [d.l, d.h]}
+                shape={(props: any) => <Wick {...props} color={lineColor} />}
+                isAnimationActive={false}
+              />
+              {/* Candle bodies (open-close) */}
+              <Bar
+                dataKey={(d: Candle) => [d.o, d.c]}
+                shape={(props: any) => <CandleBody {...props} color={lineColor} />}
+                isAnimationActive
+                animationDuration={400}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
       {/* Stats row */}
@@ -119,6 +174,44 @@ export function TokenChart({ symbol, currentPrice, change24h, color }: TokenChar
         <Stat label={`${tf} Change`} value={`${isUp ? '+' : ''}${stats.change.toFixed(2)}%`} valueClass={isUp ? 'text-up' : 'text-down'} />
       </div>
     </div>
+  )
+}
+
+// Custom candle wick (vertical line from low to high)
+function Wick(props: any, color: string) {
+  const { x, width, y, height, payload } = props
+  if (!payload) return null
+  const wickX = x + width / 2
+  return (
+    <line
+      x1={wickX}
+      x2={wickX}
+      y1={y}
+      y2={y + height}
+      stroke={payload.c >= payload.o ? '#00D68F' : '#FF4D6D'}
+      strokeWidth={1}
+    />
+  )
+}
+
+// Custom candle body (rectangle from open to close)
+function CandleBody(props: any, color: string) {
+  const { x, width, y, height, payload } = props
+  if (!payload || height === 0) return null
+  const isUp = payload.c >= payload.o
+  const bodyColor = isUp ? '#00D68F' : '#FF4D6D'
+  const bodyWidth = Math.max(width * 0.6, 2)
+  const bodyX = x + (width - bodyWidth) / 2
+  return (
+    <rect
+      x={bodyX}
+      y={y}
+      width={bodyWidth}
+      height={Math.max(height, 1)}
+      fill={bodyColor}
+      opacity={0.9}
+      rx={1}
+    />
   )
 }
 
@@ -138,14 +231,27 @@ function formatTick(t: number, tf: Timeframe): string {
   return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
 }
 
-function ChartTooltip({ active, payload, symbol }: any) {
+function CandleTooltip({ active, payload, symbol }: any) {
   if (!active || !payload?.length) return null
-  const point = payload[0].payload as { t: number; price: number }
+  const candle = payload[0]?.payload as Candle
+  if (!candle) return null
+  const isUp = candle.c >= candle.o
   return (
     <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-xl">
-      <div className="font-mono font-bold text-foreground">{formatUsd(point.price, { max: point.price > 1000 ? 2 : 6 })}</div>
+      <div className="font-mono font-bold text-foreground">
+        O: {formatUsd(candle.o, { max: candle.o > 1000 ? 2 : 6 })}
+      </div>
+      <div className="font-mono text-up">
+        H: {formatUsd(candle.h, { max: candle.h > 1000 ? 2 : 6 })}
+      </div>
+      <div className="font-mono text-down">
+        L: {formatUsd(candle.l, { max: candle.l > 1000 ? 2 : 6 })}
+      </div>
+      <div className={`font-mono ${isUp ? 'text-up' : 'text-down'}`}>
+        C: {formatUsd(candle.c, { max: candle.c > 1000 ? 2 : 6 })}
+      </div>
       <div className="mt-0.5 text-[10px] text-muted-foreground">
-        {new Date(point.t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+        {new Date(candle.t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
       </div>
       <div className="mt-0.5 text-[10px] font-semibold text-gold">{symbol}</div>
     </div>

@@ -22,6 +22,7 @@ interface TokenRow {
   fixed?: boolean
   internalOnly?: boolean
   listed: boolean
+  isLive?: boolean
 }
 
 export function LandingPage() {
@@ -31,7 +32,7 @@ export function LandingPage() {
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    apiFetch<{ tokens: TokenRow[] }>('/api/tokens').then((d) => setTokens(d.tokens)).catch(() => {})
+    apiFetch<{ tokens: TokenRow[] }>('/api/market-data').then((d) => setTokens(d.tokens)).catch(() => {})
   }, [])
 
   return (

@@ -23,6 +23,7 @@ interface TokenInfo {
   fixed?: boolean
   internalOnly?: boolean
   listed: boolean
+  isLive?: boolean
 }
 
 const FALLBACK: TokenInfo[] = [
@@ -40,7 +41,7 @@ export function TokenDetailModal() {
   const [tokens, setTokens] = useState<TokenInfo[]>(FALLBACK)
 
   useEffect(() => {
-    apiFetch<{ tokens: TokenInfo[] }>('/api/tokens').then((d) => setTokens(d.tokens)).catch(() => {})
+    apiFetch<{ tokens: TokenInfo[] }>('/api/market-data').then((d) => setTokens(d.tokens)).catch(() => {})
   }, [])
 
   const token = tokens.find((t) => t.symbol === tokenDetail)

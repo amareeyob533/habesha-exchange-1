@@ -1,9 +1,8 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { apiFetch } from '@/lib/api-client'
-import { generatePriceHistory } from '@/lib/price-history'
 import { formatUsd } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { TokenIcon } from '@/components/common/token-icon'
@@ -16,6 +15,7 @@ interface TokenInfo {
   color: string
   icon: string
   iconUrl?: string | null
+  isLive?: boolean
 }
 
 const FALLBACK: TokenInfo[] = [
@@ -29,8 +29,17 @@ const FALLBACK: TokenInfo[] = [
 export function MiniMarketOverview({ onTokenClick }: { onTokenClick?: (symbol: string) => void }) {
   const [tokens, setTokens] = useState<TokenInfo[]>(FALLBACK)
 
+  // Fetch real live prices from CoinGecko (via our API)
   useEffect(() => {
-    apiFetch<{ tokens: TokenInfo[] }>('/api/tokens').then((d) => setTokens(d.tokens)).catch(() => {})
+    const load = () => {
+      apiFetch<{ tokens: TokenInfo[] }>('/api/market-data')
+        .then((d) => setTokens(d.tokens))
+        .catch(() => {})
+    }
+    load()
+    // Refresh every 60 seconds
+    const id = setInterval(load, 60000)
+    return () => clearInterval(id)
   }, [])
 
   return (
@@ -55,21 +64,8 @@ export function MiniMarketOverview({ onTokenClick }: { onTokenClick?: (symbol: s
 }
 
 function MiniTokenCard({ token, delay, onClick }: { token: TokenInfo; delay: number; onClick: () => void }) {
-  const points = useMemo(() => generatePriceHistory(token.symbol, token.price, '1D', token.change24h), [token])
   const isUp = token.change24h >= 0
-  const lineColor = token.symbol === 'HABESHA' ? '#F0B90B' : isUp ? '#0ECB81' : '#F6465D'
-  const fillColor = token.symbol === 'HABESHA' ? '#F0B90B' : isUp ? '#0ECB81' : '#F6465D'
-
-  // Build SVG sparkline path
-  const w = 120
-  const h = 40
-  const prices = points.map((p) => p.price)
-  const min = Math.min(...prices)
-  const max = Math.max(...prices)
-  const range = max - min || 1
-  const stepX = w / (prices.length - 1)
-  const pathD = prices.map((p, i) => `${i === 0 ? 'M' : 'L'} ${i * stepX} ${h - ((p - min) / range) * h}`).join(' ')
-  const areaD = `${pathD} L ${w} ${h} L 0 ${h} Z`
+  const lineColor = token.symbol === 'HABESHA' ? '#F0B90B' : isUp ? '#00D68F' : '#FF4D6D'
 
   return (
     <motion.button
@@ -91,23 +87,29 @@ function MiniTokenCard({ token, delay, onClick }: { token: TokenInfo; delay: num
           {isUp ? '▲' : '▼'} {Math.abs(token.change24h).toFixed(2)}%
         </div>
       </div>
-      {/* Mini sparkline */}
       <div className="mt-3 flex items-end justify-between gap-3">
         <div>
           <div className="font-mono text-lg font-bold tabular-nums">
             {formatUsd(token.price, { max: token.price > 1000 ? 0 : 4 })}
           </div>
+          {token.isLive && (
+            <div className="mt-0.5 text-[9px] font-bold text-up">● LIVE</div>
+          )}
         </div>
-        <svg width={w} height={h} className="overflow-visible">
-          <defs>
-            <linearGradient id={`spark-${token.symbol}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={fillColor} stopOpacity={0.3} />
-              <stop offset="100%" stopColor={fillColor} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <path d={areaD} fill={`url(#spark-${token.symbol})`} />
-          <path d={pathD} fill="none" stroke={lineColor} strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
-        </svg>
+        {/* Mini bar showing up/down */}
+        <div className="flex h-8 items-end gap-0.5">
+          {[0.3, 0.5, 0.7, 0.4, 0.6, 0.8, 0.5].map((h, i) => (
+            <div
+              key={i}
+              className="w-1 rounded-sm"
+              style={{
+                height: `${h * 100}%`,
+                backgroundColor: lineColor,
+                opacity: 0.3 + i * 0.1,
+              }}
+            />
+          ))}
+        </div>
       </div>
     </motion.button>
   )

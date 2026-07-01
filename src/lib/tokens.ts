@@ -21,9 +21,10 @@ export interface TokenConfig {
   color: string
   icon: string // emoji / glyph fallback
   iconUrl?: string // real token icon image
-  price: number // USD price
+  price: number // USD price (fallback/initial)
+  coingeckoId?: string // CoinGecko API ID for real live prices
   fixed?: boolean // fixed price (HABESHA)
-  change24h: number // simulated % change
+  change24h: number // simulated % change (fallback)
   networks: NetworkInfo[] // deposit networks + wallet addresses
   internalOnly?: boolean // Habesha: cannot deposit/withdraw externally
   listed: boolean // publicly listed
@@ -40,6 +41,7 @@ export const TOKENS: TokenConfig[] = [
     icon: '₮',
     iconUrl: '/tokens/usdt.png',
     price: 1.0,
+    coingeckoId: 'tether',
     change24h: 0.01,
     networks: [
       { name: 'TRON (TRC20)', address: 'TLksVFpUGS5SHeR4sJ1fDEajZ2fX59Nu5o' },
@@ -54,6 +56,7 @@ export const TOKENS: TokenConfig[] = [
     icon: '$',
     iconUrl: '/tokens/usdc.png',
     price: 1.0,
+    coingeckoId: 'usd-coin',
     change24h: -0.02,
     networks: [
       { name: 'Ethereum (ERC20)', address: '0xb2ba1a5b4ada2f3109cd393e7d6610cf6731ac27' },
@@ -67,6 +70,7 @@ export const TOKENS: TokenConfig[] = [
     icon: '₿',
     iconUrl: '/tokens/btc.png',
     price: 97500,
+    coingeckoId: 'bitcoin',
     change24h: 2.34,
     networks: [
       { name: 'Bitcoin Network', address: '15dQRtHdefyx8VmkSRKXyinzWyLUTGp9SA' },
@@ -80,6 +84,7 @@ export const TOKENS: TokenConfig[] = [
     icon: '◆',
     iconUrl: '/tokens/ton.png',
     price: 5.42,
+    coingeckoId: 'the-open-network',
     change24h: 4.12,
     networks: [
       { name: 'TON Network', address: 'UQC6BnUFgNB-8AxBQxo7_V7tblornEiUI6eSt8UOS4opKeiA' },

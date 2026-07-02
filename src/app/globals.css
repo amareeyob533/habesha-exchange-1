@@ -46,81 +46,83 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* ============ DARK THEME (default) — vibrant, multi-accent ============ */
+/* ============ DARK THEME — Cyber-Premium (Obsidian + Neon Cyan + Gold) ============ */
 :root {
-  --radius: 0.75rem;
-  --background: #0A0E1A;
-  --foreground: #E8ECF4;
-  --card: #121829;
-  --card-foreground: #E8ECF4;
-  --popover: #161D33;
-  --popover-foreground: #E8ECF4;
+  --radius: 0.875rem;
+  --background: #0B0E11;
+  --foreground: #EAECEF;
+  --card: #1E2329;
+  --card-foreground: #EAECEF;
+  --popover: #181A20;
+  --popover-foreground: #EAECEF;
   --primary: #F0B90B;
-  --primary-foreground: #0A0E1A;
-  --secondary: #1A2138;
-  --secondary-foreground: #E8ECF4;
-  --muted: #161C2E;
-  --muted-foreground: #7A8499;
-  --accent: #1A2138;
-  --accent-foreground: #E8ECF4;
+  --primary-foreground: #0B0E11;
+  --secondary: #181A20;
+  --secondary-foreground: #EAECEF;
+  --muted: #16191E;
+  --muted-foreground: #848E9C;
+  --accent: #181A20;
+  --accent-foreground: #EAECEF;
   --destructive: #FF4D6D;
-  --border: rgba(120, 140, 180, 0.12);
-  --input: rgba(120, 140, 180, 0.15);
+  --border: rgba(255, 255, 255, 0.06);
+  --input: rgba(255, 255, 255, 0.08);
   --ring: #F0B90B;
   --gold: #F0B90B;
-  --up: #00D68F;
+  --neon: #00E0FF;
+  --up: #0ECB81;
   --down: #FF4D6D;
   --chart-1: #F0B90B;
-  --chart-2: #00D68F;
+  --chart-2: #0ECB81;
   --chart-3: #FF4D6D;
-  --chart-4: #00C2FF;
+  --chart-4: #00E0FF;
   --chart-5: #B47AFF;
-  --sidebar: #0D1220;
-  --sidebar-foreground: #E8ECF4;
+  --sidebar: #0B0E11;
+  --sidebar-foreground: #EAECEF;
   --sidebar-primary: #F0B90B;
-  --sidebar-primary-foreground: #0A0E1A;
-  --sidebar-accent: #1A2138;
-  --sidebar-accent-foreground: #E8ECF4;
-  --sidebar-border: rgba(120, 140, 180, 0.12);
+  --sidebar-primary-foreground: #0B0E11;
+  --sidebar-accent: #181A20;
+  --sidebar-accent-foreground: #EAECEF;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
   --sidebar-ring: #F0B90B;
 }
 
-/* ============ LIGHT THEME — clean, cool, modern ============ */
+/* ============ LIGHT THEME — Luxury Minimalist (Off-white + Midnight Blue + Emerald) ============ */
 .light {
-  --background: #F0F4FA;
-  --foreground: #1A2138;
+  --background: #F8F9FA;
+  --foreground: #0C1A30;
   --card: #FFFFFF;
-  --card-foreground: #1A2138;
+  --card-foreground: #0C1A30;
   --popover: #FFFFFF;
-  --popover-foreground: #1A2138;
-  --primary: #C8901A;
+  --popover-foreground: #0C1A30;
+  --primary: #0C1A30;
   --primary-foreground: #FFFFFF;
-  --secondary: #E2E8F0;
-  --secondary-foreground: #1A2138;
-  --muted: #EDF1F7;
-  --muted-foreground: #647088;
-  --accent: #E2E8F0;
-  --accent-foreground: #1A2138;
-  --destructive: #E63555;
-  --border: rgba(26, 33, 56, 0.1);
-  --input: rgba(26, 33, 56, 0.12);
-  --ring: #C8901A;
-  --gold: #C8901A;
+  --secondary: #F0F2F5;
+  --secondary-foreground: #0C1A30;
+  --muted: #F5F6F8;
+  --muted-foreground: #627EEA;
+  --accent: #F0F2F5;
+  --accent-foreground: #0C1A30;
+  --destructive: #DC3545;
+  --border: rgba(12, 26, 48, 0.08);
+  --input: rgba(12, 26, 48, 0.1);
+  --ring: #0C1A30;
+  --gold: #0C1A30;
+  --neon: #0C1A30;
   --up: #00A66E;
-  --down: #E63555;
-  --chart-1: #C8901A;
+  --down: #DC3545;
+  --chart-1: #0C1A30;
   --chart-2: #00A66E;
-  --chart-3: #E63555;
-  --chart-4: #0098D9;
+  --chart-3: #DC3545;
+  --chart-4: #0C1A30;
   --chart-5: #8B5CF6;
-  --sidebar: #E8EDF5;
-  --sidebar-foreground: #1A2138;
-  --sidebar-primary: #C8901A;
+  --sidebar: #F0F2F5;
+  --sidebar-foreground: #0C1A30;
+  --sidebar-primary: #0C1A30;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #DDE3ED;
-  --sidebar-accent-foreground: #1A2138;
-  --sidebar-border: rgba(26, 33, 56, 0.1);
-  --sidebar-ring: #C8901A;
+  --sidebar-accent: #E8EAED;
+  --sidebar-accent-foreground: #0C1A30;
+  --sidebar-border: rgba(12, 26, 48, 0.08);
+  --sidebar-ring: #0C1A30;
 }
 
 @layer base {
@@ -149,7 +151,7 @@
 
 /* ============ GOLD GRADIENT ============ */
 .text-gold-gradient {
-  background: linear-gradient(135deg, #FCE38A 0%, #F0B90B 40%, #E89B0A 70%, #D49B0A 100%);
+  background: linear-gradient(135deg, #FCD66B 0%, #F0B90B 50%, #D49B0A 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -179,29 +181,29 @@
 
 /* ============ PREMIUM GLASSMORPHISM ============ */
 .glass-card {
-  background: color-mix(in srgb, var(--card) 72%, transparent);
-  backdrop-filter: blur(16px) saturate(1.4);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
-  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--card) 80%, transparent);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  border: 1px solid color-mix(in srgb, var(--border) 100%, transparent);
 }
 .glass-strong {
-  background: color-mix(in srgb, var(--card) 85%, transparent);
-  backdrop-filter: blur(20px) saturate(1.5);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
 }
 
-/* ============ PREMIUM SHADOWS ============ */
+/* ============ PREMIUM SHADOWS — soft depth, not harsh ============ */
 .shadow-gold {
-  box-shadow: 0 4px 20px rgba(240, 185, 11, 0.18), 0 1px 3px rgba(240, 185, 11, 0.12);
+  box-shadow: 0 4px 24px rgba(240, 185, 11, 0.12), 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 .shadow-gold-lg {
-  box-shadow: 0 8px 40px rgba(240, 185, 11, 0.22), 0 2px 8px rgba(240, 185, 11, 0.12);
+  box-shadow: 0 8px 48px rgba(240, 185, 11, 0.18), 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 .shadow-premium {
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 1px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 .light .shadow-premium {
-  box-shadow: 0 4px 24px rgba(26, 33, 56, 0.08), 0 1px 4px rgba(26, 33, 56, 0.06);
+  box-shadow: 0 8px 32px rgba(12, 26, 48, 0.06), 0 2px 8px rgba(12, 26, 48, 0.04);
 }
 
 /* ============ ANIMATED GRADIENT MESH BACKGROUND ============ */
@@ -224,20 +226,23 @@
   background: radial-gradient(circle, #F0B90B, transparent 70%);
   top: -10%; left: -5%;
   animation-delay: 0s;
+  opacity: 0.08;
 }
 .mesh-orb-2 {
   width: 400px; height: 400px;
-  background: radial-gradient(circle, #00C2FF, transparent 70%);
+  background: radial-gradient(circle, #00E0FF, transparent 70%);
   bottom: -5%; right: 10%;
   animation-delay: -7s;
+  opacity: 0.06;
 }
 .mesh-orb-3 {
   width: 350px; height: 350px;
   background: radial-gradient(circle, #B47AFF, transparent 70%);
   top: 40%; right: -5%;
   animation-delay: -14s;
+  opacity: 0.05;
 }
-.light .mesh-orb { opacity: 0.1; }
+.light .mesh-orb { opacity: 0.04 !important; }
 
 @keyframes orb-float {
   0%, 100% { transform: translate(0, 0) scale(1); }
@@ -257,7 +262,7 @@
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(240, 185, 11, 0.35), rgba(0, 194, 255, 0.15) 50%, rgba(180, 122, 255, 0.2));
+  background: linear-gradient(135deg, rgba(240, 185, 11, 0.25), rgba(0, 224, 255, 0.1) 50%, rgba(180, 122, 255, 0.12));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;

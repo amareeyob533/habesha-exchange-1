@@ -7,9 +7,10 @@ import { timeAgo, formatTokenAmount, shortAddr } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { motion } from 'framer-motion'
-import { Check, X, Loader2, RefreshCw, ShieldAlert, Inbox, Clock, ArrowDownToLine, ArrowUpFromLine, Users, ShoppingCart } from 'lucide-react'
+import { Check, X, Loader2, RefreshCw, ShieldAlert, Inbox, Clock, ArrowDownToLine, ArrowUpFromLine, Users, ShoppingCart, Headphones } from 'lucide-react'
 import { UsersAdmin } from '@/components/dashboard/views/admin-users'
 import { BuysAdmin } from '@/components/dashboard/views/admin-buys'
+import { AdminSupport } from '@/components/dashboard/views/admin-support'
 
 interface AdminDeposit {
   id: string
@@ -34,7 +35,7 @@ interface AdminWithdrawal {
   user: { uid: string; email: string; name: string | null }
 }
 
-type Section = 'deposits' | 'withdrawals' | 'buys' | 'users'
+type Section = 'deposits' | 'withdrawals' | 'buys' | 'users' | 'support'
 type StatusTab = 'pending' | 'approved' | 'rejected' | 'all'
 
 export function AdminView() {
@@ -47,7 +48,7 @@ export function AdminView() {
   const [acting, setActing] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    if (section === 'users' || section === 'buys') {
+    if (section === 'users' || section === 'buys' || section === 'support') {
       // These sections load their own data internally.
       setLoading(false)
       return
@@ -149,6 +150,12 @@ export function AdminView() {
         >
           <Users className="h-4 w-4" /> Users
         </button>
+        <button
+          onClick={() => { setSection('support') }}
+          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${section === 'support' ? 'bg-gold/15 text-gold' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          <Headphones className="h-4 w-4" /> Support
+        </button>
       </div>
 
       {/* Pending alert */}
@@ -172,6 +179,8 @@ export function AdminView() {
         <UsersAdmin />
       ) : section === 'buys' ? (
         <BuysAdmin refreshKey={0} />
+      ) : section === 'support' ? (
+        <AdminSupport />
       ) : (
         <>
           <Tabs value={statusTab} onValueChange={(v) => setStatusTab(v as StatusTab)}>

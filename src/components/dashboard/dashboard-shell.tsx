@@ -24,8 +24,17 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { LogoMark } from '@/components/common/logo'
 
 export function DashboardShell() {
-  const { view } = useUI()
+  const { view, setView } = useUI()
   const { fetchMe, user } = useAuth()
+
+  const isAdmin = user?.email?.toLowerCase() === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'amareeyob533@gmail.com').toLowerCase()
+
+  // If admin, force to admin view (clean admin-only dashboard)
+  useEffect(() => {
+    if (isAdmin && view !== 'admin' && view !== 'support') {
+      setView('admin')
+    }
+  }, [isAdmin, view, setView])
 
   // Periodic refresh — every 30s, only when tab is visible (reduces lag).
   useEffect(() => {

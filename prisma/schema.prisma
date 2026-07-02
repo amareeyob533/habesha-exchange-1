@@ -130,6 +130,17 @@ model SupportMessage {
   message   String
   status    String   @default("open") // open | resolved
   createdAt DateTime @default(now())
+  replies   SupportReply[]
+}
+
+model SupportReply {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    SupportMessage @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId  String   // user id of sender (could be user or admin)
+  senderRole String  // "user" | "admin"
+  message   String
+  createdAt DateTime @default(now())
 }
 
 

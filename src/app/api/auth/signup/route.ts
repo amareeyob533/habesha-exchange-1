@@ -75,10 +75,24 @@ export async function POST(req: NextRequest) {
       data: {
         userId: user.id,
         title: 'Welcome to Habesha Exchange! 🎉',
-        message: `You received ${airdropAmount.toFixed(4)} HABESHA ($${HABESHA_AIRDROP_USD} welcome bonus). Start trading now! `,
+        message: `You received ${airdropAmount.toFixed(4)} HABESHA ($${HABESHA_AIRDROP_USD} welcome bonus). Start trading now!`,
         type: 'success',
       },
     })
+
+    // Notify admin that a new user joined
+    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'amareeyob533@gmail.com'
+    const admin = await db.user.findUnique({ where: { email: adminEmail }, select: { id: true } })
+    if (admin) {
+      await db.notification.create({
+        data: {
+          userId: admin.id,
+          title: 'New User Joined 🎉',
+          message: `${user.name || user.username || user.email} has joined Habesha Exchange. UID: ${user.uid}`,
+          type: 'info',
+        },
+      })
+    }
 
     const token = await setSessionCookie({ userId: user.id, uid: user.uid, email: user.email })
 

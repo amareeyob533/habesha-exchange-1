@@ -43,7 +43,8 @@ export function Sidebar() {
           </button>
         </div>
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {NAV.map((item) => {
+          {/* Admin users only see admin + support nav */}
+          {(isAdmin ? [] : NAV).map((item) => {
             const active = view === item.key
             return (
               <button
@@ -69,8 +70,9 @@ export function Sidebar() {
           {isAdmin && (
             <>
               <div className="my-2 border-t border-border/60" />
-              <div className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wider text-gold">Admin</div>
+              <div className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wider text-gold">Admin Tools</div>
               <AdminNavItem item={ADMIN_NAV} active={view === ADMIN_NAV.key} onClick={() => setView(ADMIN_NAV.key)} />
+              <AdminNavItem item={{ key: 'support' as ViewKey, label: 'Support Chat', icon: LifeBuoy }} active={view === 'support'} onClick={() => setView('support')} />
             </>
           )}
         </nav>

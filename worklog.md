@@ -771,3 +771,35 @@ Changes:
 
 Stage Summary:
 - Pending icon now updates within 5 seconds, turns green with "completed" text when admin approves, stays until user opens and sees the result, then disappears. Lint clean.
+
+---
+Task ID: 40
+Agent: main
+Task: Admin support chat + new user notification + admin-only dashboard + support email
+
+1. Support Chat System (user ↔ admin):
+   - Schema: added SupportReply model (ticketId, senderId, senderRole, message, createdAt) + relation on SupportMessage.
+   - /api/support/ticket: GET (list user's tickets with replies), POST (create ticket + notify admin)
+   - /api/support/reply: POST (user replies to own ticket + notify admin)
+   - /api/admin/support: GET (admin lists all tickets with user info + replies)
+   - /api/admin/support/reply: POST (admin replies + notifies user)
+   - /api/admin/support/resolve: POST (admin marks ticket resolved + notifies user)
+   - SupportView (user): shows tickets list, click to open chat modal with chat bubbles (user right, admin left), reply input, resolved status
+   - AdminSupport (admin): shows open tickets as cards, click to open chat view, reply input, "Mark Resolved" button
+   - Admin panel: added "Support" tab with Headphones icon
+   - Admin sidebar: shows "Admin · Approvals" + "Support Chat" nav items only (no user nav)
+
+2. New User Notification:
+   - signup route: after creating user, finds admin by email and creates notification "New User Joined 🎉 — {name} has joined. UID: {uid}"
+
+3. Support Email:
+   - SupportView shows amareeyob533@gmail.com as clickable mailto link in a contact card
+
+4. Admin-Only Dashboard:
+   - Admin sidebar: no user nav items (Overview, Markets, Wallet, Exchange, Transactions, Profile, Settings hidden)
+   - Admin sidebar: only shows "Admin · Approvals" + "Support Chat"
+   - Admin topbar: shows "Admin Panel" label instead of balance
+   - Admin topbar: no Deposit/Buy buttons
+   - DashboardShell: forces admin to 'admin' view on load
+
+Stage Summary: Support chat works bidirectionally, admin gets notified on new users + new tickets + user replies, admin dashboard is clean (admin-only features), support email shown. Lint clean.

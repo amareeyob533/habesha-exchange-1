@@ -1,6 +1,6 @@
 'use client'
 
-import { Menu, Bell, LogOut, ChevronDown } from 'lucide-react'
+import { Menu, Bell, LogOut, ChevronDown, ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { useAuth } from '@/hooks/use-auth'
@@ -22,6 +22,7 @@ export function Topbar() {
   const { setSidebarOpen, openNotif, setView } = useUI()
   const unread = notifications.filter((n) => !n.read).length
   const initials = (user?.name || user?.email || 'U').slice(0, 2).toUpperCase()
+  const isAdmin = user?.email?.toLowerCase() === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'amareeyob533@gmail.com').toLowerCase()
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/40 glass-strong px-4 sm:px-6">
@@ -29,34 +30,47 @@ export function Topbar() {
         <Menu className="h-5 w-5" />
       </button>
 
+      {/* Admin sees "Admin Panel" label, users see their balance */}
       <div className="flex items-center gap-2">
-        <div className="hidden text-xs text-muted-foreground sm:block">Total Balance</div>
-        <motion.div
-          key={totalUsd}
-          initial={{ opacity: 0.5, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-lg font-extrabold tracking-tight tabular-nums"
-        >
-          <span className="text-foreground">{formatUsd(totalUsd)}</span>
-        </motion.div>
+        {isAdmin ? (
+          <div className="flex items-center gap-2 text-sm font-bold text-gold">
+            <ShieldAlert className="h-4 w-4" /> Admin Panel
+          </div>
+        ) : (
+          <>
+            <div className="hidden text-xs text-muted-foreground sm:block">Total Balance</div>
+            <motion.div
+              key={totalUsd}
+              initial={{ opacity: 0.5, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-lg font-extrabold tracking-tight tabular-nums"
+            >
+              <span className="text-foreground">{formatUsd(totalUsd)}</span>
+            </motion.div>
+          </>
+        )}
       </div>
 
       <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="hidden border-gold/40 text-gold hover:bg-gold/10 sm:inline-flex"
-          onClick={() => useUI.getState().openDeposit('USDT')}
-        >
-          Deposit
-        </Button>
-        <Button
-          size="sm"
-          className="hidden bg-gold-gradient font-semibold text-primary-foreground hover:opacity-95 sm:inline-flex"
-          onClick={() => useUI.getState().openBuy()}
-        >
-          Buy
-        </Button>
+        {!isAdmin && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="hidden border-gold/40 text-gold hover:bg-gold/10 sm:inline-flex"
+            onClick={() => useUI.getState().openDeposit('USDT')}
+          >
+            Deposit
+          </Button>
+        )}
+        {!isAdmin && (
+          <Button
+            size="sm"
+            className="hidden bg-gold-gradient font-semibold text-primary-foreground hover:opacity-95 sm:inline-flex"
+            onClick={() => useUI.getState().openBuy()}
+          >
+            Buy
+          </Button>
+        )}
 
         <GlowingNotifBell unread={unread} onClick={openNotif} notifications={notifications} />
 

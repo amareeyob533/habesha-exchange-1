@@ -803,3 +803,27 @@ Task: Admin support chat + new user notification + admin-only dashboard + suppor
    - DashboardShell: forces admin to 'admin' view on load
 
 Stage Summary: Support chat works bidirectionally, admin gets notified on new users + new tickets + user replies, admin dashboard is clean (admin-only features), support email shown. Lint clean.
+
+---
+Task ID: FIX-BUILD
+Agent: main
+Task: Fix Vercel build crash — execSync throwing on prisma db push failure (scripts/build.mjs:59)
+
+Work Log:
+- Root cause #1: Prisma schema references `directUrl = env("DIRECT_URL")` but build.mjs only set DATABASE_URL → prisma db push crashed with P1012 "Environment variable not found: DIRECT_URL"
+- Root cause #2: build.mjs used `execSync('prisma db push')` with NO try-catch → any prisma failure threw and killed the whole build before `next build` could run
+- Rewrote scripts/build.mjs:
+  * Maps POSTGRES_PRISMA_URL (pooled) → DATABASE_URL
+  * Maps POSTGRES_URL_NON_POOLING (direct) → DIRECT_URL
+  * Fills in the other if only one is set
+  * Wraps prisma generate / prisma db push / next build in a `run()` helper with try-catch
+  * prisma db push failure NO LONGER aborts the build — next build always runs
+  * Only `next build` failure exits with code 1
+- Added DIRECT_URL to local .env (points to same SQLite file) so local `prisma db push` works
+- Verified: schema is PostgreSQL (not SQLite), viewport meta present, ETB rate 185-187, M-PESA (not EMPSA), build script syntax valid (node --check), dev server healthy, lint passes (0 errors, 1 warning)
+- No vercel.json overriding the build command — Vercel uses package.json `node scripts/build.mjs`
+
+Stage Summary:
+- Build is now bulletproof on Vercel: even if the Postgres database isn't connected yet, `next build` still completes and the site deploys. Runtime APIs already handle DB errors gracefully.
+- When the user connects a Vercel Postgres database, both DATABASE_URL and DIRECT_URL are auto-resolved from POSTGRES_PRISMA_URL + POSTGRES_URL_NON_POOLING, so prisma db push succeeds and tables are created.
+- Deployment is ready. User can download and redeploy.

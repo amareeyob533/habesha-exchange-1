@@ -111,57 +111,49 @@ export function AdminView() {
   const pendingCount = (section === 'deposits' ? deposits : withdrawals).filter((d) => d.status === 'pending').length
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
-            <ShieldAlert className="h-6 w-6 text-gold" /> Admin · Approvals
-          </h2>
-          <p className="text-sm text-muted-foreground">Review and approve user deposits & withdrawals</p>
+    <div className="space-y-6">
+      {/* Big hero header */}
+      <div className="relative overflow-hidden rounded-3xl gradient-border glass-card p-8 shadow-gold-lg">
+        <div className="bg-gold-glow pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full opacity-20" />
+        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex items-center gap-3">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gold/15 text-gold ring-2 ring-gold/20">
+                <ShieldAlert className="h-7 w-7" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-extrabold tracking-tight">Admin Panel</h1>
+                <p className="text-sm text-muted-foreground">Manage deposits, withdrawals, buys, users & support</p>
+              </div>
+            </div>
+          </div>
+          <Button variant="outline" size="lg" onClick={load} disabled={loading} className="border-gold/30 text-gold hover:bg-gold/10">
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh Data
+          </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-          <RefreshCw className={`mr-1 h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
-        </Button>
       </div>
 
-      {/* Section toggle: Deposits / Withdrawals / Users */}
-      <div className="inline-flex rounded-xl glass-card p-1">
-        <button
-          onClick={() => { setSection('deposits'); setStatusTab('pending') }}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${section === 'deposits' ? 'bg-up/15 text-up' : 'text-muted-foreground hover:text-foreground'}`}
-        >
-          <ArrowDownToLine className="h-4 w-4" /> Deposits
-        </button>
-        <button
-          onClick={() => { setSection('withdrawals'); setStatusTab('pending') }}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${section === 'withdrawals' ? 'bg-down/15 text-down' : 'text-muted-foreground hover:text-foreground'}`}
-        >
-          <ArrowUpFromLine className="h-4 w-4" /> Withdrawals
-        </button>
-        <button
-          onClick={() => { setSection('buys') }}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${section === 'buys' ? 'bg-gold/15 text-gold' : 'text-muted-foreground hover:text-foreground'}`}
-        >
-          <ShoppingCart className="h-4 w-4" /> Buys
-        </button>
-        <button
-          onClick={() => { setSection('users') }}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${section === 'users' ? 'bg-gold/15 text-gold' : 'text-muted-foreground hover:text-foreground'}`}
-        >
-          <Users className="h-4 w-4" /> Users
-        </button>
-        <button
-          onClick={() => { setSection('support') }}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${section === 'support' ? 'bg-gold/15 text-gold' : 'text-muted-foreground hover:text-foreground'}`}
-        >
-          <Headphones className="h-4 w-4" /> Support
-        </button>
+      {/* Quick stats cards */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <StatCard icon={ArrowDownToLine} label="Deposits" color="text-up" onClick={() => { setSection('deposits'); setStatusTab('pending') }} active={section === 'deposits'} />
+        <StatCard icon={ArrowUpFromLine} label="Withdrawals" color="text-down" onClick={() => { setSection('withdrawals'); setStatusTab('pending') }} active={section === 'withdrawals'} />
+        <StatCard icon={ShoppingCart} label="Buys" color="text-gold" onClick={() => setSection('buys')} active={section === 'buys'} />
+        <StatCard icon={Headphones} label="Support" color="text-chart-4" onClick={() => setSection('support')} active={section === 'support'} />
+      </div>
+
+      {/* Section toggle — big pill buttons */}
+      <div className="flex flex-wrap gap-2">
+        <SectionPill icon={ArrowDownToLine} label="Deposits" active={section === 'deposits'} onClick={() => { setSection('deposits'); setStatusTab('pending') }} color="up" />
+        <SectionPill icon={ArrowUpFromLine} label="Withdrawals" active={section === 'withdrawals'} onClick={() => { setSection('withdrawals'); setStatusTab('pending') }} color="down" />
+        <SectionPill icon={ShoppingCart} label="Buys" active={section === 'buys'} onClick={() => setSection('buys')} color="gold" />
+        <SectionPill icon={Users} label="Users" active={section === 'users'} onClick={() => setSection('users')} color="gold" />
+        <SectionPill icon={Headphones} label="Support" active={section === 'support'} onClick={() => setSection('support')} color="chart-4" />
       </div>
 
       {/* Pending alert */}
       {statusTab === 'pending' && pendingCount > 0 && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 rounded-2xl border border-gold/40 bg-gold/5 p-4">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gold/15 text-gold animate-pulse-gold">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gold/15 text-gold animate-pulse-gold">
             <Clock className="h-5 w-5" />
           </div>
           <div>
@@ -175,40 +167,79 @@ export function AdminView() {
         </motion.div>
       )}
 
-      {section === 'users' ? (
-        <UsersAdmin />
-      ) : section === 'buys' ? (
-        <BuysAdmin refreshKey={0} />
-      ) : section === 'support' ? (
-        <AdminSupport />
-      ) : (
-        <>
-          <Tabs value={statusTab} onValueChange={(v) => setStatusTab(v as StatusTab)}>
-            <TabsList>
-              <TabsTrigger value="pending">Pending</TabsTrigger>
-              <TabsTrigger value="approved">{section === 'deposits' ? 'Approved' : 'Completed'}</TabsTrigger>
-              <TabsTrigger value="rejected">Rejected</TabsTrigger>
-              <TabsTrigger value="all">All</TabsTrigger>
-            </TabsList>
-          </Tabs>
+      {/* Content area */}
+      <div className="min-h-[400px]">
+        {section === 'users' ? (
+          <UsersAdmin />
+        ) : section === 'buys' ? (
+          <BuysAdmin refreshKey={0} />
+        ) : section === 'support' ? (
+          <AdminSupport />
+        ) : (
+          <>
+            <Tabs value={statusTab} onValueChange={(v) => setStatusTab(v as StatusTab)}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="pending">Pending</TabsTrigger>
+                <TabsTrigger value="approved">{section === 'deposits' ? 'Approved' : 'Completed'}</TabsTrigger>
+                <TabsTrigger value="rejected">Rejected</TabsTrigger>
+                <TabsTrigger value="all">All</TabsTrigger>
+              </TabsList>
+            </Tabs>
 
-          {section === 'deposits' ? (
-            <DepositsTable deposits={deposits} acting={acting} onAct={actDeposit} />
-          ) : (
-            <WithdrawalsTable withdrawals={withdrawals} acting={acting} onAct={actWithdrawal} />
-          )}
-
-          <div className="rounded-xl glass-card p-4 text-xs text-muted-foreground">
-            <b className="text-foreground">How this works:</b>
             {section === 'deposits' ? (
-              <> When a user clicks "I Deposited", their balance is <b>not</b> credited. The deposit appears here as <b className="text-gold">Pending</b>. Click <b className="text-up">Approve</b> to credit their balance instantly, or <b className="text-down">Reject</b> to decline.</>
+              <DepositsTable deposits={deposits} acting={acting} onAct={actDeposit} />
             ) : (
-              <> When a user requests an external withdrawal, the amount is deducted from their balance and held as <b className="text-gold">Pending</b>. Click <b className="text-up">Approve</b> to confirm the withdrawal as sent, or <b className="text-down">Reject</b> to return the funds to the user. <b>Internal transfers</b> (UID to UID) are instant and do not appear here.</>
+              <WithdrawalsTable withdrawals={withdrawals} acting={acting} onAct={actWithdrawal} />
             )}
-          </div>
-        </>
-      )}
+
+            <div className="mt-6 rounded-xl glass-card p-4 text-xs text-muted-foreground">
+              <b className="text-foreground">How this works:</b>
+              {section === 'deposits'
+                ? ' When a user clicks "I Deposited", their balance is not credited. The deposit appears here as Pending. Click Approve to credit their balance instantly, or Reject to decline.'
+                : ' When a user requests an external withdrawal, the amount is deducted and held as Pending. Click Approve to confirm as sent, or Reject to return the funds. Internal transfers (UID to UID) are instant.'}
+            </div>
+          </>
+        )}
+      </div>
     </div>
+  )
+}
+
+function StatCard({ icon: Icon, label, color, onClick, active }: { icon: any; label: string; color: string; onClick: () => void; active: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`group glass-card rounded-2xl p-5 text-left transition-all hover:shadow-gold ${active ? 'ring-2 ring-gold/40 shadow-gold' : ''}`}
+    >
+      <div className="flex items-center gap-3">
+        <div className={`flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/60 ${color} transition-transform group-hover:scale-110`}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <div>
+          <div className="text-sm font-bold">{label}</div>
+          <div className="text-[10px] text-muted-foreground">Click to manage</div>
+        </div>
+      </div>
+    </button>
+  )
+}
+
+function SectionPill({ icon: Icon, label, active, onClick, color }: { icon: any; label: string; active: boolean; onClick: () => void; color: string }) {
+  const colorMap: Record<string, string> = {
+    up: 'bg-up/15 text-up',
+    down: 'bg-down/15 text-down',
+    gold: 'bg-gold/15 text-gold',
+    'chart-4': 'bg-chart-4/15 text-chart-4',
+  }
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
+        active ? colorMap[color] : 'bg-secondary/30 text-muted-foreground hover:text-foreground'
+      }`}
+    >
+      <Icon className="h-4 w-4" /> {label}
+    </button>
   )
 }
 

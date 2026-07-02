@@ -133,7 +133,7 @@ export function LandingPage() {
             <Gift className="h-3.5 w-3.5" /> New users get $15 in Habesha Token — instantly
           </motion.div>
 
-          <h1 className="mx-auto max-w-4xl text-5xl font-extrabold leading-[1.02] tracking-tight sm:text-7xl">
+          <h1 className="mx-auto max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
             Trade crypto with{' '}
             <span className="text-gold-gradient">confidence</span>
           </h1>
@@ -141,10 +141,10 @@ export function LandingPage() {
             A premium, secure and lightning-fast exchange built for everyone. Trade BTC, USDT, USDC, TON and the exclusive Habesha Token — all in one place.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button size="lg" className="shimmer-btn bg-gold-gradient h-14 px-10 text-base font-bold text-primary-foreground shadow-gold-lg hover:opacity-95" onClick={() => openAuth('signup')}>
+            <Button size="lg" className="shimmer-btn bg-gold-gradient h-12 px-6 sm:h-14 sm:px-10 text-base font-bold text-primary-foreground shadow-gold-lg hover:opacity-95" onClick={() => openAuth('signup')}>
               Create Free Account <ArrowRight className="ml-1 h-5 w-5" />
             </Button>
-            <Button size="lg" variant="outline" className="h-14 px-10 text-base font-semibold glass-card" onClick={() => openAuth('login')}>
+            <Button size="lg" variant="outline" className="h-12 px-6 sm:h-14 sm:px-10 text-base font-semibold glass-card" onClick={() => openAuth('login')}>
               Sign In
             </Button>
           </div>
@@ -290,7 +290,7 @@ export function LandingPage() {
               <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-xs font-bold text-gold backdrop-blur-sm">
                 <LogoMark className="h-4 w-4 rounded" /> HABESHA TOKEN
               </div>
-              <h3 className="mt-5 text-3xl font-extrabold tracking-tight sm:text-5xl">The exclusive token of the ecosystem</h3>
+              <h3 className="mt-5 text-2xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">The exclusive token of the ecosystem</h3>
               <p className="mt-4 text-base text-muted-foreground">
                 Habesha Token is fixed at <b className="text-gold">$6.4321674</b> and not yet listed publicly. Every new member receives
                 <b className="text-gold"> $15</b> worth instantly. Transferable between Habesha Exchange users — no external withdrawals.
@@ -354,7 +354,7 @@ export function LandingPage() {
           <div className="relative">
             <h2 className="text-3xl font-extrabold tracking-tight sm:text-5xl">Start trading in under a minute</h2>
             <p className="mx-auto mt-4 max-w-xl text-base text-muted-foreground">Join thousands of traders on Habesha Exchange and claim your welcome bonus today.</p>
-            <Button size="lg" className="shimmer-btn bg-gold-gradient mt-8 h-14 px-10 text-base font-bold text-primary-foreground shadow-gold hover:opacity-95" onClick={() => openAuth('signup')}>
+            <Button size="lg" className="shimmer-btn bg-gold-gradient mt-8 h-12 px-6 sm:h-14 sm:px-10 text-base font-bold text-primary-foreground shadow-gold hover:opacity-95" onClick={() => openAuth('signup')}>
               Create Free Account <ArrowRight className="ml-1 h-5 w-5" />
             </Button>
           </div>

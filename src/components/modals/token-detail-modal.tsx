@@ -64,7 +64,7 @@ export function TokenDetailModal() {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && close()}>
-      <DialogContent className="max-w-[560px] glass-strong border-border/40">
+      <DialogContent className="max-w-[560px] w-[calc(100%-2rem)] glass-strong border-border/40">
         {token && (
           <>
             {/* Header */}

@@ -134,15 +134,15 @@ export function AdminView() {
       </div>
 
       {/* Quick stats cards */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <StatCard icon={ArrowDownToLine} label="Deposits" color="text-up" onClick={() => { setSection('deposits'); setStatusTab('pending') }} active={section === 'deposits'} />
         <StatCard icon={ArrowUpFromLine} label="Withdrawals" color="text-down" onClick={() => { setSection('withdrawals'); setStatusTab('pending') }} active={section === 'withdrawals'} />
         <StatCard icon={ShoppingCart} label="Buys" color="text-gold" onClick={() => setSection('buys')} active={section === 'buys'} />
         <StatCard icon={Headphones} label="Support" color="text-chart-4" onClick={() => setSection('support')} active={section === 'support'} />
       </div>
 
-      {/* Section toggle — big pill buttons */}
-      <div className="flex flex-wrap gap-2">
+      {/* Section toggle — big pill buttons (scrollable on mobile) */}
+      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
         <SectionPill icon={ArrowDownToLine} label="Deposits" active={section === 'deposits'} onClick={() => { setSection('deposits'); setStatusTab('pending') }} color="up" />
         <SectionPill icon={ArrowUpFromLine} label="Withdrawals" active={section === 'withdrawals'} onClick={() => { setSection('withdrawals'); setStatusTab('pending') }} color="down" />
         <SectionPill icon={ShoppingCart} label="Buys" active={section === 'buys'} onClick={() => setSection('buys')} color="gold" />
@@ -234,7 +234,7 @@ function SectionPill({ icon: Icon, label, active, onClick, color }: { icon: any;
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
+      className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
         active ? colorMap[color] : 'bg-secondary/30 text-muted-foreground hover:text-foreground'
       }`}
     >

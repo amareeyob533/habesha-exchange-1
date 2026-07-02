@@ -46,9 +46,11 @@ export function SupportView() {
     try {
       const data = await apiFetch<{ tickets: Ticket[] }>('/api/support/ticket')
       setTickets(data.tickets || [])
-    } catch { toast({ variant: 'destructive', title: 'Failed to load' }) }
-    finally { setLoading(false) }
-  }, [toast])
+    } catch (err: any) {
+      // Don't show error toast — just set empty tickets (DB might not be ready on Vercel)
+      setTickets([])
+    } finally { setLoading(false) }
+  }, [])
 
   useEffect(() => { load() }, [load])
 
@@ -62,14 +64,21 @@ export function SupportView() {
       })
       setReplyText('')
       await load()
-      // Update selected ticket
-      const updated = tickets.find((t) => t.id === selectedTicket.id)
-      if (updated) setSelectedTicket(updated)
       toast({ title: 'Reply sent' })
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Failed', description: err.message })
     } finally { setReplying(false) }
   }
+
+  // Auto-update selected ticket when tickets list changes (after reply/reload)
+  useEffect(() => {
+    if (selectedTicket) {
+      const updated = tickets.find((t) => t.id === selectedTicket.id)
+      if (updated && JSON.stringify(updated) !== JSON.stringify(selectedTicket)) {
+        setSelectedTicket(updated)
+      }
+    }
+  }, [tickets])
 
   return (
     <div className="space-y-5">

@@ -11,7 +11,6 @@ export async function POST(req: NextRequest) {
     if (!ticketId || !message?.trim()) {
       return NextResponse.json({ error: 'ticketId and message required' }, { status: 400 })
     }
-    // Verify the ticket belongs to this user
     const ticket = await db.supportMessage.findUnique({ where: { id: ticketId } })
     if (!ticket || ticket.userId !== user.id) {
       return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
@@ -23,20 +22,23 @@ export async function POST(req: NextRequest) {
       data: { ticketId, senderId: user.id, senderRole: 'user', message: message.trim() },
     })
     // Notify admin
-    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'amareeyob533@gmail.com'
-    const admin = await db.user.findUnique({ where: { email: adminEmail }, select: { id: true } })
-    if (admin) {
-      await db.notification.create({
-        data: {
-          userId: admin.id,
-          title: 'Support Reply',
-          message: `${user.name || user.email} replied to: ${ticket.subject}`,
-          type: 'info',
-        },
-      })
-    }
+    try {
+      const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'amareeyob533@gmail.com'
+      const admin = await db.user.findUnique({ where: { email: adminEmail }, select: { id: true } })
+      if (admin) {
+        await db.notification.create({
+          data: {
+            userId: admin.id,
+            title: 'Support Reply',
+            message: `${user.name || user.email} replied to: ${ticket.subject}`,
+            type: 'info',
+          },
+        })
+      }
+    } catch (e) { /* not critical */ }
     return NextResponse.json({ ok: true, reply })
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message }, { status: 500 })
+    console.error('Reply error:', err)
+    return NextResponse.json({ error: err?.message || 'Failed to reply' }, { status: 500 })
   }
 }

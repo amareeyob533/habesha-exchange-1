@@ -7,14 +7,24 @@ export async function GET() {
   try {
     const { user, response } = await requireAuth()
     if (!user) return response!
-    const tickets = await db.supportMessage.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: 'desc' },
-      include: { replies: { orderBy: { createdAt: 'asc' } } },
-    })
-    return NextResponse.json({ tickets })
+    try {
+      const tickets = await db.supportMessage.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: 'desc' },
+        include: { replies: { orderBy: { createdAt: 'asc' } } },
+      })
+      return NextResponse.json({ tickets })
+    } catch (dbErr: any) {
+      console.error('Support ticket DB error:', dbErr?.message)
+      // If table doesn't exist yet, return empty
+      if (dbErr?.message?.includes('does not exist') || dbErr?.code === 'P2021') {
+        return NextResponse.json({ tickets: [] })
+      }
+      throw dbErr
+    }
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message }, { status: 500 })
+    console.error('Support ticket error:', err)
+    return NextResponse.json({ tickets: [], error: err?.message }, { status: 500 })
   }
 }
 
@@ -32,19 +42,22 @@ export async function POST(req: NextRequest) {
     })
     // Notify admin
     const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'amareeyob533@gmail.com'
-    const admin = await db.user.findUnique({ where: { email: adminEmail }, select: { id: true } })
-    if (admin) {
-      await db.notification.create({
-        data: {
-          userId: admin.id,
-          title: 'New Support Ticket',
-          message: `${user.name || user.email}: ${subject.trim()}`,
-          type: 'info',
-        },
-      })
-    }
+    try {
+      const admin = await db.user.findUnique({ where: { email: adminEmail }, select: { id: true } })
+      if (admin) {
+        await db.notification.create({
+          data: {
+            userId: admin.id,
+            title: 'New Support Ticket',
+            message: `${user.name || user.email}: ${subject.trim()}`,
+            type: 'info',
+          },
+        })
+      }
+    } catch (e) { /* notification not critical */ }
     return NextResponse.json({ ok: true, ticket })
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message }, { status: 500 })
+    console.error('Create ticket error:', err)
+    return NextResponse.json({ error: err?.message || 'Failed to create ticket' }, { status: 500 })
   }
 }

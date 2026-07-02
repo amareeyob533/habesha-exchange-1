@@ -34,12 +34,14 @@ export function SupportModal() {
     if (!subject.trim() || !message.trim()) return
     setLoading(true)
     try {
-      const res = await apiFetch<{ whatsapp: string }>('/api/support', {
+      // Create a support ticket via the new ticket API
+      await apiFetch('/api/support/ticket', {
         method: 'POST',
         body: JSON.stringify({ subject, message }),
       })
-      setDone(res.whatsapp)
-      toast({ title: 'Message sent', description: 'Our team will get back to you.' })
+      const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP || '+251900000000'
+      setDone(whatsapp)
+      toast({ title: 'Ticket created', description: 'Our team will get back to you.' })
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Failed', description: err.message })
     } finally {

@@ -58,11 +58,11 @@ export function Sidebar() {
                 {active && (
                   <motion.div
                     layoutId="sidebar-active"
-                    className="absolute inset-0 rounded-xl border border-gold/30 bg-gold/10"
+                    className="absolute inset-0 rounded-xl border border-primary/30 bg-primary/10"
                     transition={{ type: 'spring', stiffness: 400, damping: 32 }}
                   />
                 )}
-                <item.icon className={cn('relative h-[18px] w-[18px]', active && 'text-gold')} />
+                <item.icon className={cn('relative h-[18px] w-[18px]', active && 'text-primary')} />
                 <span className="relative">{item.label}</span>
               </button>
             )
@@ -70,17 +70,17 @@ export function Sidebar() {
           {isAdmin && (
             <>
               <div className="my-2 border-t border-border/60" />
-              <div className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wider text-gold">Admin Tools</div>
+              <div className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wider text-primary">Admin Tools</div>
               <AdminNavItem item={ADMIN_NAV} active={view === ADMIN_NAV.key} onClick={() => setView(ADMIN_NAV.key)} />
               <AdminNavItem item={{ key: 'support' as ViewKey, label: 'Support Chat', icon: LifeBuoy }} active={view === 'support'} onClick={() => setView('support')} />
             </>
           )}
         </nav>
         <div className="border-t border-border p-4">
-          <div className="rounded-xl border border-gold/20 bg-gold/5 p-3 text-xs text-muted-foreground">
-            <div className="font-semibold text-gold">Need help?</div>
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
+            <div className="font-semibold text-primary">Need help?</div>
             <p className="mt-1">Contact our 24/7 support team anytime.</p>
-            <button onClick={() => setView('support')} className="mt-2 font-semibold text-gold hover:underline">
+            <button onClick={() => setView('support')} className="mt-2 font-semibold text-primary hover:underline">
               Open support →
             </button>
           </div>
@@ -102,11 +102,11 @@ function AdminNavItem({ item, active, onClick }: { item: { key: ViewKey; label: 
       {active && (
         <motion.div
           layoutId="sidebar-active"
-          className="absolute inset-0 rounded-xl border border-gold/40 bg-gold/10"
+          className="absolute inset-0 rounded-xl border border-primary/40 bg-primary/10"
           transition={{ type: 'spring', stiffness: 400, damping: 32 }}
         />
       )}
-      <item.icon className={cn('relative h-[18px] w-[18px]', active ? 'text-gold' : 'text-gold/70')} />
+      <item.icon className={cn('relative h-[18px] w-[18px]', active ? 'text-primary' : 'text-primary/70')} />
       <span className="relative">{item.label}</span>
     </button>
   )

@@ -33,7 +33,7 @@ export function Topbar() {
       {/* Admin sees "Admin Panel" label, users see their balance */}
       <div className="flex items-center gap-2">
         {isAdmin ? (
-          <div className="flex items-center gap-2 text-sm font-bold text-gold">
+          <div className="flex items-center gap-2 text-sm font-bold text-primary">
             <ShieldAlert className="h-4 w-4" /> Admin Panel
           </div>
         ) : (
@@ -56,7 +56,7 @@ export function Topbar() {
           <Button
             variant="outline"
             size="sm"
-            className="hidden border-gold/40 text-gold hover:bg-gold/10 sm:inline-flex"
+            className="hidden border-primary/40 text-primary hover:bg-primary/10 sm:inline-flex"
             onClick={() => useUI.getState().openDeposit('USDT')}
           >
             Deposit
@@ -65,7 +65,7 @@ export function Topbar() {
         {!isAdmin && (
           <Button
             size="sm"
-            className="hidden bg-gold-gradient font-semibold text-primary-foreground hover:opacity-95 sm:inline-flex"
+            className="hidden bg-emerald-gradient font-semibold text-primary-foreground hover:opacity-95 sm:inline-flex"
             onClick={() => useUI.getState().openBuy()}
           >
             Buy
@@ -78,9 +78,9 @@ export function Topbar() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 rounded-full border border-border bg-secondary/60 py-1 pl-1 pr-2 transition-colors hover:border-gold/60">
+            <button className="flex items-center gap-2 rounded-full border border-border bg-secondary/60 py-1 pl-1 pr-2 transition-colors hover:border-primary/60">
               <Avatar className="h-7 w-7">
-                <AvatarFallback className="bg-gold/15 text-[11px] font-bold text-gold">{initials}</AvatarFallback>
+                <AvatarFallback className="bg-primary/15 text-[11px] font-bold text-primary">{initials}</AvatarFallback>
               </Avatar>
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
@@ -89,7 +89,7 @@ export function Topbar() {
             <DropdownMenuLabel className="text-xs">
               <div className="font-semibold text-foreground">{user?.name || 'User'}</div>
               <div className="text-muted-foreground">{user?.email}</div>
-              <div className="mt-1 inline-flex items-center gap-1 rounded bg-gold/15 px-1.5 py-0.5 font-bold text-gold">
+              <div className="mt-1 inline-flex items-center gap-1 rounded bg-primary/15 px-1.5 py-0.5 font-bold text-primary">
                 UID {user?.uid}
               </div>
             </DropdownMenuLabel>
@@ -130,14 +130,14 @@ function GlowingNotifBell({ unread, onClick, notifications }: { unread: number; 
   if (unreadNotifs.length > 0) {
     // Priority: warning (red) > success (green) > info (yellow)
     if (unreadNotifs.some((n) => n.type === 'warning')) glowColor = '#FF4D6D' // red
-    else if (unreadNotifs.some((n) => n.type === 'success')) glowColor = '#00D68F' // green
-    else glowColor = '#F0B90B' // yellow (info/pending)
+    else if (unreadNotifs.some((n) => n.type === 'success')) glowColor = '#00E08F' // emerald
+    else glowColor = '#FFC83D' // brand gold (info/pending)
   }
 
   return (
     <button
       onClick={onClick}
-      className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-secondary/60 transition-colors hover:border-gold/60"
+      className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-secondary/60 transition-colors hover:border-primary/60"
       aria-label="Notifications"
     >
       {/* Glowing ring */}

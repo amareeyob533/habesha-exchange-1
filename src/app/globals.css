@@ -46,83 +46,89 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* ============ DARK THEME — Cyber-Premium (Obsidian + Neon Cyan + Gold) ============ */
+/* ============================================================================
+   DARK THEME — "Obsidian Aurora"
+   Cool onyx base · Vibrant emerald primary · Gold reserved for brand only
+   ============================================================================ */
 :root {
   --radius: 0.875rem;
-  --background: #0B0E11;
-  --foreground: #EAECEF;
-  --card: #1E2329;
-  --card-foreground: #EAECEF;
-  --popover: #181A20;
-  --popover-foreground: #EAECEF;
-  --primary: #F0B90B;
-  --primary-foreground: #0B0E11;
-  --secondary: #181A20;
-  --secondary-foreground: #EAECEF;
-  --muted: #16191E;
-  --muted-foreground: #848E9C;
-  --accent: #181A20;
-  --accent-foreground: #EAECEF;
+  --background: #07090D;
+  --foreground: #ECF1F8;
+  --card: #11151C;
+  --card-foreground: #ECF1F8;
+  --popover: #0E1117;
+  --popover-foreground: #ECF1F8;
+  --primary: #00E08F;
+  --primary-foreground: #04130C;
+  --secondary: #181D26;
+  --secondary-foreground: #ECF1F8;
+  --muted: #141821;
+  --muted-foreground: #7C8794;
+  --accent: #181D26;
+  --accent-foreground: #ECF1F8;
   --destructive: #FF4D6D;
-  --border: rgba(255, 255, 255, 0.06);
-  --input: rgba(255, 255, 255, 0.08);
-  --ring: #F0B90B;
-  --gold: #F0B90B;
-  --neon: #00E0FF;
-  --up: #0ECB81;
+  --border: rgba(255, 255, 255, 0.07);
+  --input: rgba(255, 255, 255, 0.09);
+  --ring: #00E08F;
+  --gold: #FFC83D;
+  --neon: #22D3EE;
+  --up: #00E08F;
   --down: #FF4D6D;
-  --chart-1: #F0B90B;
-  --chart-2: #0ECB81;
+  --chart-1: #00E08F;
+  --chart-2: #22D3EE;
   --chart-3: #FF4D6D;
-  --chart-4: #00E0FF;
-  --chart-5: #B47AFF;
-  --sidebar: #0B0E11;
-  --sidebar-foreground: #EAECEF;
-  --sidebar-primary: #F0B90B;
-  --sidebar-primary-foreground: #0B0E11;
-  --sidebar-accent: #181A20;
-  --sidebar-accent-foreground: #EAECEF;
-  --sidebar-border: rgba(255, 255, 255, 0.06);
-  --sidebar-ring: #F0B90B;
+  --chart-4: #B47AFF;
+  --chart-5: #FFC83D;
+  --sidebar: #0A0C11;
+  --sidebar-foreground: #ECF1F8;
+  --sidebar-primary: #00E08F;
+  --sidebar-primary-foreground: #04130C;
+  --sidebar-accent: #181D26;
+  --sidebar-accent-foreground: #ECF1F8;
+  --sidebar-border: rgba(255, 255, 255, 0.07);
+  --sidebar-ring: #00E08F;
 }
 
-/* ============ LIGHT THEME — Luxury Minimalist (Off-white + Midnight Blue + Emerald) ============ */
+/* ============================================================================
+   LIGHT THEME — "Pearl Mint"
+   Cool pearl base · Emerald primary · Clean and modern
+   ============================================================================ */
 .light {
-  --background: #F8F9FA;
-  --foreground: #0C1A30;
+  --background: #F6F8FB;
+  --foreground: #0B1117;
   --card: #FFFFFF;
-  --card-foreground: #0C1A30;
+  --card-foreground: #0B1117;
   --popover: #FFFFFF;
-  --popover-foreground: #0C1A30;
-  --primary: #0C1A30;
+  --popover-foreground: #0B1117;
+  --primary: #00B96B;
   --primary-foreground: #FFFFFF;
-  --secondary: #F0F2F5;
-  --secondary-foreground: #0C1A30;
-  --muted: #F5F6F8;
-  --muted-foreground: #627EEA;
-  --accent: #F0F2F5;
-  --accent-foreground: #0C1A30;
-  --destructive: #DC3545;
-  --border: rgba(12, 26, 48, 0.08);
-  --input: rgba(12, 26, 48, 0.1);
-  --ring: #0C1A30;
-  --gold: #0C1A30;
-  --neon: #0C1A30;
-  --up: #00A66E;
-  --down: #DC3545;
-  --chart-1: #0C1A30;
-  --chart-2: #00A66E;
-  --chart-3: #DC3545;
-  --chart-4: #0C1A30;
-  --chart-5: #8B5CF6;
-  --sidebar: #F0F2F5;
-  --sidebar-foreground: #0C1A30;
-  --sidebar-primary: #0C1A30;
+  --secondary: #EEF2F7;
+  --secondary-foreground: #0B1117;
+  --muted: #F1F4F9;
+  --muted-foreground: #5A6573;
+  --accent: #EEF2F7;
+  --accent-foreground: #0B1117;
+  --destructive: #E0394A;
+  --border: rgba(11, 17, 23, 0.08);
+  --input: rgba(11, 17, 23, 0.1);
+  --ring: #00B96B;
+  --gold: #C8930E;
+  --neon: #0891B2;
+  --up: #00A565;
+  --down: #E0394A;
+  --chart-1: #00B96B;
+  --chart-2: #0891B2;
+  --chart-3: #E0394A;
+  --chart-4: #7C3AED;
+  --chart-5: #C8930E;
+  --sidebar: #EEF2F7;
+  --sidebar-foreground: #0B1117;
+  --sidebar-primary: #00B96B;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #E8EAED;
-  --sidebar-accent-foreground: #0C1A30;
-  --sidebar-border: rgba(12, 26, 48, 0.08);
-  --sidebar-ring: #0C1A30;
+  --sidebar-accent: #E5EAF1;
+  --sidebar-accent-foreground: #0B1117;
+  --sidebar-border: rgba(11, 17, 23, 0.08);
+  --sidebar-ring: #00B96B;
 }
 
 @layer base {
@@ -149,34 +155,56 @@
   }
 }
 
-/* ============ GOLD GRADIENT ============ */
+/* ============ EMERALD GRADIENT (primary action / modern accent) ============ */
+.text-emerald-gradient {
+  background: linear-gradient(135deg, #5EE9B0 0%, #00E08F 50%, #00B96B 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.bg-emerald-gradient {
+  background: linear-gradient(135deg, #5EE9B0 0%, #00E08F 50%, #00B96B 100%);
+}
+.light .text-emerald-gradient {
+  background: linear-gradient(135deg, #00D277 0%, #00A55E 50%, #00824A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.light .bg-emerald-gradient {
+  background: linear-gradient(135deg, #00D277 0%, #00A55E 50%, #00824A 100%);
+}
+
+/* ============ GOLD GRADIENT (brand only — brighter, less amber) ============ */
 .text-gold-gradient {
-  background: linear-gradient(135deg, #FCD66B 0%, #F0B90B 50%, #D49B0A 100%);
+  background: linear-gradient(135deg, #FFE082 0%, #FFC83D 50%, #F0A800 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
 .bg-gold-gradient {
-  background: linear-gradient(135deg, #FCD66B 0%, #F0B90B 50%, #D49B0A 100%);
+  background: linear-gradient(135deg, #FFE082 0%, #FFC83D 50%, #F0A800 100%);
 }
 .bg-gold-glow {
-  background: radial-gradient(circle at 50% 50%, rgba(240, 185, 11, 0.25), transparent 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(255, 200, 61, 0.22), transparent 70%);
 }
 
-/* Light-mode gold: deeper, richer, less glaring on warm backgrounds */
+/* Light-mode gold: deeper, richer */
 .light .text-gold-gradient {
-  background: linear-gradient(135deg, #D9A82C 0%, #A8780C 50%, #85600A 100%);
+  background: linear-gradient(135deg, #E6A817 0%, #B8860B 50%, #8B6914 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
 .light .bg-gold-gradient {
-  background: linear-gradient(135deg, #C99422 0%, #A8780C 50%, #85600A 100%);
+  background: linear-gradient(135deg, #E6A817 0%, #B8860B 50%, #8B6914 100%);
 }
 .light .bg-gold-glow {
-  background: radial-gradient(circle at 50% 50%, rgba(168, 120, 12, 0.12), transparent 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(200, 147, 14, 0.12), transparent 70%);
 }
 
 /* ============ PREMIUM GLASSMORPHISM ============ */
@@ -194,19 +222,19 @@
 
 /* ============ PREMIUM SHADOWS — soft depth, not harsh ============ */
 .shadow-gold {
-  box-shadow: 0 4px 24px rgba(240, 185, 11, 0.12), 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 24px rgba(0, 224, 143, 0.14), 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 .shadow-gold-lg {
-  box-shadow: 0 8px 48px rgba(240, 185, 11, 0.18), 0 2px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 48px rgba(0, 224, 143, 0.2), 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 .shadow-premium {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.32), 0 2px 8px rgba(0, 0, 0, 0.14);
 }
 .light .shadow-premium {
-  box-shadow: 0 8px 32px rgba(12, 26, 48, 0.06), 0 2px 8px rgba(12, 26, 48, 0.04);
+  box-shadow: 0 8px 32px rgba(11, 17, 23, 0.06), 0 2px 8px rgba(11, 17, 23, 0.04);
 }
 
-/* ============ ANIMATED GRADIENT MESH BACKGROUND ============ */
+/* ============ ANIMATED GRADIENT MESH BACKGROUND — cool aurora ============ */
 .mesh-bg {
   position: fixed;
   inset: 0;
@@ -222,27 +250,27 @@
   animation: orb-float 20s ease-in-out infinite;
 }
 .mesh-orb-1 {
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, #F0B90B, transparent 70%);
+  width: 520px; height: 520px;
+  background: radial-gradient(circle, #00E08F, transparent 70%);
   top: -10%; left: -5%;
   animation-delay: 0s;
-  opacity: 0.08;
+  opacity: 0.1;
 }
 .mesh-orb-2 {
-  width: 400px; height: 400px;
-  background: radial-gradient(circle, #00E0FF, transparent 70%);
+  width: 420px; height: 420px;
+  background: radial-gradient(circle, #22D3EE, transparent 70%);
   bottom: -5%; right: 10%;
   animation-delay: -7s;
-  opacity: 0.06;
+  opacity: 0.08;
 }
 .mesh-orb-3 {
-  width: 350px; height: 350px;
+  width: 380px; height: 380px;
   background: radial-gradient(circle, #B47AFF, transparent 70%);
   top: 40%; right: -5%;
   animation-delay: -14s;
-  opacity: 0.05;
+  opacity: 0.06;
 }
-.light .mesh-orb { opacity: 0.04 !important; }
+.light .mesh-orb { opacity: 0.05 !important; }
 
 @keyframes orb-float {
   0%, 100% { transform: translate(0, 0) scale(1); }
@@ -250,7 +278,7 @@
   66% { transform: translate(-20px, 30px) scale(0.95); }
 }
 
-/* ============ GRADIENT BORDER CARD ============ */
+/* ============ GRADIENT BORDER CARD — emerald → cyan → violet ============ */
 .gradient-border {
   position: relative;
   background: var(--card);
@@ -262,7 +290,7 @@
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(240, 185, 11, 0.25), rgba(0, 224, 255, 0.1) 50%, rgba(180, 122, 255, 0.12));
+  background: linear-gradient(135deg, rgba(0, 224, 143, 0.3), rgba(34, 211, 238, 0.12) 50%, rgba(180, 122, 255, 0.14));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -286,7 +314,7 @@
   left: 100%;
 }
 
-/* ============ SCROLLBAR ============ */
+/* ============ SCROLLBAR — cool neutral, not gold ============ */
 .custom-scroll::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -295,25 +323,24 @@
   background: transparent;
 }
 .custom-scroll::-webkit-scrollbar-thumb {
-  background: rgba(240, 185, 11, 0.25);
+  background: rgba(124, 135, 148, 0.28);
   border-radius: 999px;
 }
 .custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(240, 185, 11, 0.45);
+  background: rgba(124, 135, 148, 0.5);
 }
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(240, 185, 11, 0.25) transparent;
+  scrollbar-color: rgba(124, 135, 148, 0.28) transparent;
 }
-/* Light-mode scrollbar: softer warm gray instead of gold */
 .light .custom-scroll::-webkit-scrollbar-thumb {
-  background: rgba(120, 108, 88, 0.3);
+  background: rgba(90, 101, 115, 0.3);
 }
 .light .custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(120, 108, 88, 0.5);
+  background: rgba(90, 101, 115, 0.5);
 }
 .light * {
-  scrollbar-color: rgba(120, 108, 88, 0.3) transparent;
+  scrollbar-color: rgba(90, 101, 115, 0.3) transparent;
 }
 
 /* ============ ANIMATIONS ============ */
@@ -322,7 +349,7 @@
   100% { background-position: 200% 0; }
 }
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(240, 185, 11, 0.15), transparent);
+  background: linear-gradient(90deg, transparent, rgba(0, 224, 143, 0.18), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
@@ -334,8 +361,8 @@
 .animate-float { animation: float 6s ease-in-out infinite; }
 
 @keyframes pulse-gold {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(240, 185, 11, 0.5); }
-  50% { box-shadow: 0 0 0 14px rgba(240, 185, 11, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 224, 143, 0.5); }
+  50% { box-shadow: 0 0 0 14px rgba(0, 224, 143, 0); }
 }
 .animate-pulse-gold { animation: pulse-gold 2.4s ease-out infinite; }
 

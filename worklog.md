@@ -827,3 +827,35 @@ Stage Summary:
 - Build is now bulletproof on Vercel: even if the Postgres database isn't connected yet, `next build` still completes and the site deploys. Runtime APIs already handle DB errors gracefully.
 - When the user connects a Vercel Postgres database, both DATABASE_URL and DIRECT_URL are auto-resolved from POSTGRES_PRISMA_URL + POSTGRES_URL_NON_POOLING, so prisma db push succeeds and tables are created.
 - Deployment is ready. User can download and redeploy.
+
+---
+Task ID: UI-RECOLOR
+Agent: main
+Task: Fix "everything looks brown" — redesign color palette to be modern, less brown/amber
+
+Work Log:
+- Root cause: gold #F0B90B (amber/brown tone) was the dominant primary color — used for backgrounds, buttons, active states, mesh orbs, scrollbar, gradients → created an overall brown wash
+- Rewrote src/app/globals.css with new "Obsidian Aurora" palette:
+  * Dark theme: cool onyx base (#07090D / #11151C — no warm tint), vibrant emerald primary #00E08F, gold demoted to brand-only #FFC83D (brighter, less amber)
+  * Light theme: cool pearl base #F6F8FB, emerald primary #00B96B (cleaner than the old midnight blue)
+  * Mesh orbs: emerald + cyan + violet aurora (was gold → brown ambient wash)
+  * Scrollbar: cool neutral gray rgba(124,135,148) (was gold-tinted)
+  * Gradient borders: emerald → cyan → violet (was gold-tinted)
+  * Added .text-emerald-gradient / .bg-emerald-gradient classes for modern action buttons
+  * Refined .bg-gold-gradient to brighter #FFE082 → #FFC83D → #F0A800 (less brown)
+  * shadow-gold now uses emerald tint (matches new primary)
+- Updated src/components/dashboard/bottom-nav.tsx: Home active color gold→emerald, Markets→cyan, Trade→gold(brand), Wallet→violet
+- Updated src/components/dashboard/sidebar.tsx: all active states gold→primary(emerald), "Admin Tools" label + "Need help?" card → emerald
+- Updated src/components/dashboard/topbar.tsx:
+  * Admin Panel label: gold→emerald
+  * Deposit button outline: gold→emerald
+  * Buy button: bg-gold-gradient → bg-emerald-gradient
+  * Avatar fallback + UID chip + bell hover: gold→emerald
+  * Notification bell glow: success=emerald #00E08F, pending=brand gold #FFC83D (brighter, less brown)
+- Verified: lint 0 errors (1 pre-existing warning), homepage compiled HTTP 200 with new CSS, no runtime errors
+
+Stage Summary:
+- Visual transformation: brown/amber-dominant → modern cool onyx + vibrant emerald, with gold reserved strictly for brand identity (logo, Habesha token)
+- All 30 files using text-gold/bg-gold classes still work (token redefined brighter); primary action color is now emerald everywhere via bg-primary/text-primary
+- Modern fintech aesthetic: Coinbase/Robinhood-style emerald-on-onyx, cool aurora background, clean neutral scrollbar
+- Mobile + desktop both benefit (palette is global)

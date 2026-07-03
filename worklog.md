@@ -859,3 +859,22 @@ Stage Summary:
 - All 30 files using text-gold/bg-gold classes still work (token redefined brighter); primary action color is now emerald everywhere via bg-primary/text-primary
 - Modern fintech aesthetic: Coinbase/Robinhood-style emerald-on-onyx, cool aurora background, clean neutral scrollbar
 - Mobile + desktop both benefit (palette is global)
+
+---
+Task ID: FIX-SCHEMA-MISMATCH
+Agent: main
+Task: Fix "sandbox is inactive" + login 500 error — schema/DB provider mismatch
+
+Work Log:
+- Root cause: prisma/schema.prisma had `provider = "postgresql"` but local .env had `DATABASE_URL=file:.../custom.db` (SQLite path). Prisma couldn't connect → every API returned 500 → server crashed → preview showed "sandbox is inactive"
+- Fix: changed schema.prisma `provider` to "sqlite" and removed `directUrl` (SQLite doesn't support it) for local dev/sandbox
+- Updated scripts/build.mjs with STEP 0: auto-detects Postgres env vars on Vercel → rewrites schema.prisma to `postgresql` + adds `directUrl` before running prisma generate. Local dev stays sqlite, Vercel gets postgresql automatically.
+- Ran `bun run db:generate` + `bun run db:push` — Prisma client regenerated with sqlite, local DB in sync
+- Restarted dev server: all APIs now return 200 (homepage, market-data, auth/me, auth/login — was 500 before)
+- Lint: 0 errors (1 pre-existing warning)
+
+Stage Summary:
+- Local sandbox preview works again (sqlite) + Vercel deployment works (postgresql, auto-swapped by build.mjs)
+- Login API fixed: POST /api/auth/login now returns 200 (was 500 due to Prisma connection failure)
+- Best of both worlds: no manual schema switching needed — build.mjs handles it automatically
+- User can now refresh the preview panel and see the new Obsidian Aurora emerald theme

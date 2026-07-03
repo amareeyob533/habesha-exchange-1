@@ -10,6 +10,7 @@
 // so the deployment succeeds. The runtime APIs are resilient to a missing/mismatched
 // schema and will surface a friendly error instead of crashing.
 import { execSync } from 'node:child_process'
+import { readFileSync, writeFileSync } from 'node:fs'
 
 function run(cmd, label) {
   try {
@@ -24,7 +25,45 @@ function run(cmd, label) {
   }
 }
 
-console.log('→ Ensuring database environment variables...')
+// ============================================================================
+// STEP 0: Swap Prisma datasource from "sqlite" (local dev) to "postgresql"
+// (Vercel/production). The committed schema uses sqlite so the sandbox preview
+// works without a Postgres server. On Vercel, POSTGRES_PRISMA_URL is present,
+// so we rewrite the schema in-place before running prisma generate.
+// ============================================================================
+const SCHEMA_PATH = 'prisma/schema.prisma'
+const hasPostgresUrl = !!(
+  process.env.POSTGRES_PRISMA_URL ||
+  process.env.POSTGRES_URL_NON_POOLING ||
+  process.env.POSTGRES_URL ||
+  (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres'))
+)
+
+console.log('→ Checking Prisma datasource provider...')
+try {
+  const schema = readFileSync(SCHEMA_PATH, 'utf8')
+  if (hasPostgresUrl && schema.includes('provider = "sqlite"')) {
+    console.log('  Detected Postgres env + sqlite schema → switching to postgresql')
+    let updated = schema.replace(
+      /datasource db \{[\s\S]*?\}/,
+      `datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}`
+    )
+    writeFileSync(SCHEMA_PATH, updated)
+    console.log('  ✓ schema.prisma swapped to postgresql for this build')
+  } else if (hasPostgresUrl) {
+    console.log('  ✓ schema already postgresql')
+  } else {
+    console.log('  • No Postgres URL found — keeping sqlite (local dev / sandbox)')
+  }
+} catch (e) {
+  console.error('  ⚠ Could not read/modify schema.prisma:', e.message)
+}
+
+console.log('\n→ Ensuring database environment variables...')
 
 // Collect any available Postgres connection URL.
 const pooled =

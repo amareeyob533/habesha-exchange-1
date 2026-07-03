@@ -4,9 +4,11 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  // NOTE: This is "sqlite" for local development / sandbox preview.
+  // scripts/build.mjs automatically swaps this to "postgresql" + adds directUrl
+  // during the Vercel build (where POSTGRES_PRISMA_URL is available).
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model User {

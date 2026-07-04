@@ -16,12 +16,14 @@ interface ModalState {
   buyOpen: boolean
   supportOpen: boolean
   notifOpen: boolean
+  kycOpen: boolean
   openDeposit: (t: string) => void
   openWithdraw: (t: string) => void
   openTransfer: (t: string) => void
   openBuy: () => void
   openSupport: () => void
   openNotif: () => void
+  openKyc: () => void
   closeAll: () => void
   // token detail modal (chart)
   tokenDetail: string | null
@@ -44,14 +46,16 @@ export const useUI = create<ModalState>((set) => ({
   buyOpen: false,
   supportOpen: false,
   notifOpen: false,
+  kycOpen: false,
   openDeposit: (t) => set({ depositToken: t }),
   openWithdraw: (t) => set({ withdrawToken: t }),
   openTransfer: (t) => set({ transferToken: t }),
   openBuy: () => set({ buyOpen: true }),
   openSupport: () => set({ supportOpen: true }),
   openNotif: () => set({ notifOpen: true }),
+  openKyc: () => set({ kycOpen: true }),
   closeAll: () =>
-    set({ depositToken: null, withdrawToken: null, transferToken: null, supportOpen: false, notifOpen: false }),
+    set({ depositToken: null, withdrawToken: null, transferToken: null, supportOpen: false, notifOpen: false, kycOpen: false }),
   tokenDetail: null,
   openTokenDetail: (symbol) => set({ tokenDetail: symbol }),
   authOpen: false,

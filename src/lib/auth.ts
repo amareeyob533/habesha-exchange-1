@@ -106,8 +106,8 @@ export async function getCurrentUser() {
       id: true, uid: true, email: true, username: true, name: true,
       passwordHash: true, provider: true, avatarUrl: true,
       isBlocked: true, blockedReason: true,
-      kycLevel: true, kycStatus: true, kycSubmittedAt: true,
-      kycRequestedLevel: true, kycDocUrl: true, kycSelfieUrl: true, kycSelfieVideoUrl: true,
+      kycStatus: true, kycSubmittedAt: true, kycApprovedAt: true,
+      kycFullName: true, kycCity: true, kycIdType: true, kycRejectReason: true,
       country: true, phone: true, createdAt: true, updatedAt: true,
     },
   })

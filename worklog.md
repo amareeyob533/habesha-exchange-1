@@ -942,3 +942,60 @@ Stage Summary:
 - Screenshot is AUTO-DELETED from the database after admin approves OR rejects the order → database never fills up
 - NO environment variables needed — this uses the database you already have (PostgreSQL on Vercel)
 - The buy-modal file input now accepts image/*,.heic,.heif,.avif
+
+---
+Task ID: KYC-SYSTEM
+Agent: main
+Task: Build Exness-style 2-step KYC verification system with deposit limit, admin review, 2-day retention + auto-delete
+
+Work Log:
+- Prisma schema: removed old KYC fields (kycLevel, kycDocUrl, kycSelfieUrl, kycSelfieVideoUrl, kycRequestedLevel), added new fields (kycApprovedAt, kycFullName, kycCity, kycIdType, kycRejectReason). Created KycApplication + KycDocument models with deleteAfter timestamp for 2-day auto-delete.
+- Created src/lib/kyc-helpers.ts:
+  * cleanupExpiredKyc() — lazily deletes documents past their deleteAfter timestamp (called on every KYC API request)
+  * hasApprovedKyc(user) — returns true if user has approved KYC
+  * getTotalDepositedUsd(userId) — sums lifetime approved deposits in USD
+  * KYC_DEPOSIT_LIMIT_USD = 500, KYC_RETENTION_DAYS = 2
+- API routes created:
+  * POST /api/kyc — submit application {fullName, city, idType, documentId} → sets kycStatus=pending
+  * GET /api/kyc — current user's KYC status
+  * POST /api/kyc/upload — upload ID photo (any image type, max 8MB, base64 in DB)
+  * GET /api/kyc/document?id=...&download=true — serve/download ID photo (owner or admin only)
+  * GET /api/admin/kyc?status=pending — list KYC applications for admin review
+  * POST /api/admin/kyc/approve {applicationId} — approves, sets deleteAfter = now + 2 days
+  * POST /api/admin/kyc/reject {applicationId, reason?} — rejects, deletes document immediately
+- Deposit limit check: /api/deposit now blocks deposits that would push the user's total above $500 USD if they don't have approved KYC. Returns clear error with kycRequired:true.
+- KYC modal (src/components/modals/kyc-modal.tsx): Exness-style 2-step flow
+  * Step 1: Full name + city
+  * Step 2: Choose ID type (driver's license, national ID, passport) + upload photo
+  * Status views: none → start, pending → under review, approved → verified, rejected → re-submit
+- Admin KYC view (src/components/dashboard/views/admin-kyc.tsx):
+  * Lists pending applications with user info, full name, city, ID type
+  * Shows ID document image inline
+  * Download button (Content-Disposition: attachment) + Open in new tab button
+  * Approve / Reject buttons (reject has optional reason input)
+  * Search bar to find users by name, city, UID, email, or username
+  * Shows auto-delete date when approved
+- Admin panel: added KYC section (stat card + pill button) to admin.tsx
+- Settings page: added KYC verification card at the top showing status + "Verify Now" button
+- use-ui hook: added kycOpen state + openKyc action
+- dashboard-shell.tsx: added <KycModal /> to the modal stack
+- Removed old KYC files: src/lib/kyc-actions.ts, src/components/dashboard/views/kyc-view.tsx
+- Updated src/lib/auth.ts getCurrentUser to select new KYC fields
+- Schema pushed to local SQLite DB (prisma db push --accept-data-loss)
+- Lint: 0 errors (1 pre-existing warning)
+- Verified end-to-end (user side):
+  * Signup → token ✅
+  * Upload ID image → doc ID + data URL ✅
+  * Submit KYC → kycStatus=pending ✅
+  * Deposit $600 blocked → "Deposit limit reached... $500 max... complete KYC" ✅
+
+Stage Summary:
+- Exness-style 2-step KYC: (1) full name + city, (2) ID type + upload photo
+- Without KYC: $500 USD lifetime deposit limit. With KYC: unlimited.
+- Any image type supported (PNG, JPEG, WEBP, HEIC from iPhone, GIF, BMP, AVIF, TIFF)
+- Admin panel: KYC section shows pending applications with ID photo, download button, approve/reject
+- Admin can search users by name/city/UID/email/username
+- 2-day retention: approved KYC documents kept for exactly 2 days, then auto-deleted (lazy cleanup)
+- Rejection: document deleted immediately
+- All image storage is base64 in PostgreSQL → works on Vercel's read-only filesystem
+- NO new environment variables needed

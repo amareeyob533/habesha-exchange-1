@@ -22,13 +22,14 @@ model User {
   avatarUrl       String?
   isBlocked       Boolean  @default(false) // admin can block an account
   blockedReason   String?
-  kycLevel        String   @default("none") // none | normal | high
+  // KYC (Exness-style 2-step verification)
   kycStatus       String   @default("none") // none | pending | approved | rejected
   kycSubmittedAt  DateTime?
-  kycRequestedLevel String? // normal | high (the level the user applied for)
-  kycDocUrl       String?  // ID card photo (high KYC)
-  kycSelfieUrl    String?  // captured selfie photo frame (normal + high)
-  kycSelfieVideoUrl String? // live camera video recording (normal + high)
+  kycApprovedAt   DateTime? // set when admin approves — used for 2-day auto-delete
+  kycFullName     String?  // step 1: full name as written on the ID
+  kycCity         String?  // step 1: city where the user lives
+  kycIdType       String?  // step 2: driver_license | national_id | passport
+  kycRejectReason String?  // filled when admin rejects
   country         String?
   phone           String?
   createdAt       DateTime @default(now())
@@ -44,6 +45,7 @@ model User {
   supportMessages      SupportMessage[]
   buyOrders            BuyOrder[]
   paymentProofs        PaymentProof[]
+  kycApplications      KycApplication[]
 }
 
 model Balance {
@@ -173,4 +175,46 @@ model PaymentProof {
   data      String   // base64 data URL or external URL
   size      Int
   createdAt DateTime @default(now())
+}
+
+// ============================================================================
+// KYC (Exness-style 2-step verification)
+// ============================================================================
+// A user submits full name + city (step 1) and an ID photo (step 2).
+// The application goes to "pending" until an admin approves/rejects it.
+// Approved users get unlimited deposits/withdrawals; unapproved users are
+// capped at 500 USD lifetime deposit value.
+//
+// RETENTION POLICY: When the admin approves a KYC, the ID document is kept
+// for exactly 2 days (so the admin can still review/download it), then
+// automatically deleted. Rejection deletes the document immediately.
+// Auto-deletion is handled lazily by /api/kyc/* routes (see cleanupExpiredKyc).
+model KycApplication {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName    String   // step 1
+  city        String   // step 1
+  idType      String   // step 2: driver_license | national_id | passport
+  status      String   @default("pending") // pending | approved | rejected
+  rejectReason String?
+  submittedAt DateTime @default(now())
+  reviewedAt  DateTime? // set when admin acts
+  reviewedBy  String?  // admin user id
+  document    KycDocument?
+}
+
+model KycDocument {
+  id            String   @id @default(cuid())
+  applicationId String   @unique
+  application   KycApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  userId        String
+  mimeType      String
+  fileName      String
+  data          String   // base64 data URL
+  size          Int
+  // Auto-delete timestamp. Set to (approvedAt + 2 days) when admin approves.
+  // Lazy cleanup: any KYC API call deletes documents past this timestamp.
+  deleteAfter   DateTime?
+  createdAt     DateTime @default(now())
 }

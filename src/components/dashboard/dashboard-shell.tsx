@@ -16,6 +16,7 @@ import { DepositModal } from '@/components/modals/deposit-modal'
 import { WithdrawModal } from '@/components/modals/withdraw-modal'
 import { BuyModal } from '@/components/modals/buy-modal'
 import { SupportModal } from '@/components/modals/support-modal'
+import { KycModal } from '@/components/modals/kyc-modal'
 import { NotificationPanel } from '@/components/dashboard/notification-panel'
 import { BottomNav } from '@/components/dashboard/bottom-nav'
 import { useUI } from '@/hooks/use-ui'
@@ -98,6 +99,7 @@ export function DashboardShell() {
       <WithdrawModal />
       <BuyModal />
       <SupportModal />
+      <KycModal />
       <NotificationPanel />
     </div>
   )

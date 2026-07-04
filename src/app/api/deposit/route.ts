@@ -4,6 +4,7 @@ import { requireAuth } from '@/lib/api'
 import { getToken } from '@/lib/tokens'
 import { notifyAdminDeposit } from '@/lib/email'
 import { signApprovalToken, getBaseUrl } from '@/lib/deposit-approval'
+import { hasApprovedKyc, getTotalDepositedUsd, KYC_DEPOSIT_LIMIT_USD } from '@/lib/kyc-helpers'
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,6 +22,31 @@ export async function POST(req: NextRequest) {
     const amt = Number(amount)
     if (!amt || amt <= 0) {
       return NextResponse.json({ error: 'Enter a valid amount' }, { status: 400 })
+    }
+
+    // KYC deposit limit: users without approved KYC can deposit at most
+    // $500 USD worth of tokens in total (lifetime approved deposits + this one).
+    if (!hasApprovedKyc(user)) {
+      const alreadyDeposited = await getTotalDepositedUsd(user.id)
+      // Approximate USD value of this deposit using static fallback prices.
+      const PRICES: Record<string, number> = {
+        USDT: 1, USDC: 1, BTC: 97500, TON: 5.42, HABESHA: 6.4321674,
+      }
+      const thisDepositUsd = amt * (PRICES[token] ?? 0)
+      const totalAfter = alreadyDeposited + thisDepositUsd
+      if (totalAfter > KYC_DEPOSIT_LIMIT_USD) {
+        const remaining = Math.max(0, KYC_DEPOSIT_LIMIT_USD - alreadyDeposited)
+        return NextResponse.json(
+          {
+            error: `Deposit limit reached. Without KYC verification you can deposit up to $${KYC_DEPOSIT_LIMIT_USD} USD total. You've already deposited $${alreadyDeposited.toFixed(2)} USD. Remaining: $${remaining.toFixed(2)}. Please complete KYC verification in Settings to unlock unlimited deposits.`,
+            kycRequired: true,
+            limit: KYC_DEPOSIT_LIMIT_USD,
+            alreadyDeposited: alreadyDeposited.toFixed(2),
+            remaining: remaining.toFixed(2),
+          },
+          { status: 403 },
+        )
+      }
     }
 
     const deposit = await db.deposit.create({

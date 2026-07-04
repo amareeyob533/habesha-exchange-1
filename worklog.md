@@ -1039,3 +1039,27 @@ Stage Summary:
 - Both buy-modal (payment screenshot) and kyc-modal (ID photo) now compress before upload
 - KYC reminder banner sits above the balance bar showing one of 3 states (verify now / under review / rejected) and is clickable to open the KYC verification flow
 - No new environment variables needed
+
+---
+Task ID: FIX-KYC-STATUS-NOT-REFLECTED
+Agent: main
+Task: Fix KYC reminder banner + Settings status not updating after admin approves KYC
+
+Work Log:
+- Root cause: /api/auth/me route (which builds the `user` object the frontend uses) did NOT include ANY KYC fields in the database select OR the response JSON. So user.kycStatus was always undefined on the frontend → kycStatus !== 'approved' was always true → banner always showed + Settings always said "verify your account" even after approval.
+- Fix 1 (src/app/api/auth/me/route.ts): Added KYC fields to the Prisma select:
+  * kycStatus, kycSubmittedAt, kycApprovedAt, kycFullName, kycCity, kycIdType, kycRejectReason
+- Fix 2 (src/app/api/auth/me/route.ts): Added KYC fields to the response JSON user object so the frontend receives them.
+- Fix 3 (src/hooks/use-auth.ts): Added KYC fields to the AuthUser TypeScript interface so TypeScript recognizes them.
+- Fix 4 (src/components/dashboard/dashboard-shell.tsx): Reduced periodic refresh from 30s to 10s so KYC status changes (admin approve/reject) show up quickly without the user needing to refresh the page.
+- Verified end-to-end:
+  * Before KYC: /api/auth/me returns kycStatus: "none" ✅
+  * After submit: /api/auth/me returns kycStatus: "pending" ✅
+  * After admin approve (via direct DB update): /api/auth/me returns kycStatus: "approved", kycApprovedAt, kycFullName, kycCity, kycIdType ✅
+- Lint: 0 errors (1 pre-existing warning)
+
+Stage Summary:
+- KYC reminder banner now DISAPPEARS within 10 seconds of admin approval (was stuck showing forever)
+- Settings page now shows "Verified ✓" after admin approval (was stuck on "verify your account")
+- The bug was that /api/auth/me never sent KYC fields to the frontend — now fixed
+- No new environment variables needed

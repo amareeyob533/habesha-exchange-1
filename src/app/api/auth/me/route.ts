@@ -16,6 +16,10 @@ export async function GET() {
         id: true, uid: true, email: true, username: true, name: true,
         avatarUrl: true, provider: true, isBlocked: true, blockedReason: true,
         country: true, phone: true, createdAt: true,
+        // KYC fields — the frontend needs these to show/hide the reminder
+        // banner and display the correct status in Settings.
+        kycStatus: true, kycSubmittedAt: true, kycApprovedAt: true,
+        kycFullName: true, kycCity: true, kycIdType: true, kycRejectReason: true,
         balances: { select: { token: true, amount: true } },
         notifications: { orderBy: { createdAt: 'desc' }, take: 10, select: { id: true, title: true, message: true, type: true, read: true, createdAt: true } },
       },
@@ -62,6 +66,15 @@ export async function GET() {
         country: user.country,
         phone: user.phone,
         createdAt: user.createdAt,
+        // KYC fields — included so the frontend can show the correct status
+        // in the topbar banner and the Settings page.
+        kycStatus: user.kycStatus,
+        kycSubmittedAt: user.kycSubmittedAt,
+        kycApprovedAt: user.kycApprovedAt,
+        kycFullName: user.kycFullName,
+        kycCity: user.kycCity,
+        kycIdType: user.kycIdType,
+        kycRejectReason: user.kycRejectReason,
       },
       balances,
       totalUsd,

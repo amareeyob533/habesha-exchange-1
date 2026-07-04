@@ -32,6 +32,14 @@ export interface AuthUser {
   country?: string | null
   phone?: string | null
   createdAt: string
+  // KYC fields
+  kycStatus?: string | null
+  kycSubmittedAt?: string | null
+  kycApprovedAt?: string | null
+  kycFullName?: string | null
+  kycCity?: string | null
+  kycIdType?: string | null
+  kycRejectReason?: string | null
 }
 
 interface AuthState {

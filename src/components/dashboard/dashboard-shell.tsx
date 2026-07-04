@@ -37,10 +37,11 @@ export function DashboardShell() {
     }
   }, [isAdmin, view, setView])
 
-  // Periodic refresh — every 30s, only when tab is visible (reduces lag).
+  // Periodic refresh — every 10s, only when tab is visible.
+  // Faster refresh so KYC status changes (admin approve/reject) show up quickly.
   useEffect(() => {
     let id: ReturnType<typeof setInterval> | null = null
-    const start = () => { if (!id) id = setInterval(() => fetchMe(), 30000) }
+    const start = () => { if (!id) id = setInterval(() => fetchMe(), 10000) }
     const stop = () => { if (id) { clearInterval(id); id = null } }
     const onVis = () => { document.hidden ? stop() : start() }
     start()

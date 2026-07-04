@@ -88,8 +88,20 @@ export const useAuth = create<AuthState>((set, get) => ({
         notifications: data.notifications || [],
         authChecked: true,
       })
-    } catch {
-      clearStoredToken()
+    } catch (err: any) {
+      // CRITICAL: Only clear the token on an actual auth rejection (401).
+      // On network errors (server unreachable / dev server restarting), KEEP
+      // the token so the user stays "logged in" and is restored once the
+      // server is back. This is what makes sessions survive sandbox restarts
+      // and makes the preview usable.
+      const msg = String(err?.message || '')
+      const isNetworkError = msg.includes('NETWORK_ERROR')
+      const isAuthError = msg.includes('401') || msg.toLowerCase().includes('unauthorized')
+      if (isAuthError && !isNetworkError) {
+        clearStoredToken()
+      }
+      // Show the landing page for now, but don't wipe the token on network errors.
+      // page.tsx will auto-retry fetchMe every 5s while a token is still stored.
       set({ user: null, authChecked: true })
     }
   },

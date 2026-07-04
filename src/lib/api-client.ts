@@ -43,7 +43,14 @@ export async function apiFetch<T = any>(
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
   }
-  const res = await fetch(url, { ...options, headers })
+  let res: Response
+  try {
+    res = await fetch(url, { ...options, headers })
+  } catch (networkErr) {
+    // Server unreachable (dev server down, network issue, etc.)
+    // Throw a tagged error so callers can distinguish it from auth failures.
+    throw new Error('NETWORK_ERROR: server unreachable')
+  }
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
     // If unauthorized, clear any stale token.

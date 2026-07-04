@@ -878,3 +878,26 @@ Stage Summary:
 - Login API fixed: POST /api/auth/login now returns 200 (was 500 due to Prisma connection failure)
 - Best of both worlds: no manual schema switching needed — build.mjs handles it automatically
 - User can now refresh the preview panel and see the new Obsidian Aurora emerald theme
+
+---
+Task ID: FIX-AUTH-PERSIST
+Agent: main
+Task: Fix "sign in doesn't remember me" — session wiped on server restart
+
+Work Log:
+- Root cause: use-auth.ts fetchMe() catch block called clearStoredToken() on ALL errors including network errors. Since the sandbox dev server dies frequently, every refresh while server was down → fetchMe failed → token wiped → user logged out permanently.
+- Fix 1 (src/lib/api-client.ts): apiFetch now catches fetch() network errors and throws a tagged Error('NETWORK_ERROR: server unreachable') so callers can distinguish "server down" from "401 unauthorized"
+- Fix 2 (src/hooks/use-auth.ts): fetchMe catch block now only clears the token on actual 401/auth errors, NOT on network errors. Token is preserved across server restarts.
+- Fix 3 (src/app/page.tsx): Added auto-retry effect — if authChecked=true, user=null, but a token is still in localStorage, retry fetchMe every 5 seconds. Session auto-restores the moment the server comes back.
+- Verified end-to-end:
+  * POST /api/auth/signup → 200 + token
+  * POST /api/auth/login → 200 + token
+  * GET /api/auth/me with Bearer token → 200 + full user + balances
+  * GET /api/auth/me without token → {user:null}
+  * Login again on existing account → 200 + same user
+- Lint: 0 errors (1 pre-existing warning)
+
+Stage Summary:
+- Auth now survives sandbox dev server restarts: token preserved in localStorage, auto-retry restores session when server returns
+- On Vercel (real deployment): server is always running, stable domain, httpOnly cookie + localStorage both work → sign-in WILL be remembered across refreshes (7-day JWT expiry)
+- The "doesn't remember me" issue was sandbox-specific (dev server dying). Vercel deployment is unaffected.

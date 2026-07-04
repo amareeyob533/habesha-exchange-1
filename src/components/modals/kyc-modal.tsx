@@ -9,6 +9,7 @@ import { useUI } from '@/hooks/use-ui'
 import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/hooks/use-toast'
 import { apiFetch, uploadFile } from '@/lib/api-client'
+import { compressImage, formatBytes } from '@/lib/compress-image'
 import { ShieldCheck, Loader2, Upload, Check, ChevronRight, ArrowLeft, IdCard, MapPin, User, CheckCircle2, Clock, XCircle, AlertCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -73,10 +74,18 @@ export function KycModal() {
     }
     setUploading(true)
     try {
-      const res = await uploadFile<{ id: string; url: string }>('/api/kyc/upload', file)
+      // Compress in the browser first — dramatically reduces upload time.
+      const originalSize = file.size
+      const compressed = await compressImage(file)
+      const compressedSize = compressed.size
+      const savedPct = originalSize > 0 ? Math.round((1 - compressedSize / originalSize) * 100) : 0
+      if (savedPct > 10) {
+        toast({ title: 'Image compressed', description: `${formatBytes(originalSize)} → ${formatBytes(compressedSize)} (${savedPct}% smaller)` })
+      }
+      const res = await uploadFile<{ id: string; url: string }>('/api/kyc/upload', compressed)
       setDocUrl(res.url)
       setDocId(res.id)
-      setDocName(file.name)
+      setDocName(compressed.name)
       toast({ title: 'ID photo uploaded' })
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Upload failed', description: err.message || 'Could not upload image.' })

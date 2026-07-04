@@ -32,6 +32,7 @@ export function BuyModal() {
   const [countdown, setCountdown] = useState(20)
   const [canProceed, setCanProceed] = useState(false)
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null)
+  const [screenshotId, setScreenshotId] = useState<string | null>(null)
   const [screenshotName, setScreenshotName] = useState('')
   const [txnCode, setTxnCode] = useState('')
   const [uploading, setUploading] = useState(false)
@@ -48,7 +49,7 @@ export function BuyModal() {
     if (!open) {
       const t = setTimeout(() => {
         setStep('amount'); setAmount(''); setBankCode(''); setCopied(false)
-        setCanProceed(false); setCountdownStarted(false); setScreenshotUrl(null); setScreenshotName(''); setTxnCode(''); setCountdown(20)
+        setCanProceed(false); setCountdownStarted(false); setScreenshotUrl(null); setScreenshotId(null); setScreenshotName(''); setTxnCode(''); setCountdown(20)
       }, 300)
       return () => clearTimeout(t)
     }
@@ -85,14 +86,28 @@ export function BuyModal() {
   async function handleScreenshot(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    // Client-side validation before upload
+    const isImage = file.type.startsWith('image/')
+    if (!isImage) {
+      toast({ variant: 'destructive', title: 'Invalid file', description: 'Please select an image file (JPG, PNG, WEBP, HEIC, etc.)' })
+      e.target.value = ''
+      return
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast({ variant: 'destructive', title: 'File too large', description: `Max 8 MB. Your file is ${(file.size / 1024 / 1024).toFixed(1)} MB` })
+      e.target.value = ''
+      return
+    }
     setUploading(true)
     try {
       const res = await uploadFile('/api/buy/upload', file)
       setScreenshotUrl(res.url)
+      setScreenshotId(res.id || null)
       setScreenshotName(file.name)
-      toast({ title: 'Screenshot uploaded' })
+      toast({ title: 'Screenshot uploaded', description: 'Payment proof ready to submit.' })
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Upload failed', description: err.message })
+      toast({ variant: 'destructive', title: 'Upload failed', description: err.message || 'Could not upload image. Please try again.' })
+      e.target.value = ''
     } finally {
       setUploading(false)
     }
@@ -103,7 +118,7 @@ export function BuyModal() {
     try {
       await apiFetch('/api/buy', {
         method: 'POST',
-        body: JSON.stringify({ usdtAmount: usdtAmount, birrAmount: birrAmount, bank: bankCode, screenshotUrl, transactionCode: txnCode, rate: liveRate }),
+        body: JSON.stringify({ usdtAmount: usdtAmount, birrAmount: birrAmount, bank: bankCode, screenshotUrl, screenshotId, transactionCode: txnCode, rate: liveRate }),
       })
       await fetchMe()
       setStep('done')
@@ -269,7 +284,7 @@ export function BuyModal() {
                   {uploading && <Loader2 className="h-4 w-4 animate-spin text-gold" />}
                   {screenshotUrl && !uploading && <Check className="h-4 w-4 text-up" />}
                 </button>
-                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleScreenshot} />
+                <input ref={fileRef} type="file" accept="image/*,.heic,.heif,.avif" className="hidden" onChange={handleScreenshot} />
               </div>
 
               {/* Screenshot preview */}

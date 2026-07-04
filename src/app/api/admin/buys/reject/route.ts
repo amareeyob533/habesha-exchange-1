@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     if (order.status === 'approved') return NextResponse.json({ error: 'Order was already approved.' }, { status: 400 })
 
     await db.$transaction(async (tx) => {
-      await tx.buyOrder.update({ where: { id: order.id }, data: { status: 'rejected' } })
+      await tx.buyOrder.update({ where: { id: order.id }, data: { status: 'rejected', screenshotUrl: null } })
       await tx.notification.create({
         data: {
           userId: order.userId,
@@ -30,6 +30,14 @@ export async function POST(req: NextRequest) {
         },
       })
     })
+
+    // AUTO-DELETE: Remove the payment screenshot from the database so it
+    // doesn't fill up storage. The order record (text only) is kept for history.
+    try {
+      await db.paymentProof.deleteMany({ where: { userId: order.userId } })
+    } catch {
+      // best-effort delete
+    }
 
     return NextResponse.json({ ok: true, message: 'Buy order rejected. User notified.' })
   } catch (err: any) {

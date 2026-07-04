@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const { user, response } = await requireAuth()
     if (!user) return response!
 
-    const { usdtAmount, birrAmount, bank, screenshotUrl, transactionCode, rate: clientRate } = await req.json()
+    const { usdtAmount, birrAmount, bank, screenshotUrl, screenshotId, transactionCode, rate: clientRate } = await req.json()
     const usdt = Number(usdtAmount)
     const birr = Number(birrAmount)
     if (!usdt || usdt <= 0) {
@@ -49,6 +49,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Select a valid bank' }, { status: 400 })
     }
 
+    // screenshotUrl is a data URL (from /api/buy/upload). We also store the
+    // PaymentProof id so the admin can view the image and so it can be deleted
+    // automatically after the order is reviewed.
     const order = await db.buyOrder.create({
       data: {
         userId: user.id,

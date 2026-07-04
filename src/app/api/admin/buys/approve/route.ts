@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     if (order.status === 'rejected') return NextResponse.json({ error: 'Order was rejected.' }, { status: 400 })
 
     await db.$transaction(async (tx) => {
-      await tx.buyOrder.update({ where: { id: order.id }, data: { status: 'approved' } })
+      await tx.buyOrder.update({ where: { id: order.id }, data: { status: 'approved', screenshotUrl: null } })
       // Credit USDT to the buyer
       const bal = await tx.balance.findUnique({ where: { userId_token: { userId: order.userId, token: 'USDT' } } })
       if (bal) {
@@ -47,6 +47,14 @@ export async function POST(req: NextRequest) {
         },
       })
     })
+
+    // AUTO-DELETE: Remove the payment screenshot from the database so it
+    // doesn't fill up storage. The order record (text only) is kept for history.
+    try {
+      await db.paymentProof.deleteMany({ where: { userId: order.userId } })
+    } catch {
+      // best-effort delete
+    }
 
     return NextResponse.json({ ok: true, message: `Approved. ${order.usdtAmount} USDT credited to user.` })
   } catch (err: any) {

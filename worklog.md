@@ -901,3 +901,44 @@ Stage Summary:
 - Auth now survives sandbox dev server restarts: token preserved in localStorage, auto-retry restores session when server returns
 - On Vercel (real deployment): server is always running, stable domain, httpOnly cookie + localStorage both work → sign-in WILL be remembered across refreshes (7-day JWT expiry)
 - The "doesn't remember me" issue was sandbox-specific (dev server dying). Vercel deployment is unaffected.
+
+---
+Task ID: FIX-BUY-UPLOAD
+Agent: main
+Task: Fix buy USDT screenshot upload — accept all image types, deliver to admin, auto-delete after review
+
+Work Log:
+- Root cause: /api/buy/upload route DID NOT EXIST — the buy-modal called uploadFile('/api/buy/upload', file) but there was no such endpoint → upload always failed
+- Created src/app/api/buy/upload/route.ts:
+  * Accepts multipart/form-data with `file` field
+  * Accepts ALL image types: PNG, JPEG, WEBP, HEIC, HEIF, GIF, BMP, AVIF, TIFF
+  * Validates file is an image (mimeType.startsWith('image/'))
+  * Validates size (max 8 MB)
+  * Reads file → base64 data URL → stores in PaymentProof table
+  * Returns { url (data URL for preview), id (proof record id) }
+  * Works on Vercel's read-only filesystem (no /public writes)
+- Updated src/components/modals/buy-modal.tsx:
+  * Added screenshotId state to track the proof record
+  * Added client-side validation (image type + 8MB limit) with friendly toast errors
+  * Updated file input accept="image/*,.heic,.heif,.avif" (covers iPhone HEIC photos)
+  * Sends screenshotId + screenshotUrl to /api/buy on submit
+- Updated src/app/api/admin/buys/approve/route.ts:
+  * After approving, sets screenshotUrl=null on the order AND deletes all PaymentProof records for that user
+- Updated src/app/api/admin/buys/reject/route.ts:
+  * After rejecting, sets screenshotUrl=null on the order AND deletes all PaymentProof records for that user
+  * This prevents the database from filling up with screenshots
+- Existing /api/buy/proof route already serves images to admin (owner or admin only) via data URL redirect
+- admin-buys.tsx already displays the screenshot via <img src={o.screenshotUrl}> — now works because screenshotUrl is a data URL
+- Verified end-to-end:
+  * POST /api/auth/signup → 200 + token
+  * POST /api/buy/upload (with PNG file) → 200 + {url, id}
+  * GET /api/buy/proof?id=... → 200 (image served back)
+- Lint: 0 errors (1 pre-existing warning)
+
+Stage Summary:
+- Screenshot upload now works for ALL image types (JPG, PNG, WEBP, HEIC from iPhone, GIF, BMP, AVIF, TIFF)
+- Screenshot is stored in the database (PaymentProof table) as base64 — works on Vercel's read-only filesystem
+- Admin sees the screenshot in the admin panel (Buys section) when reviewing buy orders
+- Screenshot is AUTO-DELETED from the database after admin approves OR rejects the order → database never fills up
+- NO environment variables needed — this uses the database you already have (PostgreSQL on Vercel)
+- The buy-modal file input now accepts image/*,.heic,.heif,.avif

@@ -32,8 +32,8 @@ export const BUY_BANKS: BuyBank[] = [
   {
     code: 'M-PESA',
     name: 'M-PESA',
-    accountName: 'To be added',
-    accountNumber: 'To be added',
+    accountName: 'Amare Yalew',
+    accountNumber: '0718373923',
   },
 ]
 

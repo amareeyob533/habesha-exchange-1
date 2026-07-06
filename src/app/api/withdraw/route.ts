@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
 import { getToken, ETB_RATE, BANKS } from '@/lib/tokens'
+import { sendPushNotification } from '@/lib/push'
 
 export async function POST(req: NextRequest) {
   try {
@@ -112,6 +113,7 @@ export async function POST(req: NextRequest) {
             type: 'success',
           },
         })
+        await sendPushNotification(user.id, { title: 'Transfer Sent', body: `${amt} ${token} sent to UID ${targetUid}.` }).catch(() => {})
         await tx.notification.create({
           data: {
             userId: recipient.id,
@@ -120,6 +122,7 @@ export async function POST(req: NextRequest) {
             type: 'success',
           },
         })
+        await sendPushNotification(recipient.id, { title: 'Transfer Received', body: `You received ${amt} ${token} from UID ${user.uid}.` }).catch(() => {})
       })
 
       return NextResponse.json({ ok: true, mode: 'internal' })
@@ -157,6 +160,13 @@ export async function POST(req: NextRequest) {
           type: 'info',
         },
       })
+      await sendPushNotification(user.id, {
+        title: network === 'bank' ? 'Bank Withdrawal Submitted' : 'Withdrawal Submitted',
+        body:
+          network === 'bank'
+            ? `Your bank withdrawal of ${amt} USDT (≈ ${(amt * ETB_RATE).toLocaleString('en-US')} ETB) to ${bankName} is pending admin approval. You'll be notified once processed.`
+            : `Your withdrawal of ${amt} ${token} to ${String(address).slice(0, 12)}... is pending admin approval. You'll be notified once it's processed.`,
+      }).catch(() => {})
     })
 
     return NextResponse.json({ ok: true, mode: network === 'bank' ? 'bank' : 'external' })

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
 import { isAdminEmail } from '@/lib/deposit-actions'
+import { sendPushNotification } from '@/lib/push'
 
 /** POST /api/admin/support/resolve { ticketId } — admin marks ticket as resolved */
 export async function POST(req: NextRequest) {
@@ -23,6 +24,7 @@ export async function POST(req: NextRequest) {
           type: 'info',
         },
       })
+      await sendPushNotification(ticket.userId, { title: 'Ticket Resolved', body: `Your support ticket "${ticket.subject}" has been marked as resolved. If you need more help, please open a new ticket.` }).catch(() => {})
     }
     return NextResponse.json({ ok: true, message: 'Ticket resolved' })
   } catch (err: any) {

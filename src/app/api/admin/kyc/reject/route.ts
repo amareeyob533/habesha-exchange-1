@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
 import { isAdminEmail } from '@/lib/deposit-actions'
+import { sendPushNotification } from '@/lib/push'
 
 /**
  * POST /api/admin/kyc/reject { applicationId, reason? }
@@ -64,6 +65,12 @@ export async function POST(req: NextRequest) {
           type: 'warning',
         },
       })
+      await sendPushNotification(app.userId, {
+        title: 'KYC Rejected',
+        body: reason
+          ? `Your KYC verification was rejected. Reason: ${reason}. You can re-submit your verification after reviewing the requirements.`
+          : 'Your KYC verification was rejected. You can re-submit your verification after reviewing the requirements.',
+      }).catch(() => {})
     })
 
     return NextResponse.json({ ok: true, message: 'KYC rejected. User notified. ID document deleted.' })

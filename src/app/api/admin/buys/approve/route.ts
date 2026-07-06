@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
 import { isAdminEmail } from '@/lib/deposit-actions'
+import { sendPushNotification } from '@/lib/push'
 
 /** POST /api/admin/buys/approve { orderId } — admin credits USDT to the buyer */
 export async function POST(req: NextRequest) {
@@ -46,6 +47,7 @@ export async function POST(req: NextRequest) {
           type: 'success',
         },
       })
+      await sendPushNotification(order.userId, { title: 'Buy Order Approved ✓', body: `Your buy order for ${order.usdtAmount} USDT has been approved. The USDT is now in your wallet.` }).catch(() => {})
     })
 
     // AUTO-DELETE: Remove the payment screenshot from the database so it

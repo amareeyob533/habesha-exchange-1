@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
 import { isAdminEmail } from '@/lib/deposit-actions'
+import { sendPushNotification } from '@/lib/push'
 
 /** POST /api/admin/buys/reject { orderId } — admin rejects a buy order */
 export async function POST(req: NextRequest) {
@@ -29,6 +30,7 @@ export async function POST(req: NextRequest) {
           type: 'warning',
         },
       })
+      await sendPushNotification(order.userId, { title: 'Buy Order Rejected', body: `Your buy order for ${order.usdtAmount} USDT was rejected. If you believe this is an error, please contact support.` }).catch(() => {})
     })
 
     // AUTO-DELETE: Remove the payment screenshot from the database so it

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
+import { sendPushNotification } from '@/lib/push'
 
 /** POST /api/support/reply — user replies to their own ticket */
 export async function POST(req: NextRequest) {
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest) {
             type: 'info',
           },
         })
+        await sendPushNotification(admin.id, { title: 'Support Reply', body: `${user.name || user.email} replied to: ${ticket.subject}` }).catch(() => {})
       }
     } catch (e) { /* not critical */ }
     return NextResponse.json({ ok: true, reply })

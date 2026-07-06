@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
 import { isAdminEmail } from '@/lib/deposit-actions'
+import { sendPushNotification } from '@/lib/push'
 
 /** POST /api/admin/users/unblock { userId } — admin only */
 export async function POST(req: NextRequest) {
@@ -23,6 +24,7 @@ export async function POST(req: NextRequest) {
         type: 'success',
       },
     })
+    await sendPushNotification(userId, { title: 'Account Unblocked', body: 'Your account has been restored. You can now sign in and use Habesha Exchange normally.' }).catch(() => {})
     return NextResponse.json({ ok: true, message: 'User unblocked.' })
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || 'Failed' }, { status: 500 })

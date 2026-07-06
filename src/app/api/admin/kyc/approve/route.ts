@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
 import { isAdminEmail } from '@/lib/deposit-actions'
 import { KYC_RETENTION_DAYS, cleanupExpiredKyc } from '@/lib/kyc-helpers'
+import { sendPushNotification } from '@/lib/push'
 
 /**
  * POST /api/admin/kyc/approve { applicationId }
@@ -65,6 +66,7 @@ export async function POST(req: NextRequest) {
           type: 'success',
         },
       })
+      await sendPushNotification(app.userId, { title: 'KYC Approved ✓', body: 'Your identity verification has been approved. You now have unlimited deposit and withdrawal limits.' }).catch(() => {})
     })
 
     // Opportunistic cleanup of any expired documents.

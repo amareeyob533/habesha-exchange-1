@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
 import { isAdminEmail } from '@/lib/deposit-actions'
+import { sendPushNotification } from '@/lib/push'
 
 /** POST /api/admin/users/block { userId, reason? } — admin only */
 export async function POST(req: NextRequest) {
@@ -24,6 +25,7 @@ export async function POST(req: NextRequest) {
         type: 'warning',
       },
     })
+    await sendPushNotification(userId, { title: 'Account Blocked', body: reason ? `Your account has been blocked. Reason: ${reason}` : 'Your account has been blocked. Contact support for assistance.' }).catch(() => {})
     return NextResponse.json({ ok: true, message: 'User blocked. They will be signed out on next action.' })
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || 'Failed' }, { status: 500 })

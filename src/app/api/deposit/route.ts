@@ -5,6 +5,7 @@ import { getToken } from '@/lib/tokens'
 import { notifyAdminDeposit } from '@/lib/email'
 import { signApprovalToken, getBaseUrl } from '@/lib/deposit-approval'
 import { hasApprovedKyc, getTotalDepositedUsd, KYC_DEPOSIT_LIMIT_USD } from '@/lib/kyc-helpers'
+import { sendPushNotification } from '@/lib/push'
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,6 +58,7 @@ export async function POST(req: NextRequest) {
         type: 'info',
       },
     })
+    await sendPushNotification(user.id, { title: 'Deposit Submitted', body: `Your deposit of ${amt} ${token} on ${network} is pending admin confirmation. You'll be notified once it's credited.` }).catch(() => {})
 
     // Build signed one-click approve / reject links and email them to the admin.
     const base = getBaseUrl(req)

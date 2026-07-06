@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
 import { BUY_BANKS } from '@/lib/buy-config'
+import { sendPushNotification } from '@/lib/push'
 
 // The rate fluctuates client-side between 185 and 187.
 // The server accepts any rate in that range (the client sends the current live rate).
@@ -72,6 +73,7 @@ export async function POST(req: NextRequest) {
         type: 'info',
       },
     })
+    await sendPushNotification(user.id, { title: 'Buy Order Submitted', body: `Your buy order for ${usdt} USDT (${birr.toLocaleString('en-US')} ETB via ${bank}) is pending admin approval. You'll be notified once the USDT is credited.` }).catch(() => {})
 
     return NextResponse.json({ ok: true, order })
   } catch (err: any) {

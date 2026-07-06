@@ -19,6 +19,7 @@ import { SupportModal } from '@/components/modals/support-modal'
 import { KycModal } from '@/components/modals/kyc-modal'
 import { NotificationPanel } from '@/components/dashboard/notification-panel'
 import { BottomNav } from '@/components/dashboard/bottom-nav'
+import { PushPermissionBanner } from '@/components/dashboard/push-banner'
 import { useUI } from '@/hooks/use-ui'
 import { useAuth } from '@/hooks/use-auth'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -102,6 +103,7 @@ export function DashboardShell() {
       <SupportModal />
       <KycModal />
       <NotificationPanel />
+      <PushPermissionBanner />
     </div>
   )
 }

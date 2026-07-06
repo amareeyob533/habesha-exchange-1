@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
 import { isAdminEmail } from '@/lib/deposit-actions'
+import { sendPushNotification } from '@/lib/push'
 
 /** POST /api/admin/users/notify { userId, title, message } — admin sends a notification to a user */
 export async function POST(req: NextRequest) {
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
         type: 'info',
       },
     })
+    await sendPushNotification(userId, { title: title.trim(), body: message.trim() }).catch(() => {})
     return NextResponse.json({ ok: true, message: 'Notification sent.' })
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || 'Failed' }, { status: 500 })

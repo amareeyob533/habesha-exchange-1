@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import { sendPushNotification } from '@/lib/push'
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'amareeyob533@gmail.com'
 
@@ -70,6 +71,7 @@ export async function approveDeposit(depositId: string): Promise<'done' | 'alrea
         type: 'success',
       },
     })
+    await sendPushNotification(deposit.userId, { title: 'Deposit Credited ✓', body: `Your deposit of ${deposit.amount} ${deposit.token} on ${deposit.network} has been approved and credited to your account.` }).catch(() => {})
   })
   return 'done'
 }
@@ -94,6 +96,7 @@ export async function rejectDeposit(depositId: string): Promise<'done' | 'alread
         type: 'warning',
       },
     })
+    await sendPushNotification(deposit.userId, { title: 'Deposit Rejected', body: `Your deposit of ${deposit.amount} ${deposit.token} on ${deposit.network} could not be confirmed and has been rejected. Please contact support if you believe this is an error.` }).catch(() => {})
   })
   return 'done'
 }

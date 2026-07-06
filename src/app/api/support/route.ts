@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
+import { sendPushNotification } from '@/lib/push'
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,6 +22,7 @@ export async function POST(req: NextRequest) {
         type: 'info',
       },
     })
+    await sendPushNotification(user.id, { title: 'Support Ticket Received', body: 'We received your message. For urgent matters, contact us on WhatsApp.' }).catch(() => {})
     return NextResponse.json({
       ok: true,
       whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || '+251900000000',

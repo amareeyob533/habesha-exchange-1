@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
 import { cleanupExpiredKyc } from '@/lib/kyc-helpers'
+import { sendPushNotification } from '@/lib/push'
 
 const VALID_ID_TYPES = new Set(['driver_license', 'national_id', 'passport'])
 
@@ -106,6 +107,7 @@ export async function POST(req: NextRequest) {
         type: 'info',
       },
     })
+    await sendPushNotification(user.id, { title: 'KYC Submitted for Review', body: 'Your identity verification has been submitted. Our admin team will review it shortly. You will be notified once approved or rejected.' }).catch(() => {})
 
     return NextResponse.json({ ok: true, kycStatus: 'pending' })
   } catch (err: any) {

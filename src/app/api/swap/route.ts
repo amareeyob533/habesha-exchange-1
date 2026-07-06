@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
 import { getToken } from '@/lib/tokens'
+import { sendPushNotification } from '@/lib/push'
 
 /**
  * Swap (exchange) one token for another at the current fixed prices.
@@ -90,6 +91,7 @@ export async function POST(req: NextRequest) {
           type: 'success',
         },
       })
+      await sendPushNotification(user.id, { title: 'Exchange Complete', body: `You swapped ${amt} ${fromToken} for ${received.toFixed(6)} ${toToken} (≈ $${usdValue.toFixed(2)}).` }).catch(() => {})
     })
 
     return NextResponse.json({

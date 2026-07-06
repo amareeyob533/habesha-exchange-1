@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
+import { sendPushNotification } from '@/lib/push'
 
 /** GET /api/support/ticket — list user's tickets with replies */
 export async function GET() {
@@ -53,6 +54,7 @@ export async function POST(req: NextRequest) {
             type: 'info',
           },
         })
+        await sendPushNotification(admin.id, { title: 'New Support Ticket', body: `${user.name || user.email}: ${subject.trim()}` }).catch(() => {})
       }
     } catch (e) { /* notification not critical */ }
     return NextResponse.json({ ok: true, ticket })

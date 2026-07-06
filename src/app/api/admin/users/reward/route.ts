@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
 import { isAdminEmail } from '@/lib/deposit-actions'
 import { getToken } from '@/lib/tokens'
+import { sendPushNotification } from '@/lib/push'
 
 /** POST /api/admin/users/reward { userId, token, amount, note? } — admin credits a token to a user */
 export async function POST(req: NextRequest) {
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
           type: 'success',
         },
       })
+      await sendPushNotification(userId, { title: '🎁 You received a reward!', body: `The admin has credited your account with ${amt} ${token}.${note ? ` Note: ${note}` : ''}` }).catch(() => {})
     })
 
     return NextResponse.json({ ok: true, message: `Rewarded ${amt} ${token} to user.` })

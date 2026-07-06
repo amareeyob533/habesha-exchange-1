@@ -218,3 +218,19 @@ model KycDocument {
   deleteAfter   DateTime?
   createdAt     DateTime @default(now())
 }
+
+// ============================================================================
+// Web Push Notifications
+// ============================================================================
+// Each user can have multiple push subscriptions (one per device/browser).
+// When a notification is created in the DB, we also send a web push to all
+// of that user's subscriptions so it shows up as a system notification on
+// their phone/desktop even when the tab is closed.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique // the push service endpoint URL (per device)
+  p256dh    String   // client public key (base64url)
+  auth      String   // auth secret (base64url)
+  createdAt DateTime @default(now())
+}

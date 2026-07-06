@@ -1183,3 +1183,35 @@ Stage Summary:
 - sendPushNotification wired into 22 notification.create calls across 20 files (deposits, withdrawals, buys, KYC, support, admin actions)
 - Works on phone browsers (Chrome Android, Safari iOS 16.4+, Firefox)
 - No new env vars required (VAPID keys have fallback) but recommended for production: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY
+
+---
+Task ID: UI-HERO-BALANCE-UPDATES
+Agent: main
+Task: Remove security strip, replace hero tagline, enlarge balance + add hide eye button
+
+Work Log:
+- src/components/landing/landing-page.tsx:
+  * Removed the "Bank-grade security · Instant internal transfers" premium badge strip above the hero heading
+  * Replaced hero heading "Trade crypto with confidence" → "Welcome to Habesha Exchange" (gold gradient on the brand name)
+  * Updated subtitle to Ethiopia-focused: "Your trusted home for crypto in Ethiopia. Buy, sell and hold BTC, USDT, USDC and TON — pay in Birr, withdraw to any bank, and trade with people you trust."
+  * Removed unused Gift icon import
+- src/app/layout.tsx:
+  * Updated metadata title: "Habesha Exchange — Trade Crypto with Confidence" → "Habesha Exchange — Your Trusted Home for Crypto"
+  * Updated metadata description + keywords (Ethiopia-focused, removed stale refs)
+- src/components/auth/auth-modal.tsx:
+  * Replaced "Bank-grade security · instant internal transfers between Habesha Exchange users by 6-digit UID" with "Your account is protected with industry-standard encryption. Welcome to Habesha Exchange."
+  * Switched the info box styling from gold to primary (emerald) to match the theme
+- src/components/dashboard/topbar.tsx:
+  * Added useState for balanceHidden (eye toggle)
+  * Imported Eye + EyeOff icons + useState from react
+  * Enlarged balance font: text-lg → text-2xl (mobile) / text-3xl (desktop) — much bigger and bolder
+  * Changed "Total Balance" label to a small uppercase tracking-wider label above the balance
+  * Added an eye/eye-off toggle button next to the balance — clicking it shows •••••• instead of the amount
+  * Increased header height from h-16 (64px) to min-h-[72px] to accommodate the bigger balance
+- Lint: 0 errors (1 pre-existing warning)
+
+Stage Summary:
+- Landing hero is cleaner: no security badge strip, welcoming "Welcome to Habesha Exchange" headline
+- Browser tab title updated to match the new tagline
+- Auth modal info box rewritten to be welcoming instead of technical
+- Total balance in topbar is now significantly bigger (text-2xl/3xl vs text-lg) and has an eye toggle to hide/show the amount for privacy

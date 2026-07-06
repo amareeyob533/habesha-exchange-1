@@ -16,10 +16,10 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Habesha Exchange — Trade Crypto with Confidence",
+  title: "Habesha Exchange — Your Trusted Home for Crypto",
   description:
-    "Habesha Exchange — a premium cryptocurrency exchange. Trade BTC, USDT, USDC and TON. Secure, fast and built for everyone.",
-  keywords: ["Habesha Exchange", "crypto exchange", "bitcoin", "USDT", "USDC", "TON", "trade crypto"],
+    "Habesha Exchange — buy, sell and hold BTC, USDT, USDC and TON. Pay in Birr, withdraw to any Ethiopian bank, and trade with people you trust.",
+  keywords: ["Habesha Exchange", "crypto exchange Ethiopia", "buy USDT Ethiopia", "bitcoin", "USDT", "USDC", "TON", "trade crypto", "ETB crypto"],
   icons: { icon: "/habesha-mark.jpg" },
 };
 

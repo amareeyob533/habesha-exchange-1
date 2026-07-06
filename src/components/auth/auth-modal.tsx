@@ -238,9 +238,9 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
                         {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </Field>
-                    <div className="flex items-start gap-2 rounded-lg border border-gold/20 bg-gold/5 p-2.5 text-[11px] text-muted-foreground">
-                      <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold" />
-                      <span>Bank-grade security · instant internal transfers between Habesha Exchange users by 6-digit UID.</span>
+                    <div className="flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 p-2.5 text-[11px] text-muted-foreground">
+                      <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                      <span>Your account is protected with industry-standard encryption. Welcome to Habesha Exchange.</span>
                     </div>
                     <Button type="submit" disabled={loading} className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground hover:opacity-95">
                       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Create Account <ArrowRight className="ml-1 h-4 w-4" /></>}

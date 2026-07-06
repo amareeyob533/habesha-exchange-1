@@ -1,6 +1,7 @@
 'use client'
 
-import { Menu, Bell, LogOut, ChevronDown, ShieldAlert, ShieldCheck, Clock, AlertCircle } from 'lucide-react'
+import { useState } from 'react'
+import { Menu, Bell, LogOut, ChevronDown, ShieldAlert, ShieldCheck, Clock, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { useAuth } from '@/hooks/use-auth'
@@ -23,6 +24,7 @@ export function Topbar() {
   const unread = notifications.filter((n) => !n.read).length
   const initials = (user?.name || user?.email || 'U').slice(0, 2).toUpperCase()
   const isAdmin = user?.email?.toLowerCase() === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'amareeyob533@gmail.com').toLowerCase()
+  const [balanceHidden, setBalanceHidden] = useState(false)
 
   // KYC status for the reminder banner (only for non-admin users).
   const kycStatus = user?.kycStatus || 'none'
@@ -30,7 +32,7 @@ export function Topbar() {
 
   return (
     <header className="sticky top-0 z-30 glass-strong border-b border-border/40">
-      <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
+      <div className="flex min-h-[72px] items-center gap-3 px-4 sm:px-6">
         <button className="lg:hidden" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
           <Menu className="h-5 w-5" />
         </button>
@@ -43,15 +45,26 @@ export function Topbar() {
             </div>
           ) : (
             <>
-              <div className="hidden text-xs text-muted-foreground sm:block">Total Balance</div>
+              <div className="hidden flex-col leading-none sm:flex">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Total Balance</span>
+              </div>
               <motion.div
-                key={totalUsd}
+                key={`${totalUsd}-${balanceHidden}`}
                 initial={{ opacity: 0.5, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-lg font-extrabold tracking-tight tabular-nums"
+                className="text-2xl font-extrabold tracking-tight tabular-nums sm:text-3xl"
               >
-                <span className="text-foreground">{formatUsd(totalUsd)}</span>
+                <span className="text-foreground">
+                  {balanceHidden ? '••••••' : formatUsd(totalUsd)}
+                </span>
               </motion.div>
+              <button
+                onClick={() => setBalanceHidden((v) => !v)}
+                aria-label={balanceHidden ? 'Show balance' : 'Hide balance'}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
+              >
+                {balanceHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </>
           )}
         </div>

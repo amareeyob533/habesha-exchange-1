@@ -10,7 +10,7 @@ import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { useUI } from '@/hooks/use-ui'
 import { apiFetch } from '@/lib/api-client'
 import { formatUsd } from '@/lib/format'
-import { ArrowRight, ShieldCheck, Zap, Globe2, Wallet, Lock, TrendingUp, Gift, Users, ChevronRight, Menu, Search } from 'lucide-react'
+import { ArrowRight, ShieldCheck, Zap, Globe2, Wallet, Lock, TrendingUp, Users, ChevronRight, Menu, Search } from 'lucide-react'
 
 interface TokenRow {
   symbol: string
@@ -121,22 +121,19 @@ export function LandingPage() {
             </div>
           </motion.div>
 
-          {/* Premium badge */}
+          {/* Hero heading */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-4 py-1.5 text-xs font-semibold text-gold backdrop-blur-sm"
+            className="mx-auto mb-6"
           >
-            <Gift className="h-3.5 w-3.5" /> Bank-grade security · Instant internal transfers
+            <h1 className="mx-auto max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
+              Welcome to <span className="text-gold-gradient">Habesha Exchange</span>
+            </h1>
           </motion.div>
-
-          <h1 className="mx-auto max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
-            Trade crypto with{' '}
-            <span className="text-gold-gradient">confidence</span>
-          </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg">
-            A premium, secure and lightning-fast exchange built for everyone. Trade BTC, USDT, USDC and TON — all in one place.
+            Your trusted home for crypto in Ethiopia. Buy, sell and hold BTC, USDT, USDC and TON — pay in Birr, withdraw to any bank, and trade with people you trust.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button size="lg" className="shimmer-btn bg-gold-gradient h-12 px-6 sm:h-14 sm:px-10 text-base font-bold text-primary-foreground shadow-gold-lg hover:opacity-95" onClick={() => openAuth('signup')}>

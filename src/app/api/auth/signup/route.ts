@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { hashPassword, setSessionCookie } from '@/lib/auth'
 import { generateUid, ensureBalances } from '@/lib/uid'
-import { TOKEN_SYMBOLS, HABESHA_PRICE, HABESHA_AIRDROP_USD } from '@/lib/tokens'
+import { TOKEN_SYMBOLS } from '@/lib/tokens'
 
 function normalizeUsername(raw: string): string {
   return raw.toLowerCase().trim().replace(/\s+/g, '')
@@ -54,31 +54,6 @@ export async function POST(req: NextRequest) {
 
     // Initialize balances for all tokens
     await ensureBalances(user.id, TOKEN_SYMBOLS)
-
-    // Airdrop free Habesha tokens ($15 worth at fixed price)
-    const airdropAmount = HABESHA_AIRDROP_USD / HABESHA_PRICE
-    await db.balance.update({
-      where: { userId_token: { userId: user.id, token: 'HABESHA' } },
-      data: { amount: airdropAmount },
-    })
-    await db.transaction.create({
-      data: {
-        userId: user.id,
-        type: 'airdrop',
-        token: 'HABESHA',
-        amount: airdropAmount,
-        status: 'completed',
-        note: `Welcome bonus — $${HABESHA_AIRDROP_USD} worth of Habesha Token`,
-      },
-    })
-    await db.notification.create({
-      data: {
-        userId: user.id,
-        title: 'Welcome to Habesha Exchange! 🎉',
-        message: `You received ${airdropAmount.toFixed(4)} HABESHA ($${HABESHA_AIRDROP_USD} welcome bonus). Start trading now!`,
-        type: 'success',
-      },
-    })
 
     // Notify admin that a new user joined
     const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'amareeyob533@gmail.com'

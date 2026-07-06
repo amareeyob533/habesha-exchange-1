@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useUI } from '@/hooks/use-ui'
 import { formatUsd, formatTokenAmount } from '@/lib/format'
 import { motion } from 'framer-motion'
-import { ArrowDownToLine, ArrowUpFromLine, Send, Lock } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { TokenIcon } from '@/components/common/token-icon'
 
@@ -40,7 +40,6 @@ export function WalletView() {
               <div>
                 <div className="flex items-center gap-1.5 text-sm font-bold">
                   {b.symbol}
-                  {b.symbol === 'HABESHA' && <Lock className="h-3 w-3 text-gold" />}
                 </div>
                 <div className="text-[11px] text-muted-foreground">{b.name}</div>
               </div>
@@ -48,20 +47,17 @@ export function WalletView() {
             <div className="col-span-4 text-right font-mono text-sm font-semibold sm:col-span-3">{formatTokenAmount(b.amount, b.symbol)}</div>
             <div className="col-span-4 text-right font-mono text-sm text-muted-foreground sm:col-span-3">{formatUsd(b.usdValue)}</div>
             <div className="col-span-12 flex gap-1.5 sm:col-span-3 sm:justify-end">
-              <Button size="sm" variant="outline" className="h-8 border-border text-xs" disabled={b.symbol === 'HABESHA'} onClick={() => openDeposit(b.symbol)}>
+              <Button size="sm" variant="outline" className="h-8 border-border text-xs" onClick={() => openDeposit(b.symbol)}>
                 <ArrowDownToLine className="h-3 w-3" />
               </Button>
               <Button size="sm" variant="outline" className="h-8 border-border text-xs" onClick={() => openWithdraw(b.symbol)}>
-                {b.symbol === 'HABESHA' ? <Send className="h-3 w-3" /> : <ArrowUpFromLine className="h-3 w-3" />}
+                <ArrowUpFromLine className="h-3 w-3" />
               </Button>
             </div>
           </motion.div>
         ))}
       </div>
 
-      <div className="rounded-xl border border-gold/20 bg-gold/5 p-4 text-xs text-muted-foreground">
-        <b className="text-gold">Habesha Token</b> is an exclusive asset. It can only be transferred between Habesha Exchange users (by UID) and cannot be withdrawn to external wallets.
-      </div>
     </div>
   )
 }

@@ -23,7 +23,6 @@ const FALLBACK: TokenInfo[] = [
   { symbol: 'TON', name: 'Toncoin', price: 5.42, change24h: 4.12, color: '#0098EA', icon: '◆' },
   { symbol: 'USDT', name: 'Tether USD', price: 1, change24h: 0.01, color: '#26A17B', icon: '₮' },
   { symbol: 'USDC', name: 'USD Coin', price: 1, change24h: -0.02, color: '#2775CA', icon: '$' },
-  { symbol: 'HABESHA', name: 'Habesha Token', price: 6.4321674, change24h: 0, color: '#F0B90B', icon: 'H' },
 ]
 
 export function MiniMarketOverview({ onTokenClick }: { onTokenClick?: (symbol: string) => void }) {
@@ -65,7 +64,7 @@ export function MiniMarketOverview({ onTokenClick }: { onTokenClick?: (symbol: s
 
 function MiniTokenCard({ token, delay, onClick }: { token: TokenInfo; delay: number; onClick: () => void }) {
   const isUp = token.change24h >= 0
-  const lineColor = token.symbol === 'HABESHA' ? '#F0B90B' : isUp ? '#00D68F' : '#FF4D6D'
+  const lineColor = isUp ? '#00D68F' : '#FF4D6D'
 
   return (
     <motion.button

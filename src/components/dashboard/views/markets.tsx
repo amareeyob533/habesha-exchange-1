@@ -5,7 +5,7 @@ import { useUI } from '@/hooks/use-ui'
 import { apiFetch } from '@/lib/api-client'
 import { formatUsd } from '@/lib/format'
 import { motion } from 'framer-motion'
-import { ArrowDownToLine, ArrowUpFromLine, Send, TrendingUp, TrendingDown, Search } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, TrendingUp, TrendingDown, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { TokenIcon } from '@/components/common/token-icon'
 import { Input } from '@/components/ui/input'
@@ -18,8 +18,6 @@ interface TokenRow {
   color: string
   icon: string
   iconUrl?: string | null
-  fixed?: boolean
-  internalOnly?: boolean
   listed: boolean
   isLive?: boolean
 }
@@ -84,8 +82,6 @@ export function MarketsView() {
                 <div>
                   <div className="flex flex-wrap items-center gap-1.5 font-bold">
                     {t.symbol}
-                    {t.internalOnly && <span className="rounded bg-gold/15 px-1.5 py-0.5 text-[9px] font-bold text-gold">EXCLUSIVE</span>}
-                    {t.fixed && <span className="rounded bg-secondary px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">FIXED</span>}
                   </div>
                   <div className="text-[11px] text-muted-foreground">{t.name}</div>
                 </div>
@@ -95,14 +91,14 @@ export function MarketsView() {
               </div>
               <div className={`col-span-2 flex items-center justify-end gap-1 text-right font-mono text-sm ${t.change24h >= 0 ? 'text-up' : 'text-down'}`}>
                 {t.change24h >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                {t.fixed ? '0.00%' : `${t.change24h >= 0 ? '+' : ''}${t.change24h.toFixed(2)}%`}
+                {`${t.change24h >= 0 ? '+' : ''}${t.change24h.toFixed(2)}%`}
               </div>
               <div className="col-span-3 flex justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-                <Button size="sm" variant="outline" className="h-8 border-border text-xs" disabled={t.internalOnly} onClick={() => openDeposit(t.symbol)}>
+                <Button size="sm" variant="outline" className="h-8 border-border text-xs" onClick={() => openDeposit(t.symbol)}>
                   <ArrowDownToLine className="h-3 w-3" />
                 </Button>
                 <Button size="sm" variant="outline" className="h-8 border-border text-xs" onClick={() => openWithdraw(t.symbol)}>
-                  {t.internalOnly ? <Send className="h-3 w-3" /> : <ArrowUpFromLine className="h-3 w-3" />}
+                  <ArrowUpFromLine className="h-3 w-3" />
                 </Button>
               </div>
             </motion.div>

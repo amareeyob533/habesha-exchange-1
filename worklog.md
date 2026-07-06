@@ -1063,3 +1063,46 @@ Stage Summary:
 - Settings page now shows "Verified ✓" after admin approval (was stuck on "verify your account")
 - The bug was that /api/auth/me never sent KYC fields to the frontend — now fixed
 - No new environment variables needed
+
+---
+Task ID: REMOVE-HABESHA-TOKEN
+Agent: general-purpose
+Task: Remove all HABESHA token references from backend + frontend
+
+Work Log:
+- Backend API routes (5 files):
+  * src/app/api/withdraw/route.ts — removed the `if (tk.internalOnly && network !== 'internal')` check that blocked external HABESHA withdrawals.
+  * src/app/api/swap/route.ts — removed the `if (from.internalOnly)` check that blocked swapping FROM HABESHA token.
+  * src/app/api/ohlc/route.ts — changed `if (token.fixed || !token.coingeckoId)` to `if (!token.coingeckoId)` and updated the comment from "HABESHA token — no live data" to "Tokens without CoinGecko IDs: return flat candles at fallback price".
+  * src/app/api/tokens/route.ts — removed `fixed: !!t.fixed` and `internalOnly: !!t.internalOnly` from the response.
+  * src/app/api/market-data/route.ts — removed `fixed: !!t.fixed` and `internalOnly: !!t.internalOnly` from BOTH response objects (live + fallback) and updated the stale "skip HABESHA" comment to "Get all CoinGecko IDs for live price fetching".
+- Frontend dashboard views (6 files):
+  * src/components/dashboard/views/wallet.tsx — removed the Lock icon for HABESHA, the disabled deposit button for HABESHA, the Send icon swap for HABESHA, and the "Habesha Token is an exclusive asset" info card. All tokens now use the normal deposit/withdraw buttons. Removed unused `Send, Lock` imports.
+  * src/components/dashboard/views/settings.tsx — removed `<SelectItem value="HABESHA">HABESHA</SelectItem>` from the default trading pair dropdown.
+  * src/components/dashboard/views/mini-market.tsx — removed the HABESHA entry from the FALLBACK tokens array and simplified `lineColor` from `token.symbol === 'HABESHA' ? '#F0B90B' : isUp ? '#00D68F' : '#FF4D6D'` to just `isUp ? '#00D68F' : '#FF4D6D'`.
+  * src/components/dashboard/views/admin-users.tsx — removed 'HABESHA' from the TOKENS array used in the reward dialog (now ['USDT', 'USDC', 'BTC', 'TON']).
+  * src/components/dashboard/views/exchange.tsx — removed the HABESHA mock token, removed `internalOnly` from the TokenInfo interface, removed `toIsHabesha`/`fromIsHabesha` variables, removed `showHabeshaWarning` state, removed the disabled+Lock-icon SelectItem, removed the conditional swap-direction button styling, removed the one-way-conversion warning block, removed the "Habesha Token — Not Listed Yet" info card, and removed the entire confirmation Dialog for swapping INTO Habesha. Also removed unused Dialog/ShieldAlert/Lock/AlertTriangle imports.
+  * src/components/dashboard/views/markets.tsx — removed `internalOnly` and `fixed` from the TokenRow interface, removed EXCLUSIVE/FIXED badges, changed `t.fixed ? '0.00%'` to always show the actual change, removed `disabled={t.internalOnly}` on the deposit button, and removed the internalOnly Send icon swap. Removed unused `Send` import.
+- Frontend modals (3 files):
+  * src/components/modals/deposit-modal.tsx — removed `internalOnly` from the TokenInfo interface and changed the filter `d.tokens.filter((t) => !t.internalOnly)` to just `d.tokens` (no more internal-only tokens).
+  * src/components/modals/withdraw-modal.tsx — removed `internalOnly` from the TokenInfo interface, removed the HABESHA mock token entry, replaced `effectiveMode` with `mode` everywhere (no more forced-internal logic), removed the INTERNAL badge in the SelectItem, removed `disabled={!!token?.internalOnly}` on the External/Bank mode buttons, removed the internalOnly warning block, removed the `ShieldAlert` import (no longer used), and made `disabled` optional in the ModeButton component (so internal mode button can omit it).
+  * src/components/modals/token-detail-modal.tsx — removed `internalOnly` and `fixed` from the TokenInfo interface, removed the HABESHA mock token, removed EXCLUSIVE/FIXED badges, changed `token.fixed ? '0.00%'` to always show the actual change, removed the fixed-price notice block, removed the internalOnly transfer-only block, removed `disabled={token.internalOnly}` on the deposit button, removed the internalOnly Send/Transfer swap (just "Withdraw" now), updated the signup CTA from "New users get $15 in Habesha Token" to "New users get a welcome bonus". Removed unused `Send, Info, Lock` imports.
+- Frontend landing/markets (2 files):
+  * src/components/landing/landing-page.tsx — removed `internalOnly` and `fixed` from the TokenRow interface, removed the EXCLUSIVE badge and FIXED badge in the markets table, replaced the "New users get $15 in Habesha Token" premium badge with "Bank-grade security · Instant internal transfers", updated the hero description to remove "and the exclusive Habesha Token", changed "Tokens Listed" stat from 5+ to 4, updated the "Live Markets" feature description to drop HABESHA, replaced the "Welcome Bonus" feature (which described the HABESHA airdrop) with a "Bank Withdrawals" feature, and removed the entire "Habesha Token highlight" section. The brand "HABESHA EXCHANGE" mentions in the footer and logo were left untouched per task rules.
+  * src/components/markets/token-chart.tsx — changed `const lineColor = symbol === 'HABESHA' ? '#F0B90B' : isUp ? '#00D68F' : '#FF4D6D'` to `const lineColor = isUp ? '#00D68F' : '#FF4D6D'`.
+- Extra cleanup (outside the explicit 16-file list but still HABESHA token references):
+  * src/app/layout.tsx — removed "and the exclusive Habesha Token" from the metadata description; replaced "Habesha Token" keyword with "USDC", "TON".
+  * src/components/auth/auth-modal.tsx — changed the signup success toast from "You received $15 in Habesha Token as a welcome bonus." to "Welcome to Habesha Exchange. Your account is ready." and replaced the signup-form "$15 worth of Habesha Token" notice with a generic "Bank-grade security · instant internal transfers between Habesha Exchange users by 6-digit UID." message.
+  * src/lib/price-history.ts — updated the stale docstring comment from "For fixed-price tokens (HABESHA), returns a flat line." to "For zero-volatility tokens (e.g. stablecoins at peg), returns a flat line."
+  * src/app/api/deposit/route.ts — removed `HABESHA: 6.4321674` from the static fallback PRICES map used for KYC deposit-limit calc.
+- Verified: `bun run lint` → 0 errors (1 pre-existing unrelated warning in dashboard-shell.tsx line 46).
+- Verified: `grep -r "Habesha Token\|'HABESHA'\|\"HABESHA\"\|internalOnly\|token.fixed"` → only matches remaining are brand-name strings "HABESHA EXCHANGE" / "Habesha Exchange" (correctly preserved per task rules).
+
+Stage Summary:
+- HABESHA token is now fully removed from the codebase: all 16 listed files cleaned + 4 extra files (layout metadata, auth modal welcome messages, price-history docstring, deposit route fallback prices).
+- The `internalOnly` and `fixed` fields are gone from every TypeScript interface and every API response.
+- The deposit/withdraw UI now treats all tokens uniformly (no more disabled buttons, no more Lock icons, no more "INTERNAL" or "EXCLUSIVE" badges, no more one-way conversion warnings).
+- The Exchange page no longer has a special HABESHA flow — every token can be swapped in either direction.
+- The landing page no longer markets a HABESHA welcome airdrop or the HABESHA-token highlight section (since the airdrop was already removed from the signup route by a previous agent).
+- "Habesha Exchange" / "HABESHA EXCHANGE" brand mentions and the /public logo image files were preserved per task rules.
+- Lint: 0 errors.

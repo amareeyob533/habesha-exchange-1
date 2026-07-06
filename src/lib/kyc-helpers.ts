@@ -53,13 +53,12 @@ export async function getTotalDepositedUsd(userId: string): Promise<number> {
     select: { token: true, amount: true },
   })
   // Simple USD conversion using token symbols. USDT/USDC = 1.
-  // BTC and TON use approximate static prices; HABESHA is internal-only.
+  // BTC and TON use approximate static prices.
   const PRICES: Record<string, number> = {
     USDT: 1,
     USDC: 1,
     BTC: 97500,
     TON: 5.42,
-    HABESHA: 6.4321674,
   }
   return deposits.reduce((sum, d) => {
     const price = PRICES[d.token] ?? 0

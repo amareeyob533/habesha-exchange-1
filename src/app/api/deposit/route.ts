@@ -14,9 +14,6 @@ export async function POST(req: NextRequest) {
     const { token, network, amount } = await req.json()
     const tk = getToken(token)
     if (!tk) return NextResponse.json({ error: 'Invalid token' }, { status: 400 })
-    if (tk.internalOnly) {
-      return NextResponse.json({ error: 'This token cannot be deposited externally' }, { status: 400 })
-    }
     const net = tk.networks.find((n) => n.name === network)
     if (!net) return NextResponse.json({ error: 'Invalid network' }, { status: 400 })
     const amt = Number(amount)
@@ -30,7 +27,7 @@ export async function POST(req: NextRequest) {
       const alreadyDeposited = await getTotalDepositedUsd(user.id)
       // Approximate USD value of this deposit using static fallback prices.
       const PRICES: Record<string, number> = {
-        USDT: 1, USDC: 1, BTC: 97500, TON: 5.42, HABESHA: 6.4321674,
+        USDT: 1, USDC: 1, BTC: 97500, TON: 5.42,
       }
       const thisDepositUsd = amt * (PRICES[token] ?? 0)
       const totalAfter = alreadyDeposited + thisDepositUsd

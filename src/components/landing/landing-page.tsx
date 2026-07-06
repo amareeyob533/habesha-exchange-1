@@ -19,8 +19,6 @@ interface TokenRow {
   change24h: number
   color: string
   icon: string
-  fixed?: boolean
-  internalOnly?: boolean
   listed: boolean
   isLive?: boolean
 }
@@ -130,7 +128,7 @@ export function LandingPage() {
             transition={{ delay: 0.2 }}
             className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-4 py-1.5 text-xs font-semibold text-gold backdrop-blur-sm"
           >
-            <Gift className="h-3.5 w-3.5" /> New users get $15 in Habesha Token — instantly
+            <Gift className="h-3.5 w-3.5" /> Bank-grade security · Instant internal transfers
           </motion.div>
 
           <h1 className="mx-auto max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
@@ -138,7 +136,7 @@ export function LandingPage() {
             <span className="text-gold-gradient">confidence</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg">
-            A premium, secure and lightning-fast exchange built for everyone. Trade BTC, USDT, USDC, TON and the exclusive Habesha Token — all in one place.
+            A premium, secure and lightning-fast exchange built for everyone. Trade BTC, USDT, USDC and TON — all in one place.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button size="lg" className="shimmer-btn bg-gold-gradient h-12 px-6 sm:h-14 sm:px-10 text-base font-bold text-primary-foreground shadow-gold-lg hover:opacity-95" onClick={() => openAuth('signup')}>
@@ -165,7 +163,7 @@ export function LandingPage() {
           {[
             { label: '24h Volume', value: '$1.2B' },
             { label: 'Active Users', value: '320K+' },
-            { label: 'Tokens Listed', value: '5+' },
+            { label: 'Tokens Listed', value: '4' },
             { label: 'Uptime', value: '99.99%' },
           ].map((s, i) => (
             <motion.div
@@ -194,8 +192,8 @@ export function LandingPage() {
             { icon: Lock, title: 'Secure by Design', desc: 'Encrypted credentials, protected API routes, and secure session management for every account.' },
             { icon: Wallet, title: 'Multi-Network Wallets', desc: 'Deposit via TRON, Ethereum, Bitcoin and TON networks with verified addresses.' },
             { icon: Users, title: 'Internal Transfers', desc: 'Send funds instantly to any user by their 6-digit UID — zero fees, zero delay.' },
-            { icon: TrendingUp, title: 'Live Markets', desc: 'Track BTC, USDT, USDC, TON and Habesha Token with real-time pricing.' },
-            { icon: Gift, title: 'Welcome Bonus', desc: 'Every new account is credited with $15 in Habesha Token automatically.' },
+            { icon: TrendingUp, title: 'Live Markets', desc: 'Track BTC, USDT, USDC and TON with real-time CoinGecko pricing.' },
+            { icon: Globe2, title: 'Bank Withdrawals', desc: 'Cash out to Ethiopian banks (CBE, Telebirr, Abay, M-PESA) in ETB at fixed rates.' },
           ].map((f, i) => (
             <motion.div
               key={f.title}
@@ -259,14 +257,12 @@ export function LandingPage() {
                 <div>
                   <div className="flex flex-wrap items-center gap-1.5 font-semibold">
                     {t.symbol}
-                    {t.internalOnly && <span className="rounded bg-gold/15 px-1.5 py-0.5 text-[9px] font-bold text-gold">EXCLUSIVE</span>}
                   </div>
                   <div className="text-[11px] text-muted-foreground">{t.name}</div>
                 </div>
               </div>
               <div className="col-span-3 text-right font-mono text-sm font-semibold sm:col-span-3">
                 {formatUsd(t.price)}
-                {t.fixed && <span className="ml-1 text-[9px] text-gold">FIXED</span>}
               </div>
               <div className={`col-span-2 text-right font-mono text-sm sm:col-span-3 ${t.change24h >= 0 ? 'text-up' : 'text-down'}`}>
                 {t.change24h >= 0 ? '+' : ''}{t.change24h.toFixed(2)}%
@@ -278,38 +274,6 @@ export function LandingPage() {
               </div>
             </motion.div>
           ))}
-        </div>
-      </section>
-
-      {/* Habesha Token highlight */}
-      <section className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6">
-        <div className="relative overflow-hidden rounded-3xl gradient-border glass-card p-8 sm:p-14 shadow-gold-lg">
-          <LogoMark className="bg-gold-glow pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full opacity-15 blur-3xl animate-float" />
-          <div className="relative flex flex-col items-start gap-8 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-xs font-bold text-gold backdrop-blur-sm">
-                <LogoMark className="h-4 w-4 rounded" /> HABESHA TOKEN
-              </div>
-              <h3 className="mt-5 text-2xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">The exclusive token of the ecosystem</h3>
-              <p className="mt-4 text-base text-muted-foreground">
-                Habesha Token is fixed at <b className="text-gold">$6.4321674</b> and not yet listed publicly. Every new member receives
-                <b className="text-gold"> $15</b> worth instantly. Transferable between Habesha Exchange users — no external withdrawals.
-              </p>
-              <Button className="shimmer-btn bg-gold-gradient mt-7 h-12 px-8 font-bold text-primary-foreground shadow-gold hover:opacity-95" onClick={() => openAuth('signup')}>
-                Claim your bonus <ArrowRight className="ml-1 h-4 w-4" />
-              </Button>
-            </div>
-            <div className="grid w-full max-w-xs grid-cols-2 gap-4">
-              <div className="glass-card gradient-border rounded-2xl p-5">
-                <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Fixed Price</div>
-                <div className="mt-1 text-3xl font-extrabold text-gold-gradient">$6.43</div>
-              </div>
-              <div className="glass-card gradient-border rounded-2xl p-5">
-                <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Welcome Bonus</div>
-                <div className="mt-1 text-3xl font-extrabold text-gold-gradient">$15</div>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 

@@ -11,8 +11,6 @@ export async function GET() {
       color: t.color,
       icon: t.icon,
       iconUrl: t.iconUrl || null,
-      fixed: !!t.fixed,
-      internalOnly: !!t.internalOnly,
       listed: t.listed,
       networks: t.networks.map((n) => ({ name: n.name, address: n.address })),
     })),

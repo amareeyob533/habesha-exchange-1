@@ -25,17 +25,6 @@ export async function POST(req: NextRequest) {
     if (!from || !to) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 400 })
     }
-    // Habesha Token is NOT publicly listed yet, so it can only be RECEIVED
-    // (swapped TO), never swapped FROM into other tokens.
-    if (from.internalOnly) {
-      return NextResponse.json(
-        {
-          error:
-            'Habesha Token is not listed yet and cannot be exchanged into other tokens. You can only receive HABESHA (by swapping other tokens into it) or transfer it internally between Habesha Exchange users.',
-        },
-        { status: 400 },
-      )
-    }
     const amt = Number(amount)
     if (!amt || amt <= 0) {
       return NextResponse.json({ error: 'Enter a valid amount' }, { status: 400 })

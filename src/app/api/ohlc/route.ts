@@ -22,8 +22,8 @@ export async function GET(req: NextRequest) {
     const token = TOKENS.find((t) => t.symbol === symbol)
     if (!token) return NextResponse.json({ error: 'Invalid token' }, { status: 400 })
 
-    // HABESHA token — no live data, return flat candles
-    if (token.fixed || !token.coingeckoId) {
+    // Tokens without CoinGecko IDs: return flat candles at fallback price
+    if (!token.coingeckoId) {
       const now = Date.now()
       const candles = Array.from({ length: 20 }, (_, i) => ({
         t: now - (20 - i) * 3600000,

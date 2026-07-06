@@ -13,7 +13,7 @@ export function formatUsd(amount: number, opts?: { max?: number; min?: number })
 }
 
 export function formatTokenAmount(amount: number, symbol: string): string {
-  const decimals = symbol === 'BTC' ? 6 : symbol === 'HABESHA' ? 4 : 2
+  const decimals = symbol === 'BTC' ? 6 : 2
   return amount.toLocaleString('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,

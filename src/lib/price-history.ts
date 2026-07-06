@@ -32,7 +32,6 @@ function volatilityFor(symbol: string): number {
   if (symbol === 'USDT' || symbol === 'USDC') return 0.0015
   if (symbol === 'BTC') return 0.03
   if (symbol === 'TON') return 0.05
-  if (symbol === 'HABESHA') return 0 // fixed price
   return 0.04
 }
 
@@ -46,7 +45,7 @@ const TF_CONFIG: Record<Timeframe, { points: number; stepMs: number }> = {
 
 /**
  * Generate deterministic historical price points ending at `currentPrice`.
- * For fixed-price tokens (HABESHA), returns a flat line.
+ * For zero-volatility tokens (e.g. stablecoins at peg), returns a flat line.
  */
 export function generatePriceHistory(
   symbol: string,

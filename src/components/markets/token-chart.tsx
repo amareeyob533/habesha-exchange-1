@@ -73,7 +73,7 @@ export function TokenChart({ symbol, currentPrice, change24h, color }: TokenChar
   }, [candles])
 
   const isUp = stats.change >= 0
-  const lineColor = symbol === 'HABESHA' ? '#F0B90B' : isUp ? '#00D68F' : '#FF4D6D'
+  const lineColor = isUp ? '#00D68F' : '#FF4D6D'
 
   return (
     <div className="space-y-3">

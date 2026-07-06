@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { setSessionCookie } from '@/lib/auth'
 import { generateUid, ensureBalances } from '@/lib/uid'
-import { TOKEN_SYMBOLS, HABESHA_PRICE, HABESHA_AIRDROP_USD } from '@/lib/tokens'
+import { TOKEN_SYMBOLS } from '@/lib/tokens'
 
 /**
  * Simulated Google sign-in.
@@ -33,29 +33,6 @@ export async function POST(req: NextRequest) {
         },
       })
       await ensureBalances(user.id, TOKEN_SYMBOLS)
-      const airdropAmount = HABESHA_AIRDROP_USD / HABESHA_PRICE
-      await db.balance.update({
-        where: { userId_token: { userId: user.id, token: 'HABESHA' } },
-        data: { amount: airdropAmount },
-      })
-      await db.transaction.create({
-        data: {
-          userId: user.id,
-          type: 'airdrop',
-          token: 'HABESHA',
-          amount: airdropAmount,
-          status: 'completed',
-          note: `Welcome bonus — $${HABESHA_AIRDROP_USD} worth of Habesha Token`,
-        },
-      })
-      await db.notification.create({
-        data: {
-          userId: user.id,
-          title: 'Welcome to Habesha Exchange! 🎉',
-          message: `You received ${airdropAmount.toFixed(4)} HABESHA ($${HABESHA_AIRDROP_USD} welcome bonus). Start trading now! `,
-          type: 'success',
-        },
-      })
     } else if (user.provider === 'credentials' && !user.avatarUrl && avatarUrl) {
       await db.user.update({ where: { id: user.id }, data: { avatarUrl } })
     }

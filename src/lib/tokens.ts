@@ -1,5 +1,5 @@
 // Central token configuration for Habesha Exchange.
-// Prices are static for demo stability; HABESHA price is FIXED per requirement.
+// Prices use CoinGecko for live data; fallback static prices shown below.
 
 export interface NetworkInfo {
   name: string
@@ -23,15 +23,10 @@ export interface TokenConfig {
   iconUrl?: string // real token icon image
   price: number // USD price (fallback/initial)
   coingeckoId?: string // CoinGecko API ID for real live prices
-  fixed?: boolean // fixed price (HABESHA)
   change24h: number // simulated % change (fallback)
   networks: NetworkInfo[] // deposit networks + wallet addresses
-  internalOnly?: boolean // Habesha: cannot deposit/withdraw externally
   listed: boolean // publicly listed
 }
-
-export const HABESHA_PRICE = 6.4321674
-export const HABESHA_AIRDROP_USD = 15
 
 export const TOKENS: TokenConfig[] = [
   {
@@ -91,19 +86,6 @@ export const TOKENS: TokenConfig[] = [
     ],
     listed: true,
   },
-  {
-    symbol: 'HABESHA',
-    name: 'Habesha Token',
-    color: '#F0B90B',
-    icon: 'H',
-    iconUrl: '/tokens/habesha.jpg',
-    price: HABESHA_PRICE,
-    fixed: true,
-    change24h: 0,
-    networks: [], // no external deposit
-    internalOnly: true,
-    listed: false, // not listed publicly yet, but shown in exchange
-  },
 ]
 
 export function getToken(symbol: string): TokenConfig | undefined {
@@ -113,7 +95,7 @@ export function getToken(symbol: string): TokenConfig | undefined {
 export const TOKEN_SYMBOLS = TOKENS.map((t) => t.symbol)
 
 export function formatTokenAmount(amount: number, symbol: string): string {
-  const decimals = symbol === 'BTC' ? 6 : symbol === 'HABESHA' ? 4 : 2
+  const decimals = symbol === 'BTC' ? 6 : 2
   return amount.toLocaleString('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,

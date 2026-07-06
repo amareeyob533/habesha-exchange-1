@@ -52,7 +52,7 @@ interface UserDetail {
   transactions: { id: string; type: string; token: string; amount: number; status: string; note: string | null; createdAt: string }[]
 }
 
-const TOKENS = ['USDT', 'USDC', 'BTC', 'TON', 'HABESHA']
+const TOKENS = ['USDT', 'USDC', 'BTC', 'TON']
 
 export function UsersAdmin() {
   const { toast } = useToast()

@@ -20,7 +20,6 @@ interface TokenInfo {
   color: string
   icon: string
   networks: { name: string; address: string }[]
-  internalOnly?: boolean
 }
 
 const TOKENS_FALLBACK: TokenInfo[] = [
@@ -79,7 +78,7 @@ function DepositForm({ initialSymbol, onClose }: { initialSymbol: string; onClos
 
   useEffect(() => {
     apiFetch<{ tokens: TokenInfo[] }>('/api/tokens')
-      .then((d) => setTokens(d.tokens.filter((t) => !t.internalOnly)))
+      .then((d) => setTokens(d.tokens))
       .catch(() => {})
   }, [])
 

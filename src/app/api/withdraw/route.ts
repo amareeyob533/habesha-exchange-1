@@ -14,14 +14,6 @@ export async function POST(req: NextRequest) {
     const amt = Number(amount)
     if (!amt || amt <= 0) return NextResponse.json({ error: 'Enter a valid amount' }, { status: 400 })
 
-    // Habesha token: internal transfers only
-    if (tk.internalOnly && network !== 'internal') {
-      return NextResponse.json(
-        { error: 'Habesha Token can only be transferred internally between Habesha Exchange users.' },
-        { status: 400 },
-      )
-    }
-
     // Bank withdrawal: token MUST be USDT (users exchange to USDT first), bank must be valid.
     if (network === 'bank') {
       if (token !== 'USDT') {

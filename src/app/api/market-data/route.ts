@@ -18,7 +18,7 @@ export async function GET() {
       return NextResponse.json(priceCache.data)
     }
 
-    // Get all CoinGecko IDs (skip HABESHA — it's fixed price)
+    // Get all CoinGecko IDs for live price fetching
     const coingeckoIds = TOKENS.filter((t) => t.coingeckoId).map((t) => t.coingeckoId!)
     const idsParam = coingeckoIds.join(',')
 
@@ -46,8 +46,6 @@ export async function GET() {
         icon: t.icon,
         iconUrl: t.iconUrl || null,
         coingeckoId: t.coingeckoId || null,
-        fixed: !!t.fixed,
-        internalOnly: !!t.internalOnly,
         listed: t.listed,
         networks: t.networks.map((n) => ({ name: n.name, address: n.address })),
         isLive: !!live,
@@ -72,8 +70,6 @@ export async function GET() {
       icon: t.icon,
       iconUrl: t.iconUrl || null,
       coingeckoId: t.coingeckoId || null,
-      fixed: !!t.fixed,
-      internalOnly: !!t.internalOnly,
       listed: t.listed,
       networks: t.networks.map((n) => ({ name: n.name, address: n.address })),
       isLive: false,

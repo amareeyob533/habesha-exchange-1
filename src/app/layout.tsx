@@ -18,8 +18,8 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Habesha Exchange — Trade Crypto with Confidence",
   description:
-    "Habesha Exchange — a premium cryptocurrency exchange. Trade BTC, USDT, USDC, TON and the exclusive Habesha Token. Secure, fast and built for everyone.",
-  keywords: ["Habesha Exchange", "crypto exchange", "bitcoin", "USDT", "Habesha Token", "trade crypto"],
+    "Habesha Exchange — a premium cryptocurrency exchange. Trade BTC, USDT, USDC and TON. Secure, fast and built for everyone.",
+  keywords: ["Habesha Exchange", "crypto exchange", "bitcoin", "USDT", "USDC", "TON", "trade crypto"],
   icons: { icon: "/habesha-mark.jpg" },
 };
 

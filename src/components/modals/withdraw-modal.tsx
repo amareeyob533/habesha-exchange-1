@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast'
 import { apiFetch } from '@/lib/api-client'
 import { formatUsd, formatTokenAmount, shortAddr } from '@/lib/format'
 import { ETB_RATE, BANKS } from '@/lib/tokens'
-import { ArrowUpFromLine, Users, Globe, Landmark, Loader2, ShieldAlert, Check, Info, ArrowLeftRight } from 'lucide-react'
+import { ArrowUpFromLine, Users, Globe, Landmark, Loader2, Check, Info, ArrowLeftRight } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface TokenInfo {
@@ -22,7 +22,6 @@ interface TokenInfo {
   color: string
   icon: string
   networks: { name: string; address: string }[]
-  internalOnly?: boolean
 }
 
 const TOKENS_FALLBACK: TokenInfo[] = [
@@ -31,7 +30,6 @@ const TOKENS_FALLBACK: TokenInfo[] = [
   { symbol: 'USDC', name: 'USD Coin', price: 1, color: '#2775CA', icon: '$', networks: [{ name: 'Ethereum (ERC20)', address: '' }]},
   { symbol: 'BTC', name: 'Bitcoin', price: 97500, color: '#F7931A', icon: '₿', networks: [{ name: 'Bitcoin Network', address: '' }]},
   { symbol: 'TON', name: 'Toncoin', price: 5.42, color: '#0098EA', icon: '◆', networks: [{ name: 'TON Network', address: '' }]},
-  { symbol: 'HABESHA', name: 'Habesha Token', price: 6.4321674, color: '#F0B90B', icon: 'H', networks: [], internalOnly: true },
 ]
 
 type Mode = 'internal' | 'external' | 'bank'
@@ -84,11 +82,10 @@ function WithdrawForm({ initialSymbol, onClose }: { initialSymbol: string; onClo
 
   const token = tokens.find((t) => t.symbol === symbol) || tokens[0]
   const balance = balances.find((b) => b.symbol === symbol)?.amount ?? 0
-  // Force internal mode for Habesha (derived, no effect). Bank requires USDT.
-  const effectiveMode: Mode = token?.internalOnly ? 'internal' : mode
-  const effectiveNetwork = effectiveMode === 'external' ? (network || token?.networks[0]?.name || '') : ''
+  // Bank requires USDT; otherwise mode is freely selectable.
+  const effectiveNetwork = mode === 'external' ? (network || token?.networks[0]?.name || '') : ''
   // ETB preview for bank withdrawals (USDT amount * rate)
-  const birrPreview = effectiveMode === 'bank' && amount ? Number(amount) * ETB_RATE : 0
+  const birrPreview = mode === 'bank' && amount ? Number(amount) * ETB_RATE : 0
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -103,8 +100,8 @@ function WithdrawForm({ initialSymbol, onClose }: { initialSymbol: string; onClo
     }
     setLoading(true)
     try {
-      const payload: any = { token: symbol, amount: amt, network: effectiveMode }
-      if (effectiveMode === 'internal') {
+      const payload: any = { token: symbol, amount: amt, network: mode }
+      if (mode === 'internal') {
         const uid = targetUid.trim()
         if (!/^\d{6}$/.test(uid)) {
           toast({ variant: 'destructive', title: 'Invalid UID', description: 'Enter a 6-digit recipient UID.' })
@@ -112,7 +109,7 @@ function WithdrawForm({ initialSymbol, onClose }: { initialSymbol: string; onClo
           return
         }
         payload.address = uid
-      } else if (effectiveMode === 'external') {
+      } else if (mode === 'external') {
         payload.network = effectiveNetwork
         payload.address = address.trim()
         if (!address.trim()) {
@@ -120,7 +117,7 @@ function WithdrawForm({ initialSymbol, onClose }: { initialSymbol: string; onClo
           setLoading(false)
           return
         }
-      } else if (effectiveMode === 'bank') {
+      } else if (mode === 'bank') {
         // Stage 1: show bank info form before final submit
         if (!showBankForm) {
           if (!bankCode) {
@@ -151,11 +148,11 @@ function WithdrawForm({ initialSymbol, onClose }: { initialSymbol: string; onClo
       await apiFetch('/api/withdraw', { method: 'POST', body: JSON.stringify(payload) })
       await fetchMe()
       setDone({
-        mode: effectiveMode,
+        mode,
         amount: amt,
-        to: effectiveMode === 'internal' ? targetUid.trim() : effectiveMode === 'bank' ? bankAccount.trim() : address.trim(),
-        birr: effectiveMode === 'bank' ? birrPreview : undefined,
-        bank: effectiveMode === 'bank' ? bankCode : undefined,
+        to: mode === 'internal' ? targetUid.trim() : mode === 'bank' ? bankAccount.trim() : address.trim(),
+        birr: mode === 'bank' ? birrPreview : undefined,
+        bank: mode === 'bank' ? bankCode : undefined,
       })
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Failed', description: err.message })
@@ -199,7 +196,6 @@ function WithdrawForm({ initialSymbol, onClose }: { initialSymbol: string; onClo
                   <SelectItem key={t.symbol} value={t.symbol}>
                     <span className="flex items-center gap-2">
                       <span style={{ color: t.color }}>{t.icon}</span> {t.symbol}
-                      {t.internalOnly && <span className="rounded bg-gold/15 px-1 text-[9px] font-bold text-gold">INTERNAL</span>}
                     </span>
                   </SelectItem>
                 ))}
@@ -209,17 +205,10 @@ function WithdrawForm({ initialSymbol, onClose }: { initialSymbol: string; onClo
 
           {/* Mode selector — 3 options */}
           <div className="grid grid-cols-3 gap-2">
-            <ModeButton active={effectiveMode === 'internal'} onClick={() => { setMode('internal'); setShowBankForm(false) }} icon={Users} label="Internal" sub="By UID" />
-            <ModeButton active={effectiveMode === 'external'} onClick={() => { if (!token?.internalOnly) { setMode('external'); setShowBankForm(false) } }} icon={Globe} label="External" sub="Wallet" disabled={!!token?.internalOnly} />
-            <ModeButton active={effectiveMode === 'bank'} onClick={() => { if (symbol === 'USDT' && !token?.internalOnly) { setMode('bank'); setShowBankForm(false) } }} icon={Landmark} label="Bank" sub="ETB cash-out" disabled={symbol !== 'USDT' || !!token?.internalOnly} />
+            <ModeButton active={mode === 'internal'} onClick={() => { setMode('internal'); setShowBankForm(false) }} icon={Users} label="Internal" sub="By UID" />
+            <ModeButton active={mode === 'external'} onClick={() => { setMode('external'); setShowBankForm(false) }} icon={Globe} label="External" sub="Wallet" />
+            <ModeButton active={mode === 'bank'} onClick={() => { if (symbol === 'USDT') { setMode('bank'); setShowBankForm(false) } }} icon={Landmark} label="Bank" sub="ETB cash-out" disabled={symbol !== 'USDT'} />
           </div>
-
-          {token?.internalOnly && (
-            <div className="flex items-start gap-2 rounded-lg border border-gold/30 bg-gold/5 p-2.5 text-[11px]">
-              <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold" />
-              <span className="text-muted-foreground"><b className="text-gold">Habesha Token</b> can only be transferred internally between Habesha Exchange users. External & bank withdrawals are not available.</span>
-            </div>
-          )}
 
           {symbol !== 'USDT' && mode === 'bank' && (
             <div className="flex items-start gap-2 rounded-lg border border-gold/30 bg-gold/5 p-2.5 text-[11px]">
@@ -228,7 +217,7 @@ function WithdrawForm({ initialSymbol, onClose }: { initialSymbol: string; onClo
             </div>
           )}
 
-          {effectiveMode === 'internal' ? (
+          {mode === 'internal' ? (
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Recipient UID (6 digits)</Label>
               <Input
@@ -242,7 +231,7 @@ function WithdrawForm({ initialSymbol, onClose }: { initialSymbol: string; onClo
                 <Info className="h-3 w-3" /> Transfers are instant and free between Habesha Exchange users.
               </div>
             </div>
-          ) : effectiveMode === 'external' ? (
+          ) : mode === 'external' ? (
             <div className="space-y-3">
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Network</Label>
@@ -300,21 +289,21 @@ function WithdrawForm({ initialSymbol, onClose }: { initialSymbol: string; onClo
           )}
 
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Amount {effectiveMode === 'bank' ? '(USDT)' : ''}</Label>
-            <Input type="number" min="0" step="any" value={amount} onChange={(e) => { setAmount(e.target.value); setShowBankForm(false) }} placeholder="0.00" className="bg-secondary/40" disabled={effectiveMode === 'bank' && showBankForm} />
+            <Label className="text-xs text-muted-foreground">Amount {mode === 'bank' ? '(USDT)' : ''}</Label>
+            <Input type="number" min="0" step="any" value={amount} onChange={(e) => { setAmount(e.target.value); setShowBankForm(false) }} placeholder="0.00" className="bg-secondary/40" disabled={mode === 'bank' && showBankForm} />
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-muted-foreground">
                 {amount && token ? `≈ ${formatUsd(Number(amount) * token.price)}` : ''}
-                {effectiveMode === 'bank' && amount ? ` · ≈ ${birrPreview.toLocaleString('en-US')} ETB` : ''}
+                {mode === 'bank' && amount ? ` · ≈ ${birrPreview.toLocaleString('en-US')} ETB` : ''}
               </span>
-              {!(effectiveMode === 'bank' && showBankForm) && (
+              {!(mode === 'bank' && showBankForm) && (
                 <button type="button" onClick={() => setAmount(String(balance))} className="font-medium text-gold hover:underline">Max</button>
               )}
             </div>
           </div>
 
           <Button type="submit" className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground" disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : effectiveMode === 'bank' && !showBankForm ? 'Continue' : effectiveMode === 'internal' ? 'Send Instantly' : effectiveMode === 'bank' ? 'Submit Bank Withdrawal' : 'Submit Withdrawal'}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : mode === 'bank' && !showBankForm ? 'Continue' : mode === 'internal' ? 'Send Instantly' : mode === 'bank' ? 'Submit Bank Withdrawal' : 'Submit Withdrawal'}
           </Button>
         </motion.form>
       )}
@@ -322,7 +311,7 @@ function WithdrawForm({ initialSymbol, onClose }: { initialSymbol: string; onClo
   )
 }
 
-function ModeButton({ active, onClick, icon: Icon, label, sub, disabled }: { active: boolean; onClick: () => void; icon: any; label: string; sub: string; disabled: boolean }) {
+function ModeButton({ active, onClick, icon: Icon, label, sub, disabled = false }: { active: boolean; onClick: () => void; icon: any; label: string; sub: string; disabled?: boolean }) {
   return (
     <button
       type="button"

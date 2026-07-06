@@ -44,19 +44,17 @@ export function Topbar() {
               <ShieldAlert className="h-4 w-4" /> Admin Panel
             </div>
           ) : (
-            <>
-              <div className="hidden flex-col leading-none sm:flex">
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Total Balance</span>
-              </div>
+            <div className="flex items-center gap-2">
               <motion.div
                 key={`${totalUsd}-${balanceHidden}`}
                 initial={{ opacity: 0.5, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-2xl font-extrabold tracking-tight tabular-nums sm:text-3xl"
+                className="flex flex-col leading-none"
               >
-                <span className="text-foreground">
-                  {balanceHidden ? '••••••' : formatUsd(totalUsd)}
+                <span className="text-xl font-bold tracking-tight tabular-nums sm:text-2xl text-foreground">
+                  {balanceHidden ? '******' : formatUsd(totalUsd)}
                 </span>
+                <span className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">Total Balance</span>
               </motion.div>
               <button
                 onClick={() => setBalanceHidden((v) => !v)}
@@ -65,7 +63,7 @@ export function Topbar() {
               >
                 {balanceHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
-            </>
+            </div>
           )}
         </div>
 

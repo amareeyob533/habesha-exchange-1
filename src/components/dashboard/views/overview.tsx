@@ -1,18 +1,20 @@
 'use client'
 
+import { useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { useUI } from '@/hooks/use-ui'
 import { useLiveRate } from '@/hooks/use-live-rate'
 import { formatUsd, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
-import { ArrowDownToLine, ArrowUpFromLine, Send, Plus, TrendingUp, ShoppingCart, LineChart, ArrowLeftRight, TrendingDown } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, Send, Plus, TrendingUp, ShoppingCart, LineChart, ArrowLeftRight, TrendingDown, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MiniMarketOverview } from '@/components/dashboard/views/mini-market'
 
 export function OverviewView() {
   const { user, totalUsd, notifications } = useAuth()
   const { openDeposit, openWithdraw, setView, openBuy, openTokenDetail } = useUI()
+  const [balanceHidden, setBalanceHidden] = useState(false)
 
   return (
     <div className="space-y-5">
@@ -25,9 +27,18 @@ export function OverviewView() {
         >
           <div className="bg-gold-glow pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full opacity-40" />
           <div className="relative">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Total Balance (USD)</div>
-            <motion.div key={totalUsd} initial={{ opacity: 0.5 }} animate={{ opacity: 1 }} className="mt-2 text-4xl font-extrabold tracking-tight tabular-nums sm:text-5xl">
-              <span className="text-foreground">{formatUsd(totalUsd)}</span>
+            <div className="flex items-center justify-between">
+              <div className="text-xs uppercase tracking-wider text-muted-foreground">Total Balance (USD)</div>
+              <button
+                onClick={() => setBalanceHidden((v) => !v)}
+                aria-label={balanceHidden ? 'Show balance' : 'Hide balance'}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
+              >
+                {balanceHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            <motion.div key={`${totalUsd}-${balanceHidden}`} initial={{ opacity: 0.5 }} animate={{ opacity: 1 }} className="mt-2 text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">
+              <span className="text-foreground">{balanceHidden ? '******' : formatUsd(totalUsd)}</span>
             </motion.div>
             <div className="mt-1 flex items-center gap-1.5 text-xs text-up">
               <TrendingUp className="h-3.5 w-3.5" /> Ready to trade

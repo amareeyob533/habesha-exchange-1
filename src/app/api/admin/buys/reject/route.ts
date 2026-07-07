@@ -30,8 +30,10 @@ export async function POST(req: NextRequest) {
           type: 'warning',
         },
       })
-      await sendPushNotification(order.userId, { title: 'Buy Order Rejected', body: `Your buy order for ${order.usdtAmount} USDT was rejected. If you believe this is an error, please contact support.` }).catch(() => {})
-    })
+    }, { timeout: 15000 })
+
+    // Push notification AFTER the transaction commits.
+    await sendPushNotification(order.userId, { title: 'Buy Order Rejected', body: `Your buy order for ${order.usdtAmount} USDT was rejected. If you believe this is an error, please contact support.` }).catch(() => {})
 
     // AUTO-DELETE: Remove the payment screenshot from the database so it
     // doesn't fill up storage. The order record (text only) is kept for history.

@@ -1215,3 +1215,34 @@ Stage Summary:
 - Browser tab title updated to match the new tagline
 - Auth modal info box rewritten to be welcoming instead of technical
 - Total balance in topbar is now significantly bigger (text-2xl/3xl vs text-lg) and has an eye toggle to hide/show the amount for privacy
+
+---
+Task ID: FIX-TX-TIMEOUT + SYNC-BALANCE-HIDE
+Agent: main
+Task: Fix transaction timeout error on admin approve/reject + sync balance hide/show between topbar and overview
+
+Work Log:
+- ROOT CAUSE #1 (Transaction timeout): sendPushNotification() was called INSIDE db.$transaction() blocks. Push notifications make network calls to FCM/APNS (2-5 seconds), which caused the transaction to exceed Prisma's default 5000ms timeout → "Transaction already closed: A commit cannot be executed on an expired transaction"
+- FIX #1: Moved ALL sendPushNotification() calls OUTSIDE the db.$transaction() blocks in 9 files:
+  * src/lib/deposit-actions.ts (approveDeposit + rejectDeposit)
+  * src/lib/withdrawal-actions.ts (approveWithdrawal + rejectWithdrawal)
+  * src/app/api/admin/buys/approve/route.ts
+  * src/app/api/admin/buys/reject/route.ts
+  * src/app/api/admin/kyc/approve/route.ts
+  * src/app/api/admin/kyc/reject/route.ts
+  * src/app/api/withdraw/route.ts (internal transfer + external/bank withdrawal)
+  * src/app/api/swap/route.ts
+  * src/app/api/admin/users/reward/route.ts
+- Also added { timeout: 15000 } to all db.$transaction() calls as a safety net (was default 5000ms)
+- ROOT CAUSE #2 (Balance hide/show not synced): topbar and overview each had their own independent useState(balanceHidden) — toggling one didn't affect the other
+- FIX #2: Moved balanceHidden state to the shared useUI Zustand store:
+  * src/hooks/use-ui.ts: added balanceHidden + toggleBalanceHidden
+  * src/components/dashboard/topbar.tsx: uses useUI balanceHidden + toggleBalanceHidden (removed local useState + useState import)
+  * src/components/dashboard/views/overview.tsx: uses useUI balanceHidden + toggleBalanceHidden (removed local useState + useState import)
+- Now when you hide the balance on either the topbar OR the overview, BOTH hide. When you show it, BOTH show.
+- Lint: 0 errors (1 pre-existing warning)
+
+Stage Summary:
+- Transaction timeout error FIXED: push notifications now sent AFTER transaction commits, never inside. Timeout also increased to 15s as safety net.
+- Balance hide/show SYNCED: both the topbar balance and overview balance use the same shared state — toggling one toggles both automatically.
+- Admin can now approve/reject deposits, withdrawals, buys, and KYC without getting the "Transaction already closed" error.

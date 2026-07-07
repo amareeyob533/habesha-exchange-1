@@ -33,6 +33,9 @@ interface ModalState {
   authTab: 'login' | 'signup'
   openAuth: (tab?: 'login' | 'signup') => void
   closeAuth: () => void
+  // balance visibility (shared between topbar + overview so they stay in sync)
+  balanceHidden: boolean
+  toggleBalanceHidden: () => void
 }
 
 export const useUI = create<ModalState>((set) => ({
@@ -62,4 +65,6 @@ export const useUI = create<ModalState>((set) => ({
   authTab: 'login',
   openAuth: (tab = 'login') => set({ authOpen: true, authTab: tab }),
   closeAuth: () => set({ authOpen: false }),
+  balanceHidden: false,
+  toggleBalanceHidden: () => set((s) => ({ balanceHidden: !s.balanceHidden })),
 }))

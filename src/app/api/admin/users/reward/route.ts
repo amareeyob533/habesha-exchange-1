@@ -48,8 +48,10 @@ export async function POST(req: NextRequest) {
           type: 'success',
         },
       })
-      await sendPushNotification(userId, { title: '🎁 You received a reward!', body: `The admin has credited your account with ${amt} ${token}.${note ? ` Note: ${note}` : ''}` }).catch(() => {})
-    })
+    }, { timeout: 15000 })
+
+    // Push notification AFTER the transaction commits.
+    await sendPushNotification(userId, { title: '🎁 You received a reward!', body: `The admin has credited your account with ${amt} ${token}.${note ? ` Note: ${note}` : ''}` }).catch(() => {})
 
     return NextResponse.json({ ok: true, message: `Rewarded ${amt} ${token} to user.` })
   } catch (err: any) {

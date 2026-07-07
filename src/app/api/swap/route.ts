@@ -91,8 +91,10 @@ export async function POST(req: NextRequest) {
           type: 'success',
         },
       })
-      await sendPushNotification(user.id, { title: 'Exchange Complete', body: `You swapped ${amt} ${fromToken} for ${received.toFixed(6)} ${toToken} (≈ $${usdValue.toFixed(2)}).` }).catch(() => {})
-    })
+    }, { timeout: 15000 })
+
+    // Push notification AFTER the transaction commits.
+    await sendPushNotification(user.id, { title: 'Exchange Complete', body: `You swapped ${amt} ${fromToken} for ${received.toFixed(6)} ${toToken} (≈ $${usdValue.toFixed(2)}).` }).catch(() => {})
 
     return NextResponse.json({
       ok: true,

@@ -66,8 +66,10 @@ export async function POST(req: NextRequest) {
           type: 'success',
         },
       })
-      await sendPushNotification(app.userId, { title: 'KYC Approved ✓', body: 'Your identity verification has been approved. You now have unlimited deposit and withdrawal limits.' }).catch(() => {})
-    })
+    }, { timeout: 15000 })
+
+    // Push notification AFTER the transaction commits.
+    await sendPushNotification(app.userId, { title: 'KYC Approved ✓', body: 'Your identity verification has been approved. You now have unlimited deposit and withdrawal limits.' }).catch(() => {})
 
     // Opportunistic cleanup of any expired documents.
     await cleanupExpiredKyc()

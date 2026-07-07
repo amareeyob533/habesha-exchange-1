@@ -65,13 +65,15 @@ export async function POST(req: NextRequest) {
           type: 'warning',
         },
       })
-      await sendPushNotification(app.userId, {
-        title: 'KYC Rejected',
-        body: reason
-          ? `Your KYC verification was rejected. Reason: ${reason}. You can re-submit your verification after reviewing the requirements.`
-          : 'Your KYC verification was rejected. You can re-submit your verification after reviewing the requirements.',
-      }).catch(() => {})
-    })
+    }, { timeout: 15000 })
+
+    // Push notification AFTER the transaction commits.
+    await sendPushNotification(app.userId, {
+      title: 'KYC Rejected',
+      body: reason
+        ? `Your KYC verification was rejected. Reason: ${reason}. You can re-submit your verification after reviewing the requirements.`
+        : 'Your KYC verification was rejected. You can re-submit your verification after reviewing the requirements.',
+    }).catch(() => {})
 
     return NextResponse.json({ ok: true, message: 'KYC rejected. User notified. ID document deleted.' })
   } catch (err: any) {

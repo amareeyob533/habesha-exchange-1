@@ -63,13 +63,14 @@ export async function approveWithdrawal(id: string): Promise<'done' | 'already' 
         type: 'success',
       },
     })
-    await sendPushNotification(wd.userId, {
-      title: isBank ? 'Bank Withdrawal Approved ✓' : 'Withdrawal Completed ✓',
-      body: isBank
-        ? `Your bank withdrawal of ${wd.amount} USDT (≈ ${Number(wd.birrAmount).toLocaleString('en-US')} ETB) to ${wd.bankName} account ${wd.address} (${wd.accountName}) has been approved. The ETB will arrive in your bank account shortly.`
-        : `Your withdrawal of ${wd.amount} ${wd.token} to ${wd.address.slice(0, 12)}... has been approved and sent.`,
-    }).catch(() => {})
-  })
+  }, { timeout: 15000 })
+  const _isBank = wd.network === 'bank'
+  await sendPushNotification(wd.userId, {
+    title: _isBank ? 'Bank Withdrawal Approved ✓' : 'Withdrawal Completed ✓',
+    body: _isBank
+      ? `Your bank withdrawal of ${wd.amount} USDT (≈ ${Number(wd.birrAmount).toLocaleString('en-US')} ETB) to ${wd.bankName} account ${wd.address} (${wd.accountName}) has been approved. The ETB will arrive in your bank account shortly.`
+      : `Your withdrawal of ${wd.amount} ${wd.token} to ${wd.address.slice(0, 12)}... has been approved and sent.`,
+  }).catch(() => {})
   return 'done'
 }
 
@@ -117,13 +118,13 @@ export async function rejectWithdrawal(id: string): Promise<'done' | 'already' |
         type: 'warning',
       },
     })
-    await sendPushNotification(wd.userId, {
-      title: 'Withdrawal Rejected',
-      body:
-        wd.network === 'bank'
-          ? `Your bank withdrawal of ${wd.amount} USDT was rejected. ${wd.amount} USDT has been returned to your account. Please contact support if you believe this is an error.`
-          : `Your withdrawal of ${wd.amount} ${wd.token} was rejected. ${wd.amount} ${wd.token} has been returned to your account.`,
-    }).catch(() => {})
-  })
+  }, { timeout: 15000 })
+  await sendPushNotification(wd.userId, {
+    title: 'Withdrawal Rejected',
+    body:
+      wd.network === 'bank'
+        ? `Your bank withdrawal of ${wd.amount} USDT was rejected. ${wd.amount} USDT has been returned to your account. Please contact support if you believe this is an error.`
+        : `Your withdrawal of ${wd.amount} ${wd.token} was rejected. ${wd.amount} ${wd.token} has been returned to your account.`,
+  }).catch(() => {})
   return 'done'
 }

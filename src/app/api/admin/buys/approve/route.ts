@@ -47,8 +47,10 @@ export async function POST(req: NextRequest) {
           type: 'success',
         },
       })
-      await sendPushNotification(order.userId, { title: 'Buy Order Approved ✓', body: `Your buy order for ${order.usdtAmount} USDT has been approved. The USDT is now in your wallet.` }).catch(() => {})
-    })
+    }, { timeout: 15000 })
+
+    // Push notification AFTER the transaction commits.
+    await sendPushNotification(order.userId, { title: 'Buy Order Approved ✓', body: `Your buy order for ${order.usdtAmount} USDT has been approved. The USDT is now in your wallet.` }).catch(() => {})
 
     // AUTO-DELETE: Remove the payment screenshot from the database so it
     // doesn't fill up storage. The order record (text only) is kept for history.

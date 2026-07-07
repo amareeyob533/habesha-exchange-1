@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { useUI } from '@/hooks/use-ui'
 import { useLiveRate } from '@/hooks/use-live-rate'
@@ -13,8 +12,7 @@ import { MiniMarketOverview } from '@/components/dashboard/views/mini-market'
 
 export function OverviewView() {
   const { user, totalUsd, notifications } = useAuth()
-  const { openDeposit, openWithdraw, setView, openBuy, openTokenDetail } = useUI()
-  const [balanceHidden, setBalanceHidden] = useState(false)
+  const { openDeposit, openWithdraw, setView, openBuy, openTokenDetail, balanceHidden, toggleBalanceHidden } = useUI()
 
   return (
     <div className="space-y-5">
@@ -30,7 +28,7 @@ export function OverviewView() {
             <div className="flex items-center justify-between">
               <div className="text-xs uppercase tracking-wider text-muted-foreground">Total Balance (USD)</div>
               <button
-                onClick={() => setBalanceHidden((v) => !v)}
+                onClick={toggleBalanceHidden}
                 aria-label={balanceHidden ? 'Show balance' : 'Hide balance'}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
               >

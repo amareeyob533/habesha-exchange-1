@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { Menu, Bell, LogOut, ChevronDown, ShieldAlert, ShieldCheck, Clock, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
@@ -20,11 +19,10 @@ import { motion } from 'framer-motion'
 
 export function Topbar() {
   const { user, totalUsd, notifications, logout } = useAuth()
-  const { setSidebarOpen, openNotif, setView, openKyc } = useUI()
+  const { setSidebarOpen, openNotif, setView, openKyc, balanceHidden, toggleBalanceHidden } = useUI()
   const unread = notifications.filter((n) => !n.read).length
   const initials = (user?.name || user?.email || 'U').slice(0, 2).toUpperCase()
   const isAdmin = user?.email?.toLowerCase() === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'amareeyob533@gmail.com').toLowerCase()
-  const [balanceHidden, setBalanceHidden] = useState(false)
 
   // KYC status for the reminder banner (only for non-admin users).
   const kycStatus = user?.kycStatus || 'none'
@@ -57,7 +55,7 @@ export function Topbar() {
                 <span className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">Total Balance</span>
               </motion.div>
               <button
-                onClick={() => setBalanceHidden((v) => !v)}
+                onClick={toggleBalanceHidden}
                 aria-label={balanceHidden ? 'Show balance' : 'Hide balance'}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
               >

@@ -11,8 +11,6 @@ import { useUI } from '@/hooks/use-ui'
 import { apiFetch } from '@/lib/api-client'
 import { formatUsd } from '@/lib/format'
 import { ArrowRight, ShieldCheck, Zap, Globe2, Wallet, Lock, TrendingUp, Users, ChevronRight, Menu, Search } from 'lucide-react'
-import { RobotMascot } from '@/components/mascot/robot-mascot'
-import { ParticleExplosion } from '@/components/effects/particle-explosion'
 
 interface TokenRow {
   symbol: string
@@ -30,16 +28,6 @@ export function LandingPage() {
   const [tokens, setTokens] = useState<TokenRow[]>([])
   const [mobileNav, setMobileNav] = useState(false)
   const [search, setSearch] = useState('')
-  const [showExplosion, setShowExplosion] = useState(false)
-
-  // Trigger the golden particle explosion, then open the signup modal.
-  function handleCreateAccount() {
-    setShowExplosion(true)
-    setTimeout(() => {
-      openAuth('signup')
-      setShowExplosion(false)
-    }, 700)
-  }
 
   useEffect(() => {
     apiFetch<{ tokens: TokenRow[] }>('/api/market-data').then((d) => setTokens(d.tokens)).catch(() => {})
@@ -47,9 +35,6 @@ export function LandingPage() {
 
   return (
     <div className="relative min-h-screen flex flex-col">
-      {/* Golden particle explosion transition (plays when Create Free Account is clicked) */}
-      <ParticleExplosion active={showExplosion} />
-
       {/* Logo background watermark */}
       <div
         className="pointer-events-none absolute inset-0 -z-10 opacity-[0.04]"
@@ -151,26 +136,12 @@ export function LandingPage() {
             Your trusted home for crypto in Ethiopia. Buy, sell and hold BTC, USDT, USDC and TON — pay in Birr, withdraw to any bank, and trade with people you trust.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <div className="relative flex items-center gap-2">
-              {/* Robot mascot — jumps in, backflips, lands next to the button, and points at it */}
-              <div className="absolute -left-16 top-1/2 -translate-y-1/2 hidden sm:block">
-                <RobotMascot pose="point" size={64} playEntrance blink />
-              </div>
-              <Button
-                size="lg"
-                className="shimmer-btn bg-gold-gradient h-12 px-6 sm:h-14 sm:px-10 text-base font-bold text-primary-foreground shadow-gold-lg hover:opacity-95 relative z-10"
-                onClick={handleCreateAccount}
-              >
-                Create Free Account <ArrowRight className="ml-1 h-5 w-5" />
-              </Button>
-            </div>
+            <Button size="lg" className="shimmer-btn bg-gold-gradient h-12 px-6 sm:h-14 sm:px-10 text-base font-bold text-primary-foreground shadow-gold-lg hover:opacity-95" onClick={() => openAuth('signup')}>
+              Create Free Account <ArrowRight className="ml-1 h-5 w-5" />
+            </Button>
             <Button size="lg" variant="outline" className="h-12 px-6 sm:h-14 sm:px-10 text-base font-semibold glass-card" onClick={() => openAuth('login')}>
               Sign In
             </Button>
-          </div>
-          {/* Mobile robot mascot (shown below buttons on small screens) */}
-          <div className="mt-6 flex justify-center sm:hidden">
-            <RobotMascot pose="point" size={56} playEntrance blink />
           </div>
           <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-gold" /> Bank-grade security</span>

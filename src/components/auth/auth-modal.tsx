@@ -12,6 +12,8 @@ import { apiFetch } from '@/lib/api-client'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, User, AtSign, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, Check, X } from 'lucide-react'
 import { LogoMark } from '@/components/common/logo'
+import { RobotMascot } from '@/components/mascot/robot-mascot'
+import { HandshakeFinale } from '@/components/effects/handshake-finale'
 
 interface AuthModalProps {
   open: boolean
@@ -24,6 +26,11 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
   const { toast } = useToast()
   const [tab, setTab] = useState<'login' | 'signup'>(defaultTab)
   const [showGoogle, setShowGoogle] = useState(false)
+  const [showFinale, setShowFinale] = useState(false)
+  // Track which signup field is currently active so the robot can point at it.
+  const [activeField, setActiveField] = useState<'name' | 'username' | 'email' | 'password' | null>(null)
+  // Trigger a thumbs-up animation when the user moves between fields.
+  const [thumbsUp, setThumbsUp] = useState(false)
 
   // login form
   const [lemail, setLemail] = useState('')
@@ -81,21 +88,52 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
       return
     }
     try {
+      // Play the 3D handshake finale FIRST, then create the account while it animates.
+      setShowFinale(true)
       await signup(semail, spass, sname, susername)
-      toast({
-        title: 'Account created! 🎉',
-        description: 'Welcome to Habesha Exchange. Your account is ready.',
-      })
-      onOpenChange(false)
+      // Keep the finale visible for its full animation, then close.
+      setTimeout(() => {
+        setShowFinale(false)
+        onOpenChange(false)
+        toast({
+          title: 'Account created! 🎉',
+          description: 'Welcome to Habesha Exchange. Your account is ready.',
+        })
+      }, 2200)
     } catch (err: any) {
+      setShowFinale(false)
       toast({ variant: 'destructive', title: 'Sign up failed', description: err.message })
     }
   }
 
+  // When the user focuses a signup field, the robot points at it.
+  function fieldFocused(name: 'name' | 'username' | 'email' | 'password') {
+    if (activeField && activeField !== name) {
+      // Moved to a new field → quick thumbs-up then point again.
+      setThumbsUp(true)
+      setTimeout(() => setThumbsUp(false), 600)
+    }
+    setActiveField(name)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[440px] gap-0 overflow-hidden border-border/80 bg-card p-0">
-        <div className="relative">
+    <>
+      {/* 3D handshake finale (plays when user clicks "Create Account") */}
+      <HandshakeFinale active={showFinale} />
+
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-[440px] gap-0 overflow-hidden border-border/80 bg-card p-0">
+          {/* Robot mascot — rides the particle explosion in, points at fields */}
+          {tab === 'signup' && !showGoogle && (
+            <div className="pointer-events-none absolute -right-2 top-16 z-20 hidden sm:block">
+              <RobotMascot
+                pose={thumbsUp ? 'thumbsup' : activeField ? 'point' : 'idle'}
+                size={48}
+                blink
+              />
+            </div>
+          )}
+          <div className="relative">
           <div className="bg-gold-glow pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full" />
           <div className="relative flex flex-col items-center px-7 pb-2 pt-8 text-center">
             <LogoMark className="h-14 w-14 rounded-2xl ring-2 ring-gold/30" />
@@ -180,6 +218,7 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
                         required
                         value={sname}
                         onChange={(e) => setSname(e.target.value)}
+                        onFocus={() => fieldFocused('name')}
                         placeholder="Your name"
                         className="border-border bg-secondary/40 pl-10"
                       />
@@ -189,6 +228,7 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
                         required
                         value={susername}
                         onChange={(e) => setSusername(e.target.value.toLowerCase())}
+                        onFocus={() => fieldFocused('username')}
                         placeholder="e.g. amarey2026"
                         className={`border-border bg-secondary/40 pl-10 pr-10 ${
                           usernameStatus === 'available' ? 'border-up/50' : usernameStatus === 'taken' || usernameStatus === 'invalid' ? 'border-down/50' : ''
@@ -217,6 +257,7 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
                         required
                         value={semail}
                         onChange={(e) => setSemail(e.target.value)}
+                        onFocus={() => fieldFocused('email')}
                         placeholder="you@example.com"
                         className="border-border bg-secondary/40 pl-10"
                       />
@@ -227,6 +268,7 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
                         required
                         value={spass}
                         onChange={(e) => setSpass(e.target.value)}
+                        onFocus={() => fieldFocused('password')}
                         placeholder="Min. 6 characters"
                         className="border-border bg-secondary/40 pl-10 pr-10"
                       />
@@ -269,9 +311,10 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
               </Button>
             </motion.div>
           )}
-        </AnimatePresence>
-      </DialogContent>
-    </Dialog>
+          </AnimatePresence>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 

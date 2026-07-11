@@ -1246,3 +1246,61 @@ Stage Summary:
 - Transaction timeout error FIXED: push notifications now sent AFTER transaction commits, never inside. Timeout also increased to 15s as safety net.
 - Balance hide/show SYNCED: both the topbar balance and overview balance use the same shared state — toggling one toggles both automatically.
 - Admin can now approve/reject deposits, withdrawals, buys, and KYC without getting the "Transaction already closed" error.
+
+---
+Task ID: CINEMATIC-ROBOT-ANIMATIONS
+Agent: main
+Task: Build cinematic robot mascot animations with particle explosion + 3D handshake finale
+
+Work Log:
+- Generated 4 robot mascot images using AI image generation (z-ai vision):
+  * /public/mascot/robot-idle.png — standing pose
+  * /public/mascot/robot-point.png — pointing right
+  * /public/mascot/robot-thumbsup.png — thumbs up
+  * /public/mascot/robot-handshake.png — hand reaching forward for 3D handshake
+  * Design: small sleek futuristic robot, dark obsidian body, emerald green accents, face is golden diamond {H} logo
+- Created src/components/mascot/robot-mascot.tsx:
+  * RobotMascot component with 4 poses (idle, point, thumbsup, handshake)
+  * Entrance animation: jumps in from top-left, backflips 720°, lands next to target
+  * Periodic eye blink (every 2.8-4s)
+  * Glow under the robot
+  * Smooth pose transitions via AnimatePresence
+- Created src/components/effects/particle-explosion.tsx:
+  * 50 golden crypto coin particles + emerald data particles burst outward
+  * 12 digital data stream lines shoot outward
+  * Bright white flash at start
+  * Golden radial burst that expands
+  * Rotating swirl ring that clears the screen
+  * Used on landing page when "Create Free Account" is clicked
+- Created src/components/effects/handshake-finale.tsx:
+  * 3D perspective handshake — robot hand appears to break out of the screen
+  * Uses CSS perspective + translateZ + scale for depth illusion
+  * Golden particle trail behind the hand (20 particles converging)
+  * "Welcome to Habesha Exchange" text fades in
+  * Dark cinematic backdrop
+  * Plays when user clicks "Create Account" on signup
+- Updated src/components/landing/landing-page.tsx:
+  * Added RobotMascot next to "Create Free Account" button (desktop: left of button, mobile: below buttons)
+  * Robot plays entrance animation (jump + backflip) on page load
+  * Robot points at the button and blinks
+  * "Create Free Account" click triggers ParticleExplosion → then opens signup modal
+- Updated src/components/auth/auth-modal.tsx:
+  * Added RobotMascot inside the signup modal (top-right corner)
+  * Robot points at the currently-focused field (name, username, email, password)
+  * When user moves to a new field, robot does a quick thumbs-up then points again
+  * Added onFocus handlers to all 4 signup fields
+  * "Create Account" click triggers the HandshakeFinale (3D hand reaching out)
+  * Finale plays for 2.2s before closing the modal (account is created during the animation)
+- All 4 scenes from the spec are implemented:
+  * Scene 1 (Welcome): robot jumps in, backflips, lands next to button, points + blinks
+  * Scene 2 (Transition): button click → golden particle explosion → signup modal
+  * Scene 3 (Input Guidance): robot points at active field, thumbs-up on field change
+  * Scene 4 (3D Finale): robot hand stretches forward in 3D, breaks out of screen, "Welcome" text
+- Lint: 0 errors (1 pre-existing warning)
+
+Stage Summary:
+- Cinematic robot mascot integrated into landing page + auth modal
+- 4 animation scenes: entrance/backflip, particle explosion transition, field guidance, 3D handshake finale
+- Uses pre-rendered PNGs for the robot (fast loading) + Framer Motion for animations
+- All animations are smooth, cinematic, and lightweight (no heavy 3D libraries)
+- Everything before login is now animated and attractive

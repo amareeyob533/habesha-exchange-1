@@ -1383,3 +1383,46 @@ Stage Summary:
 - Deposit + Withdraw modals now show the real token logo images (circular, 20x20) alongside the token symbol + name
 - All 7 tokens supported: USDT, USDC, BTC, ETH, SOL, TRX, TON
 - Fallback addresses also updated to the new wallet addresses
+
+---
+Task ID: PROFILE-PIC-VERIFICATION-BADGE
+Agent: main
+Task: Add profile picture upload with browser compression + blue KYC verification badge
+
+Work Log:
+- Analyzed reference images via VLM:
+  * Image 1 (before KYC): circular avatar with initials, no badge
+  * Image 2 (after KYC): same avatar with blue circular badge + white checkmark overlapping bottom-right
+- Created src/app/api/user/avatar/route.ts:
+  * POST endpoint accepts multipart/form-data with `file` field
+  * Accepts any image type, max 5 MB
+  * Stores as base64 data URL in User.avatarUrl column
+  * Works on Vercel's read-only filesystem
+- Created src/components/common/verified-avatar.tsx:
+  * Reusable VerifiedAvatar component with 3 sizes (sm/md/lg)
+  * Shows user's profile picture (AvatarImage) or initials fallback
+  * When verified=true: blue circular badge with white BadgeCheck icon overlapping bottom-right
+  * Badge color: #1D9BF0 (Twitter blue), ring-2 ring-background for clean edge
+- Updated src/components/dashboard/views/profile.tsx:
+  * Uses VerifiedAvatar with size="lg" and verified={kycStatus === 'approved'}
+  * Camera button overlapping top-left of avatar — click to upload profile picture
+  * Uses compressImage(file, 400, 0.8) for browser-side compression (400px max, JPEG q0.8)
+  * Shows compression toast: "Image compressed: 5MB → 80KB (98% smaller)"
+  * Calls uploadFile('/api/user/avatar', compressed) → fetchMe() to refresh
+  * Verified badge shown next to username + "Verified" pill badge below
+  * Both badges only appear when kycStatus === 'approved'
+- Updated src/components/dashboard/topbar.tsx:
+  * Replaced plain Avatar with VerifiedAvatar size="sm" verified={kycStatus === 'approved'}
+  * Blue checkmark appears on the topbar avatar when KYC is approved
+  * Removed unused Avatar/AvatarFallback imports
+- Lint: 0 errors (1 pre-existing warning)
+
+Stage Summary:
+- Profile picture upload with browser compression (400px, JPEG q0.8) — fast uploads even on slow connections
+- Blue verification badge (Twitter-style) appears on avatar when KYC is approved:
+  * Topbar avatar (small) — blue checkmark bottom-right
+  * Profile page avatar (large) — blue checkmark bottom-right + verified pill badge
+  * Profile name — small blue checkmark next to username
+- Uses existing compressImage utility from src/lib/compress-image.ts
+- Avatar stored as base64 in User.avatarUrl — works on Vercel
+- No new environment variables needed

@@ -6,7 +6,6 @@ import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { useAuth } from '@/hooks/use-auth'
 import { useUI } from '@/hooks/use-ui'
 import { formatUsd } from '@/lib/format'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { motion } from 'framer-motion'
+import { VerifiedAvatar } from '@/components/common/verified-avatar'
 
 export function Topbar() {
   const { user, totalUsd, notifications, logout } = useAuth()
@@ -93,9 +93,12 @@ export function Topbar() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 rounded-full border border-border bg-secondary/60 py-1 pl-1 pr-2 transition-colors hover:border-primary/60">
-                <Avatar className="h-7 w-7">
-                  <AvatarFallback className="bg-primary/15 text-[11px] font-bold text-primary">{initials}</AvatarFallback>
-                </Avatar>
+                <VerifiedAvatar
+                  src={user?.avatarUrl}
+                  fallback={initials}
+                  size="sm"
+                  verified={kycStatus === 'approved'}
+                />
                 <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
             </DropdownMenuTrigger>

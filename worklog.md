@@ -1591,3 +1591,43 @@ Stage Summary:
 4. ✅ Real-time polling — support chat polls every 2s, admin panel polls every 5s, dashboard refreshes every 5s, all with tab-visibility detection + flicker prevention
 
 All 4 improvements verified with lint (0 errors). Schema pushed to database. Ready to redeploy.
+
+---
+Task ID: LIGHT-MODE-REDESIGN
+Agent: main
+Task: Redesign light mode — was all white/uncomfortable, now warm sand + emerald premium theme
+
+Work Log:
+- Problem: light mode was pure white (#FFFFFF cards on #F6F8FB background) — glaring, uncomfortable, no color
+- Redesigned as "Warm Sand & Emerald" theme:
+  * Background: #F4F1EC (warm sand — NOT pure white, easier on the eyes)
+  * Cards: #FFFBF5 (warm cream — soft, inviting)
+  * Secondary/muted: #ECE6DC / #E8E1D5 (warm beige tones)
+  * Text: #1A1F2E (deep navy — high contrast but not pure black)
+  * Muted text: #6B6356 (warm brown-gray — readable, not harsh)
+  * Sidebar: #EDE6D9 (warm sand, distinct from cards)
+  * Borders: rgba(60, 50, 30, 0.1) (warm brown tint, not cold gray)
+  * Primary: #00A565 (emerald — slightly darker for better contrast on warm bg)
+  * Gold: #B8860B (deep gold — rich, premium)
+  * Up/down: #00A565 / #D63550 (refined)
+- Updated light-mode gradients:
+  * Emerald gradient: #00C773 → #00A565 → #00824A (richer on warm bg)
+  * Gold gradient: #D9A82C → #B8860B → #8B6508 (deeper, more premium)
+  * Gold glow: warm rgba(184, 134, 11, 0.15)
+- Updated light-mode mesh orbs: now visible (was 0.05 opacity = invisible):
+  * Orb 1: emerald at 0.08 opacity
+  * Orb 2: cyan at 0.06 opacity
+  * Orb 3: gold at 0.05 opacity
+  * Creates a subtle warm aurora background
+- Updated light-mode gradient border: warmer, more visible (emerald → cyan → gold)
+- Updated light-mode shadows: warm-toned (rgba(60,50,30) instead of cold gray)
+- Updated light-mode scrollbar: warm brown (rgba(107,99,86))
+- Updated viewport themeColor: adapts to system preference (sand for light, onyx for dark)
+
+Stage Summary:
+- Light mode is now "Warm Sand & Emerald" — comfortable, premium, NOT white
+- Warm sand background + cream cards + deep navy text = easy on the eyes
+- Subtle warm aurora mesh background visible in light mode
+- All gradients, shadows, borders, scrollbars use warm tones
+- Browser chrome (mobile address bar) adapts to the theme color
+- Dark mode is unchanged (still "Obsidian Aurora")

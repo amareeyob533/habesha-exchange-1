@@ -90,45 +90,46 @@
 }
 
 /* ============================================================================
-   LIGHT THEME — "Pearl Mint"
-   Cool pearl base · Emerald primary · Clean and modern
+   LIGHT THEME — "Warm Sand & Emerald"
+   Warm sand-tinted base (NOT pure white — easier on the eyes) · Emerald primary
+   · Deep navy text · Rich warm cards · Premium fintech feel
    ============================================================================ */
 .light {
-  --background: #F6F8FB;
-  --foreground: #0B1117;
-  --card: #FFFFFF;
-  --card-foreground: #0B1117;
-  --popover: #FFFFFF;
-  --popover-foreground: #0B1117;
-  --primary: #00B96B;
+  --background: #F4F1EC;
+  --foreground: #1A1F2E;
+  --card: #FFFBF5;
+  --card-foreground: #1A1F2E;
+  --popover: #FFFBF5;
+  --popover-foreground: #1A1F2E;
+  --primary: #00A565;
   --primary-foreground: #FFFFFF;
-  --secondary: #EEF2F7;
-  --secondary-foreground: #0B1117;
-  --muted: #F1F4F9;
-  --muted-foreground: #5A6573;
-  --accent: #EEF2F7;
-  --accent-foreground: #0B1117;
-  --destructive: #E0394A;
-  --border: rgba(11, 17, 23, 0.08);
-  --input: rgba(11, 17, 23, 0.1);
-  --ring: #00B96B;
-  --gold: #C8930E;
+  --secondary: #ECE6DC;
+  --secondary-foreground: #1A1F2E;
+  --muted: #E8E1D5;
+  --muted-foreground: #6B6356;
+  --accent: #ECE6DC;
+  --accent-foreground: #1A1F2E;
+  --destructive: #D63550;
+  --border: rgba(60, 50, 30, 0.1);
+  --input: rgba(60, 50, 30, 0.12);
+  --ring: #00A565;
+  --gold: #B8860B;
   --neon: #0891B2;
   --up: #00A565;
-  --down: #E0394A;
-  --chart-1: #00B96B;
+  --down: #D63550;
+  --chart-1: #00A565;
   --chart-2: #0891B2;
-  --chart-3: #E0394A;
+  --chart-3: #D63550;
   --chart-4: #7C3AED;
-  --chart-5: #C8930E;
-  --sidebar: #EEF2F7;
-  --sidebar-foreground: #0B1117;
-  --sidebar-primary: #00B96B;
+  --chart-5: #B8860B;
+  --sidebar: #EDE6D9;
+  --sidebar-foreground: #1A1F2E;
+  --sidebar-primary: #00A565;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #E5EAF1;
-  --sidebar-accent-foreground: #0B1117;
-  --sidebar-border: rgba(11, 17, 23, 0.08);
-  --sidebar-ring: #00B96B;
+  --sidebar-accent: #E5DDCC;
+  --sidebar-accent-foreground: #1A1F2E;
+  --sidebar-border: rgba(60, 50, 30, 0.1);
+  --sidebar-ring: #00A565;
 }
 
 @layer base {
@@ -167,14 +168,14 @@
   background: linear-gradient(135deg, #5EE9B0 0%, #00E08F 50%, #00B96B 100%);
 }
 .light .text-emerald-gradient {
-  background: linear-gradient(135deg, #00D277 0%, #00A55E 50%, #00824A 100%);
+  background: linear-gradient(135deg, #00C773 0%, #00A565 50%, #00824A 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
 .light .bg-emerald-gradient {
-  background: linear-gradient(135deg, #00D277 0%, #00A55E 50%, #00824A 100%);
+  background: linear-gradient(135deg, #00C773 0%, #00A565 50%, #00824A 100%);
 }
 
 /* ============ GOLD GRADIENT (brand only — brighter, less amber) ============ */
@@ -194,17 +195,17 @@
 
 /* Light-mode gold: deeper, richer */
 .light .text-gold-gradient {
-  background: linear-gradient(135deg, #E6A817 0%, #B8860B 50%, #8B6914 100%);
+  background: linear-gradient(135deg, #D9A82C 0%, #B8860B 50%, #8B6508 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
 .light .bg-gold-gradient {
-  background: linear-gradient(135deg, #E6A817 0%, #B8860B 50%, #8B6914 100%);
+  background: linear-gradient(135deg, #D9A82C 0%, #B8860B 50%, #8B6508 100%);
 }
 .light .bg-gold-glow {
-  background: radial-gradient(circle at 50% 50%, rgba(200, 147, 14, 0.12), transparent 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(184, 134, 11, 0.15), transparent 70%);
 }
 
 /* ============ PREMIUM GLASSMORPHISM ============ */
@@ -231,7 +232,7 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.32), 0 2px 8px rgba(0, 0, 0, 0.14);
 }
 .light .shadow-premium {
-  box-shadow: 0 8px 32px rgba(11, 17, 23, 0.06), 0 2px 8px rgba(11, 17, 23, 0.04);
+  box-shadow: 0 8px 32px rgba(60, 50, 30, 0.1), 0 2px 8px rgba(60, 50, 30, 0.06);
 }
 
 /* ============ ANIMATED GRADIENT MESH BACKGROUND — cool aurora ============ */
@@ -270,7 +271,9 @@
   animation-delay: -14s;
   opacity: 0.06;
 }
-.light .mesh-orb { opacity: 0.05 !important; }
+.light .mesh-orb-1 { background: radial-gradient(circle, #00A565, transparent 70%) !important; opacity: 0.08 !important; }
+.light .mesh-orb-2 { background: radial-gradient(circle, #0891B2, transparent 70%) !important; opacity: 0.06 !important; }
+.light .mesh-orb-3 { background: radial-gradient(circle, #B8860B, transparent 70%) !important; opacity: 0.05 !important; }
 
 @keyframes orb-float {
   0%, 100% { transform: translate(0, 0) scale(1); }
@@ -295,6 +298,10 @@
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
+}
+/* Light-mode gradient border — warmer, more visible on sand background */
+.light .gradient-border::before {
+  background: linear-gradient(135deg, rgba(0, 165, 101, 0.4), rgba(8, 145, 178, 0.2) 50%, rgba(184, 134, 11, 0.25));
 }
 
 /* ============ SHIMMER BUTTON ============ */
@@ -334,13 +341,13 @@
   scrollbar-color: rgba(124, 135, 148, 0.28) transparent;
 }
 .light .custom-scroll::-webkit-scrollbar-thumb {
-  background: rgba(90, 101, 115, 0.3);
+  background: rgba(107, 99, 86, 0.35);
 }
 .light .custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(90, 101, 115, 0.5);
+  background: rgba(107, 99, 86, 0.55);
 }
 .light * {
-  scrollbar-color: rgba(90, 101, 115, 0.3) transparent;
+  scrollbar-color: rgba(107, 99, 86, 0.35) transparent;
 }
 
 /* ============ ANIMATIONS ============ */

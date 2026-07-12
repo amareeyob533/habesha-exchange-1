@@ -28,11 +28,12 @@ export async function GET() {
 
 /**
  * POST /api/kyc — submit KYC application (Exness-style 2-step).
- * Body: { fullName, city, idType, documentId }
+ * Body: { fullName, city, idType, documents }
  *   - fullName: step 1 (required, 2+ chars)
  *   - city: step 1 (required, 2+ chars)
  *   - idType: step 2 (driver_license | national_id | passport)
- *   - documentId: id returned by /api/kyc/upload (the uploaded ID photo)
+ *   - documents: array of document IDs returned by /api/kyc/upload.
+ *                Must contain BOTH a "front" and a "back" document.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -49,7 +50,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Your KYC is already under review. Please wait for the admin to respond.' }, { status: 400 })
     }
 
-    const { fullName, city, idType, documentId } = await req.json()
+    const body = await req.json()
+    const fullName = body.fullName
+    const city = body.city
+    const idType = body.idType
+    // Accept either a `documents` array (new) or a single `documentId`
+    // (back-compat with older clients).
+    const documents: string[] = Array.isArray(body.documents)
+      ? body.documents.filter((d: any) => typeof d === 'string' && d.trim())
+      : body.documentId
+        ? [body.documentId]
+        : []
+
     if (!fullName || String(fullName).trim().length < 2) {
       return NextResponse.json({ error: 'Please enter your full name (step 1).' }, { status: 400 })
     }
@@ -59,31 +71,64 @@ export async function POST(req: NextRequest) {
     if (!idType || !VALID_ID_TYPES.has(idType)) {
       return NextResponse.json({ error: 'Please choose a valid ID type (step 2).' }, { status: 400 })
     }
-    if (!documentId) {
-      return NextResponse.json({ error: 'Please upload a photo of your ID (step 2).' }, { status: 400 })
+    if (documents.length === 0) {
+      return NextResponse.json({ error: 'Please upload photos of your ID (front and back).' }, { status: 400 })
     }
 
-    // Verify the uploaded document exists and belongs to this user.
-    const doc = await db.kycDocument.findUnique({
-      where: { id: documentId },
+    // Verify the uploaded documents exist, belong to this user, and include
+    // BOTH a front and a back side.
+    const docs = await db.kycDocument.findMany({
+      where: { id: { in: documents } },
     })
-    if (!doc || doc.userId !== user.id) {
-      return NextResponse.json({ error: 'Uploaded document not found. Please upload your ID photo again.' }, { status: 400 })
+    if (docs.length !== documents.length) {
+      return NextResponse.json({ error: 'One or more uploaded documents were not found. Please upload your ID photos again.' }, { status: 400 })
+    }
+    for (const d of docs) {
+      if (d.userId !== user.id) {
+        return NextResponse.json({ error: 'Uploaded document does not belong to your account.' }, { status: 400 })
+      }
+    }
+    const hasFront = docs.some((d) => d.side === 'front')
+    const hasBack = docs.some((d) => d.side === 'back')
+    if (!hasFront || !hasBack) {
+      return NextResponse.json({ error: 'Please upload BOTH the front and the back of your ID.' }, { status: 400 })
     }
 
-    // Create the application and link the document.
-    const application = await db.kycApplication.create({
-      data: {
-        userId: user.id,
-        fullName: String(fullName).trim(),
-        city: String(city).trim(),
-        idType,
-        status: 'pending',
-      },
+    // Find or create the application record.
+    let application = await db.kycApplication.findFirst({
+      where: { userId: user.id, status: 'draft' },
+      orderBy: { submittedAt: 'desc' },
     })
-    // Link the document to the new application.
-    await db.kycDocument.update({
-      where: { id: doc.id },
+    if (!application) {
+      application = await db.kycApplication.create({
+        data: {
+          userId: user.id,
+          fullName: String(fullName).trim(),
+          city: String(city).trim(),
+          idType,
+          status: 'pending',
+        },
+      })
+    } else {
+      // Promote the draft to "pending" with the user-supplied info.
+      application = await db.kycApplication.update({
+        where: { id: application.id },
+        data: {
+          fullName: String(fullName).trim(),
+          city: String(city).trim(),
+          idType,
+          status: 'pending',
+          submittedAt: new Date(),
+          rejectReason: null,
+        },
+      })
+    }
+
+    // Ensure ALL uploaded documents are linked to this application. (The
+    // upload route already links them to the draft, but a document may have
+    // been created against an older draft — re-link it here to be safe.)
+    await db.kycDocument.updateMany({
+      where: { id: { in: documents } },
       data: { applicationId: application.id },
     })
 

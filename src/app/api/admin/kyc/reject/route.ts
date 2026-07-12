@@ -7,9 +7,10 @@ import { sendPushNotification } from '@/lib/push'
 /**
  * POST /api/admin/kyc/reject { applicationId, reason? }
  *
- * Rejects a KYC application. The user's kycStatus becomes "rejected" and the
- * ID document is DELETED IMMEDIATELY (rejected applications don't need the
- * 2-day retention — only approved ones do, so the admin can re-review).
+ * Rejects a KYC application. The user's kycStatus becomes "rejected" and ALL
+ * ID documents (front + back) are DELETED IMMEDIATELY (rejected applications
+ * don't need the 2-day retention — only approved ones do, so the admin can
+ * re-review).
  */
 export async function POST(req: NextRequest) {
   try {
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     const app = await db.kycApplication.findUnique({
       where: { id: applicationId },
-      include: { document: true },
+      include: { documents: true },
     })
     if (!app) return NextResponse.json({ error: 'Application not found' }, { status: 404 })
     if (app.status === 'rejected') {
@@ -44,9 +45,11 @@ export async function POST(req: NextRequest) {
           reviewedBy: user.id,
         },
       })
-      // Delete the ID document immediately on rejection.
-      if (app.document) {
-        await tx.kycDocument.delete({ where: { id: app.document.id } })
+      // Delete ALL linked documents immediately on rejection (front + back).
+      if (app.documents.length > 0) {
+        await tx.kycDocument.deleteMany({
+          where: { id: { in: app.documents.map((d) => d.id) } },
+        })
       }
       await tx.user.update({
         where: { id: app.userId },
@@ -75,7 +78,7 @@ export async function POST(req: NextRequest) {
         : 'Your KYC verification was rejected. You can re-submit your verification after reviewing the requirements.',
     }).catch(() => {})
 
-    return NextResponse.json({ ok: true, message: 'KYC rejected. User notified. ID document deleted.' })
+    return NextResponse.json({ ok: true, message: 'KYC rejected. User notified. ID documents deleted.' })
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || 'Failed' }, { status: 500 })
   }

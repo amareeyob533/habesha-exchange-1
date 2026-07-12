@@ -9,10 +9,10 @@ import { sendPushNotification } from '@/lib/push'
  * POST /api/admin/kyc/approve { applicationId }
  *
  * Approves a KYC application. The user's kycStatus becomes "approved" and
- * kycApprovedAt is set to now. The ID document is KEPT for KYC_RETENTION_DAYS
- * (2 days) so the admin can still review/download it; a `deleteAfter` timestamp
- * is written on the document. Lazy cleanup in /api/kyc/* deletes it once that
- * timestamp passes.
+ * kycApprovedAt is set to now. The ID documents (front + back) are KEPT for
+ * KYC_RETENTION_DAYS (2 days) so the admin can still review/download them; a
+ * `deleteAfter` timestamp is written on EVERY document. Lazy cleanup in
+ * /api/kyc/* deletes them once that timestamp passes.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     const app = await db.kycApplication.findUnique({
       where: { id: applicationId },
-      include: { document: true },
+      include: { documents: true },
     })
     if (!app) return NextResponse.json({ error: 'Application not found' }, { status: 404 })
     if (app.status === 'approved') {
@@ -44,9 +44,10 @@ export async function POST(req: NextRequest) {
         where: { id: app.id },
         data: { status: 'approved', reviewedAt: now, reviewedBy: user.id },
       })
-      if (app.document) {
-        await tx.kycDocument.update({
-          where: { id: app.document.id },
+      // Set deleteAfter on ALL linked documents (front + back).
+      if (app.documents.length > 0) {
+        await tx.kycDocument.updateMany({
+          where: { id: { in: app.documents.map((d) => d.id) } },
           data: { deleteAfter },
         })
       }
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      message: `KYC approved. The ID document will be auto-deleted in ${KYC_RETENTION_DAYS} days.`,
+      message: `KYC approved. The ID documents will be auto-deleted in ${KYC_RETENTION_DAYS} days.`,
       deleteAfter: deleteAfter.toISOString(),
     })
   } catch (err: any) {

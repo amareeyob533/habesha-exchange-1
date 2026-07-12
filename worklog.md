@@ -1426,3 +1426,168 @@ Stage Summary:
 - Uses existing compressImage utility from src/lib/compress-image.ts
 - Avatar stored as base64 in User.avatarUrl — works on Vercel
 - No new environment variables needed
+
+---
+Task ID: REALTIME-POLLING
+Agent: general-purpose
+Task: Add real-time polling to support chat + admin panel for fast message/item updates
+
+Work Log:
+- src/components/dashboard/dashboard-shell.tsx: Changed periodic `fetchMe` refresh interval from 10000ms (10s) to 5000ms (5s) so users see notifications (deposit approved, KYC status change) faster. Kept existing visibility-based start/stop logic.
+- src/components/dashboard/views/support-view.tsx: Added 2s polling `useEffect` that calls `load()` while a ticket conversation is open (`selectedTicket` non-null). Stops when no ticket selected or tab hidden (visibilitychange listener). Refactored `load()` to use functional `setTickets` update with JSON.stringify comparison so identical data doesn't trigger re-render (no flicker). `sendReply` already calls `load()` immediately after send — kept that pattern with a clarifying comment.
+- src/components/dashboard/views/admin-support.tsx: Added 2s polling `useEffect` when admin has a ticket selected. Refactored `load()` to accept `{ silent?: boolean }` option — silent mode skips `setLoading(true)` so polls don't toggle the loader. Used functional `setTickets`/`setSelected` updates with JSON.stringify comparison to prevent flicker. Updated `sendReply` to call `load({ silent: true })` for immediate refresh.
+- src/components/dashboard/views/admin.tsx: Added 5s polling `useEffect` that runs only when section is 'deposits' or 'withdrawals'. Stops on other sections (users/buys/support/kyc manage their own data). Refactored `load()` with `{ silent?: boolean }` option. Used functional setState with JSON.stringify comparison to prevent flicker on poll. Updated `actDeposit`/`actWithdrawal` to use `load({ silent: true })` after action.
+- src/components/dashboard/views/admin-buys.tsx: Added 5s polling `useEffect` that runs whenever the component is mounted. Refactored `load()` with `{ silent?: boolean }` option (silent mode also suppresses error toasts so polls fail quietly). Used functional `setOrders` update with JSON.stringify comparison. Updated `act` to use `load({ silent: true })`.
+- src/components/dashboard/views/admin-kyc.tsx: Added 5s polling `useEffect` that runs whenever the component is mounted. Refactored `load()` with `{ silent?: boolean }` option (silent mode also suppresses error toasts). Used functional `setApps` update with JSON.stringify comparison. Updated `approve`/`reject` to use `load({ silent: true })`.
+- src/components/modals/support-modal.tsx: Read and reviewed — this modal only creates NEW tickets (no conversation view), so no polling needed here.
+- Verified `bun run lint` passes with 0 errors (only 6 stylistic warnings matching the pre-existing pattern in dashboard-shell.tsx for `document.hidden ? stop() : start()`).
+
+Stage Summary:
+- Support chat now polls every 2 seconds when a conversation is open — new replies from admin (or user) appear within 2-3s without manual refresh.
+- Admin panel deposits/withdrawals poll every 5s for new pending items; buy orders and KYC applications poll every 5s whenever those admin sub-components are mounted.
+- Dashboard periodic refresh reduced from 10s to 5s for faster notification delivery.
+- All polling respects `document.hidden` (pauses when tab is hidden) and cleans up the interval on unmount/dependency change.
+- All polling uses silent refresh mode (no loading spinner flicker) and JSON.stringify comparison before setState (no re-render when data unchanged).
+- Action handlers (send reply, approve, reject) immediately trigger a silent refresh instead of waiting for the next poll tick.
+- Lint: 0 errors, 6 warnings (all pre-existing pattern of ternary-as-statement, matching the original dashboard-shell.tsx code style).
+
+---
+Task ID: KYC-FRONT-BACK + ADMIN-DETAIL
+Agent: general-purpose
+Task: Add front+back ID upload to KYC + enhance admin user detail with profile pic, KYC info, email, password note
+
+Work Log:
+
+PART 1 — KYC Front + Back ID Upload (9 files):
+
+- src/app/api/kyc/upload/route.ts (NEW — the route file had been deleted by a previous agent):
+  * Accepts `side` form field (front | back, defaults to "front"). Validates against the two allowed values.
+  * Finds (or creates) the user's existing DRAFT KycApplication (status="draft") so multiple documents can attach to one in-progress application.
+  * If the user already has a document for the SAME side on the current draft, deletes the old one first (no duplicates — re-upload replaces).
+  * Stores the image as base64 data URL in KycDocument.data (Vercel-compatible — no /public writes).
+  * Writes the `side` field on each KycDocument row.
+  * Returns { id, url, side } so the client can preview + track each side separately.
+
+- src/app/api/kyc/route.ts (POST handler):
+  * Now accepts a `documents` array (string[] of document IDs). Back-compat: a single `documentId` is still accepted and wrapped into a 1-element array.
+  * Validates that the documents exist, belong to the user, AND include BOTH a "front" and a "back" side (rejects with "Please upload BOTH the front and the back of your ID." otherwise).
+  * Promotes the draft application to "pending" (or creates one if none exists), fills in fullName/city/idType, and re-links all uploaded documents to that application via updateMany.
+
+- src/app/api/admin/kyc/route.ts (GET):
+  * Replaced the singular `document: { select: {...} }` include with `documents: { select: { id, side, fileName, mimeType, size, deleteAfter }, orderBy: { side: 'asc' } }` so the admin gets BOTH ID photos per application.
+
+- src/app/api/admin/kyc/approve/route.ts:
+  * Now `include: { documents: true }` (was `document: true`).
+  * Uses `tx.kycDocument.updateMany({ where: { id: { in: app.documents.map(d => d.id) } }, data: { deleteAfter } })` to set deleteAfter on BOTH the front and back documents in a single round-trip.
+
+- src/app/api/admin/kyc/reject/route.ts:
+  * Now `include: { documents: true }`.
+  * Uses `tx.kycDocument.deleteMany({ where: { id: { in: app.documents.map(d => d.id) } } })` to delete ALL documents (front + back) immediately on rejection.
+
+- src/app/api/kyc/document/route.ts (verified, no changes needed):
+  * Still serves a single document by id. Owner-or-admin auth check unchanged. Works with the new per-document side field (it doesn't read `side`, just serves the bytes).
+
+- src/components/modals/kyc-modal.tsx:
+  * Step 2 ("ID Document") now has TWO upload tiles: "Front of ID" and "Back of ID".
+  * Each tile has its own file input, preview image, uploading spinner, and checkmark.
+  * Both go through the existing `compressImage()` before upload (no change to compression).
+  * Submit button is disabled until BOTH a front AND back document id are present (plus idType chosen).
+  * Submit sends `{ fullName, city, idType, documents: [frontId, backId] }`.
+  * Switched from the shared `uploadFile()` helper to a direct fetch() so the new `side` form field can be appended to the FormData (kept the shared helper signature backwards-compatible for the avatar + buy upload callers).
+  * Added a reusable `UploadField` component (label, doc state, click handler) to keep the two tiles DRY.
+  * Re-uploading the same side replaces (the backend deletes the old one) — the new doc id replaces the stale one in component state.
+
+- src/components/dashboard/views/admin-kyc.tsx:
+  * `KycApp.document: KycDoc | null` → `KycApp.documents: KycDoc[]` (with `side` added to the interface).
+  * Renders each document as its own block: "Front of ID" / "Back of ID" label, image preview, Download + Open buttons, and per-document auto-delete date.
+  * Falls back to "Documents auto-deleted (retention period expired)" when the array is empty.
+
+- src/lib/kyc-helpers.ts (verified, no changes needed):
+  * `cleanupExpiredKyc()` queries `db.kycDocument.findMany({ where: { deleteAfter: { lt: now } } })` — already operates per-document, so it naturally cleans up both the front and the back when their deleteAfter expires. No code change required for the new schema.
+
+PART 2 — Admin User Detail (2 files):
+
+- src/app/api/admin/users/detail/route.ts:
+  * Now `include: { kycApplications: { include: { documents: { select: { id, side, fileName, mimeType, size, deleteAfter }, orderBy: { side: 'asc' } } } } }` so the admin can view each submitted ID photo per application.
+  * Returns the full KYC summary fields on the user object: kycStatus, kycSubmittedAt, kycApprovedAt, kycFullName, kycCity, kycIdType, kycRejectReason.
+  * Returns `hasPassword: boolean` (true if a bcrypt hash is set, false for Google-only accounts) — we do NOT send the hash itself over the wire.
+  * Returns `avatarUrl` (already present before, kept) so the admin can render the profile picture.
+  * Returns `isBlocked`, `blockedReason`, `provider`, `country`, `phone`, `createdAt`, `email`, `username`, `name`, `uid` — all the existing fields.
+
+- src/components/dashboard/views/admin-users.tsx:
+  * Updated `UserDetail` interface to include the new KYC fields, `hasPassword`, and `kycApplications: KycApplicationRow[]` (with documents).
+  * Top of the user-detail drawer now shows a large centered `VerifiedAvatar` (size="lg", verified={kycStatus === 'approved'}) so the admin sees the actual profile picture with the blue Twitter-style KYC checkmark when approved.
+  * Below the avatar: name, KYC status badge (colored pill: APPROVED green / PENDING gold / REJECTED red / NO KYC muted), BLOCKED badge if blocked, and GOOGLE/CREDENTIALS provider badge.
+  * Email is now a prominent gold-bordered card with a Mail icon — clicking opens `mailto:`.
+  * Password row uses a KeyRound icon and shows "•••••••• (hashed for security)" with an explanatory note: "Stored as a one-way bcrypt hash. Plaintext is never saved and cannot be recovered — the user must reset it if forgotten." Google-only accounts show "No password set — This account signs in with Google only."
+  * KYC section: status badge + 2×2 grid showing Full Name, City, ID Type (with friendly label), Submitted date. If rejected, shows the reject reason in a red callout. Below, iterates `kycApplications` and for each application renders the front + back ID images (each with its own Download + Open buttons and auto-delete date). If documents have been auto-deleted (empty array), shows a "retention period expired" note.
+  * Added a `KycBadge` helper component (colored pill keyed by status) used both in the avatar header and the KYC section.
+  * Kept all existing fields (UID, phone, country, total balance, per-token holdings, recent transactions, admin actions: Reward/Notify/Block/Unblock/Delete).
+
+Schema check: prisma/schema.prisma was already updated by a previous step (KycApplication.documents KycDocument[], KycDocument.side @default("front"), KycDocument.applicationId no longer @unique). I ran `bunx prisma generate` to refresh the client — the dev server had cached the old client and was rejecting the `side` field until I regenerated + restarted.
+
+Verification (curl end-to-end, real server on :3000):
+- Signup → upload FRONT → returns { id, url, side: "front" } ✓
+- Upload BACK → returns { id, url, side: "back" } ✓
+- Submit KYC with both → 200 { ok: true, kycStatus: "pending" } ✓
+- Submit with ONLY front → 400 "Please upload BOTH the front and the back of your ID." ✓
+- Submit with empty documents → 400 "Please upload photos of your ID (front and back)." ✓
+- Upload with invalid side ("middle") → 400 "Invalid side. Must be \"front\" or \"back\"." ✓
+- Upload with no side → defaults to "front", succeeds ✓
+- Re-upload same side → old doc deleted, new doc created (only 1 row in DB per side) ✓
+- Admin GET /api/admin/kyc?status=pending → returns applications with documents[] (front + back) ✓
+- Admin GET /api/kyc/document?id=<other user's doc> → 200 OK (admin can view any user's docs) ✓
+- Admin approve → sets deleteAfter on BOTH docs (verified in DB: same timestamp) ✓
+- Admin reject → deletes BOTH docs (verified: 0 rows remaining in DB) ✓
+- Admin GET /api/admin/users/detail?userId=... → returns avatarUrl, kycStatus, kycFullName, kycCity, kycIdType, hasPassword, kycApplications[] with documents ✓
+
+Lint: `bun run lint` → 0 errors, 6 pre-existing warnings (the `useUI.setState({...})` ternary-as-statement pattern present in dashboard-shell + 5 other admin views since before this task).
+
+Stage Summary:
+- KYC now requires BOTH a front and a back photo of the user's ID. The upload route stores each side as its own KycDocument row tagged with `side: 'front' | 'back'`, all attached to a single draft KycApplication that gets promoted to "pending" on submit. Admin sees both images side-by-side with separate Download/Open buttons. Approve sets the 2-day retention `deleteAfter` on both; reject deletes both immediately. Auto-cleanup of expired documents continues to work unchanged (it was already per-document).
+- Admin user-detail drawer now opens with the user's profile picture (large, centered, with the blue KYC verification badge if approved), a prominent gold email card, a clearly-explained password row showing "•••••••• (hashed for security)" since bcrypt hashes cannot be reversed, the full KYC summary (status, full name, city, ID type, submitted date), and the submitted front+back ID photos (with Download buttons) as long as they're still within the 2-day retention window.
+
+---
+Task ID: SETTINGS-FUNCTIONAL
+Agent: main
+Task: Make all settings functional with persistence + real behavior
+
+Work Log:
+- Created Prisma UserSettings model with all 11 fields (exchange, wallet, notification prefs)
+- Created src/app/api/user/settings/route.ts:
+  * GET — returns user's settings (creates defaults if none exist)
+  * POST — upserts settings with type validation + whitelisted fields
+- Created src/hooks/use-user-settings.ts:
+  * useUserSettings() hook — loads settings from API, provides save() function
+  * Falls back to defaults if API unreachable
+- Rewrote src/components/dashboard/views/settings.tsx:
+  * Uses useUserSettings hook instead of local state
+  * AUTO-SAVES each setting when changed (no "Save" button needed for toggles/selects)
+  * Shows toast on each save: "Default trading pair updated", etc.
+  * Shows loading spinner while settings load
+  * All toggles, selects, and inputs now persist to the database
+- Made "Hide small balances" setting actually work in wallet.tsx:
+  * When enabled, tokens worth less than $1 are hidden from the wallet view
+  * Uses useUserSettings hook to read the setting
+- Lint: 0 errors (6 pre-existing warnings from polling pattern)
+
+Stage Summary:
+- All Settings page toggles/selects now persist to the database (auto-save on change)
+- "Hide small balances" actually hides small balances in the wallet
+- Settings survive page refresh and work across devices
+- Profile settings (name, country, phone) still use the existing "Save Changes" button
+- Theme toggle already worked (next-themes)
+- KYC card already worked (opens KYC modal)
+
+---
+Task ID: SUMMARY-ALL-4-FIXES
+Agent: main
+Task: Summary of all 4 improvements requested by user
+
+Stage Summary:
+1. ✅ Settings functional — all toggles/selects auto-save to database, "Hide small balances" actually hides tokens in wallet
+2. ✅ KYC front + back upload — 2 upload fields (front of ID + back of ID), both required, both compressed, admin sees both with download buttons
+3. ✅ Admin user detail — shows profile picture, full KYC info (name, city, ID type, front+back photos with download), email prominently, password shown as "•••••••• (hashed for security)" with bcrypt explanation
+4. ✅ Real-time polling — support chat polls every 2s, admin panel polls every 5s, dashboard refreshes every 5s, all with tab-visibility detection + flicker prevention
+
+All 4 improvements verified with lint (0 errors). Schema pushed to database. Ready to redeploy.

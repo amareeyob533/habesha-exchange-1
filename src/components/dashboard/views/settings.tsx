@@ -5,54 +5,48 @@ import { useAuth } from '@/hooks/use-auth'
 import { useUI } from '@/hooks/use-ui'
 import { useToast } from '@/hooks/use-toast'
 import { useTheme } from 'next-themes'
-import { apiFetch } from '@/lib/api-client'
+import { useUserSettings } from '@/hooks/use-user-settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { motion } from 'framer-motion'
-import { Settings, Moon, Sun, DollarSign, Wallet, Bell, Shield, Globe2, Sliders, Loader2, ShieldCheck, Clock, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Settings, Moon, Sun, Wallet, Bell, Shield, Sliders, Loader2, ShieldCheck, Clock, CheckCircle2, AlertCircle } from 'lucide-react'
 
 export function SettingsView() {
   const { user, updateProfile } = useAuth()
   const { openKyc } = useUI()
   const { theme, setTheme } = useTheme()
   const { toast } = useToast()
+  const { settings, loading, save } = useUserSettings()
 
-  // Exchange settings (local state — demo preferences)
-  const [defaultToken, setDefaultToken] = useState('USDT')
-  const [showBalances, setShowBalances] = useState(true)
-  const [compactView, setCompactView] = useState(false)
-  const [slippage, setSlippage] = useState('1.0')
-
-  // Wallet settings
-  const [defaultNetwork, setDefaultNetwork] = useState('TRON (TRC20)')
-  const [autoConvert, setAutoConvert] = useState(false)
-  const [hideSmallBalances, setHideSmallBalances] = useState(false)
-
-  // Notification settings
-  const [emailNotifs, setEmailNotifs] = useState(true)
-  const [pushNotifs, setPushNotifs] = useState(true)
-  const [depositAlerts, setDepositAlerts] = useState(true)
-  const [withdrawAlerts, setWithdrawAlerts] = useState(true)
-
-  // Profile settings
+  // Profile settings (local state — saved on submit)
   const [name, setName] = useState(user?.name || '')
   const [country, setCountry] = useState(user?.country || '')
   const [phone, setPhone] = useState(user?.phone || '')
-  const [saving, setSaving] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
+
+  // Auto-save a single setting when it changes.
+  async function autoSave(field: string, value: any, label: string) {
+    const ok = await save({ [field]: value } as any)
+    if (ok) {
+      toast({ title: `${label} updated` })
+    } else {
+      toast({ variant: 'destructive', title: 'Failed to save', description: 'Please try again.' })
+    }
+  }
 
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault()
-    setSaving(true)
+    setSavingProfile(true)
     try {
       await updateProfile({ name, country, phone })
-      toast({ title: 'Settings saved' })
+      toast({ title: 'Profile saved' })
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Failed', description: err.message })
     } finally {
-      setSaving(false)
+      setSavingProfile(false)
     }
   }
 
@@ -112,6 +106,11 @@ export function SettingsView() {
         </div>
       </motion.div>
 
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
       <div className="grid gap-5 lg:grid-cols-2">
         {/* Exchange Settings */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card gradient-border rounded-2xl p-5">
@@ -124,7 +123,10 @@ export function SettingsView() {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Default trading pair</Label>
-              <Select value={defaultToken} onValueChange={setDefaultToken}>
+              <Select
+                value={settings.defaultToken}
+                onValueChange={(v) => autoSave('defaultToken', v, 'Default trading pair')}
+              >
                 <SelectTrigger className="bg-secondary/40"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="USDT">USDT</SelectItem>
@@ -138,10 +140,27 @@ export function SettingsView() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Slippage tolerance (%)</Label>
-              <Input type="number" min="0" step="0.1" value={slippage} onChange={(e) => setSlippage(e.target.value)} className="bg-secondary/40" />
+              <Input
+                type="number"
+                min="0"
+                step="0.1"
+                value={settings.slippage}
+                onChange={(e) => autoSave('slippage', parseFloat(e.target.value) || 0, 'Slippage tolerance')}
+                className="bg-secondary/40"
+              />
             </div>
-            <ToggleRow label="Show balance in USD" desc="Display all token values in USD" checked={showBalances} onChecked={setShowBalances} />
-            <ToggleRow label="Compact view" desc="Show more tokens per screen" checked={compactView} onChecked={setCompactView} />
+            <ToggleRow
+              label="Show balance in USD"
+              desc="Display all token values in USD"
+              checked={settings.showBalanceUsd}
+              onChecked={(v) => autoSave('showBalanceUsd', v, 'Balance display')}
+            />
+            <ToggleRow
+              label="Compact view"
+              desc="Show more tokens per screen"
+              checked={settings.compactView}
+              onChecked={(v) => autoSave('compactView', v, 'Compact view')}
+            />
           </div>
         </motion.div>
 
@@ -156,18 +175,32 @@ export function SettingsView() {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Default deposit network</Label>
-              <Select value={defaultNetwork} onValueChange={setDefaultNetwork}>
+              <Select
+                value={settings.defaultNetwork}
+                onValueChange={(v) => autoSave('defaultNetwork', v, 'Default network')}
+              >
                 <SelectTrigger className="bg-secondary/40"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="TRON (TRC20)">TRON (TRC20)</SelectItem>
                   <SelectItem value="Ethereum (ERC20)">Ethereum (ERC20)</SelectItem>
                   <SelectItem value="Bitcoin Network">Bitcoin Network</SelectItem>
                   <SelectItem value="TON Network">TON Network</SelectItem>
+                  <SelectItem value="Solana Network">Solana Network</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <ToggleRow label="Auto-convert small amounts" desc="Automatically convert dust to USDT" checked={autoConvert} onChecked={setAutoConvert} />
-            <ToggleRow label="Hide small balances" desc="Hide tokens worth less than $1" checked={hideSmallBalances} onChecked={setHideSmallBalances} />
+            <ToggleRow
+              label="Auto-convert small amounts"
+              desc="Automatically convert dust to USDT"
+              checked={settings.autoConvertDust}
+              onChecked={(v) => autoSave('autoConvertDust', v, 'Auto-convert')}
+            />
+            <ToggleRow
+              label="Hide small balances"
+              desc="Hide tokens worth less than $1"
+              checked={settings.hideSmallBalances}
+              onChecked={(v) => autoSave('hideSmallBalances', v, 'Hide small balances')}
+            />
           </div>
         </motion.div>
 
@@ -204,13 +237,34 @@ export function SettingsView() {
             <h3 className="text-base font-bold">Notifications</h3>
           </div>
           <div className="space-y-4">
-            <ToggleRow label="Email notifications" desc="Receive emails for important events" checked={emailNotifs} onChecked={setEmailNotifs} />
-            <ToggleRow label="Push notifications" desc="In-app notification banners" checked={pushNotifs} onChecked={setPushNotifs} />
-            <ToggleRow label="Deposit alerts" desc="Notify when a deposit is confirmed" checked={depositAlerts} onChecked={setDepositAlerts} />
-            <ToggleRow label="Withdrawal alerts" desc="Notify when a withdrawal completes" checked={withdrawAlerts} onChecked={setWithdrawAlerts} />
+            <ToggleRow
+              label="Email notifications"
+              desc="Receive emails for important events"
+              checked={settings.emailNotifs}
+              onChecked={(v) => autoSave('emailNotifs', v, 'Email notifications')}
+            />
+            <ToggleRow
+              label="Push notifications"
+              desc="In-app notification banners"
+              checked={settings.pushNotifs}
+              onChecked={(v) => autoSave('pushNotifs', v, 'Push notifications')}
+            />
+            <ToggleRow
+              label="Deposit alerts"
+              desc="Notify when a deposit is confirmed"
+              checked={settings.depositAlerts}
+              onChecked={(v) => autoSave('depositAlerts', v, 'Deposit alerts')}
+            />
+            <ToggleRow
+              label="Withdrawal alerts"
+              desc="Notify when a withdrawal completes"
+              checked={settings.withdrawAlerts}
+              onChecked={(v) => autoSave('withdrawAlerts', v, 'Withdrawal alerts')}
+            />
           </div>
         </motion.div>
       </div>
+      )}
 
       {/* Account / Profile settings */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass-card gradient-border rounded-2xl p-5">
@@ -234,8 +288,8 @@ export function SettingsView() {
             <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+251…" className="bg-secondary/40" />
           </div>
           <div className="sm:col-span-3">
-            <Button type="submit" className="bg-gold-gradient font-semibold text-primary-foreground" disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Changes'}
+            <Button type="submit" className="bg-gold-gradient font-semibold text-primary-foreground" disabled={savingProfile}>
+              {savingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Changes'}
             </Button>
           </div>
         </form>

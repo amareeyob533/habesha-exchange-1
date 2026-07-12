@@ -34,21 +34,38 @@ export function AdminSupport() {
   const [replying, setReplying] = useState(false)
   const [resolving, setResolving] = useState(false)
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true)
     try {
       const data = await apiFetch<{ tickets: Ticket[] }>('/api/admin/support?status=open')
-      setTickets(data.tickets || [])
-      // Update selected ticket if it's still in the list
+      const next = data.tickets || []
+      // Only update state if data actually changed (prevents flicker during polling)
+      setTickets((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
+      // Update selected ticket if it's still in the list (only when changed)
       if (selected) {
-        const updated = (data.tickets || []).find((t) => t.id === selected.id)
-        if (updated) setSelected(updated)
+        const updated = next.find((t) => t.id === selected.id)
+        if (updated) {
+          setSelected((prev) => (prev && JSON.stringify(prev) === JSON.stringify(updated) ? prev : updated))
+        }
       }
     } catch { toast({ variant: 'destructive', title: 'Failed to load' }) }
-    finally { setLoading(false) }
+    finally { if (!opts?.silent) setLoading(false) }
   }, [toast, selected])
 
   useEffect(() => { load() }, [load])
+
+  // Real-time polling: when a ticket conversation is open, fetch new replies every 2s.
+  // Stop polling when no ticket is selected or when the tab is hidden.
+  useEffect(() => {
+    if (!selected) return
+    let id: ReturnType<typeof setInterval> | null = null
+    const start = () => { if (!id) id = setInterval(() => load({ silent: true }), 2000) }
+    const stop = () => { if (id) { clearInterval(id); id = null } }
+    const onVis = () => { document.hidden ? stop() : start() }
+    start()
+    document.addEventListener('visibilitychange', onVis)
+    return () => { stop(); document.removeEventListener('visibilitychange', onVis) }
+  }, [selected, load])
 
   async function sendReply() {
     if (!selected || !replyText.trim()) return
@@ -59,7 +76,8 @@ export function AdminSupport() {
         body: JSON.stringify({ ticketId: selected.id, message: replyText }),
       })
       setReplyText('')
-      await load()
+      // Immediately reload replies (don't wait for next poll tick) so the admin sees their message instantly
+      await load({ silent: true })
       toast({ title: 'Reply sent' })
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Failed', description: err.message })

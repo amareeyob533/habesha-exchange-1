@@ -27,19 +27,34 @@ export function BuysAdmin({ refreshKey }: { refreshKey: number }) {
   const [loading, setLoading] = useState(false)
   const [acting, setActing] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true)
     try {
       const data = await apiFetch<{ orders: BuyOrder[] }>('/api/admin/buys?status=pending')
-      setOrders(data.orders)
+      const next = data.orders
+      // Only update state if data actually changed (prevents flicker during polling)
+      setOrders((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Failed to load', description: err.message })
+      // Only show error toast on non-silent (manual) loads — silent polls fail quietly
+      if (!opts?.silent) toast({ variant: 'destructive', title: 'Failed to load', description: err.message })
     } finally {
       setLoading(false)
     }
   }, [toast])
 
   useEffect(() => { load() }, [load, refreshKey])
+
+  // Fast polling: refresh pending buy orders every 5s so new ones show up quickly.
+  // Stop polling when the tab is hidden.
+  useEffect(() => {
+    let id: ReturnType<typeof setInterval> | null = null
+    const start = () => { if (!id) id = setInterval(() => load({ silent: true }), 5000) }
+    const stop = () => { if (id) { clearInterval(id); id = null } }
+    const onVis = () => { document.hidden ? stop() : start() }
+    start()
+    document.addEventListener('visibilitychange', onVis)
+    return () => { stop(); document.removeEventListener('visibilitychange', onVis) }
+  }, [load])
 
   async function act(orderId: string, action: 'approve' | 'reject') {
     setActing(orderId)
@@ -49,7 +64,7 @@ export function BuysAdmin({ refreshKey }: { refreshKey: number }) {
         body: JSON.stringify({ orderId }),
       })
       toast({ title: action === 'approve' ? 'Buy Order Approved' : 'Buy Order Rejected', description: res.message })
-      await load()
+      await load({ silent: true })
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Action failed', description: err.message })
     } finally {

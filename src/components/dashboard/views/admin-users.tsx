@@ -24,9 +24,11 @@ import {
 } from '@/components/ui/dialog'
 import { motion } from 'framer-motion'
 import { TokenIcon } from '@/components/common/token-icon'
+import { VerifiedAvatar } from '@/components/common/verified-avatar'
 import {
   Search, Loader2, ShieldCheck, Ban, Trash2, Send, Gift,
   Lock, Unlock, AlertTriangle, Mail, AtSign, Hash,
+  Download, ExternalLink, KeyRound, IdCard, MapPin, User as UserIcon, Clock,
 } from 'lucide-react'
 
 interface SearchUser {
@@ -41,18 +43,55 @@ interface SearchUser {
   totalUsd: number
 }
 
+interface KycDoc {
+  id: string
+  side: string
+  fileName: string
+  mimeType: string
+  size: number
+  deleteAfter: string | null
+}
+interface KycApplicationRow {
+  id: string
+  fullName: string
+  city: string
+  idType: string
+  status: string
+  rejectReason: string | null
+  submittedAt: string
+  reviewedAt: string | null
+  documents: KycDoc[]
+}
+
 interface UserDetail {
   user: {
     id: string; uid: string; username: string | null; email: string; name: string | null
     avatarUrl: string | null; isBlocked: boolean; blockedReason: string | null
     provider: string; country: string | null; phone: string | null; createdAt: string
+    // KYC summary (denormalized onto User)
+    kycStatus: string | null
+    kycSubmittedAt: string | null
+    kycApprovedAt: string | null
+    kycFullName: string | null
+    kycCity: string | null
+    kycIdType: string | null
+    kycRejectReason: string | null
+    // Whether a bcrypt password hash is set (Google-only users have none)
+    hasPassword: boolean
   }
   balances: { symbol: string; name: string; amount: number; usdValue: number; price: number; color: string; icon: string }[]
   totalUsd: number
   transactions: { id: string; type: string; token: string; amount: number; status: string; note: string | null; createdAt: string }[]
+  kycApplications: KycApplicationRow[]
 }
 
 const TOKENS = ['USDT', 'USDC', 'BTC', 'ETH', 'SOL', 'TRX', 'TON']
+
+const ID_LABELS: Record<string, string> = {
+  driver_license: "Driver's License",
+  national_id: 'National ID',
+  passport: 'Passport',
+}
 
 export function UsersAdmin() {
   const { toast } = useToast()
@@ -240,13 +279,165 @@ export function UsersAdmin() {
               </SheetHeader>
 
               <div className="mt-4 space-y-5">
+                {/* Profile picture + identity summary */}
+                <div className="flex flex-col items-center gap-2 rounded-xl border border-border bg-secondary/30 p-4 text-center">
+                  <VerifiedAvatar
+                    src={detail.user.avatarUrl}
+                    fallback={(detail.user.username || detail.user.email)[0].toUpperCase()}
+                    size="lg"
+                    verified={detail.user.kycStatus === 'approved'}
+                  />
+                  <div className="mt-1 text-base font-bold leading-tight">
+                    {detail.user.name || `@${detail.user.username || '—'}`}
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-1.5">
+                    <KycBadge status={detail.user.kycStatus} />
+                    {detail.user.isBlocked && (
+                      <span className="rounded bg-down/15 px-1.5 py-0.5 text-[9px] font-bold text-down">BLOCKED</span>
+                    )}
+                    <span className="rounded bg-secondary px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">
+                      {detail.user.provider === 'google' ? 'GOOGLE' : 'CREDENTIALS'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Email — prominent */}
+                <a
+                  href={`mailto:${detail.user.email}`}
+                  className="flex items-center gap-3 rounded-xl border border-gold/30 bg-gold/5 p-3 transition-colors hover:bg-gold/10"
+                >
+                  <Mail className="h-5 w-5 shrink-0 text-gold" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Email</div>
+                    <div className="truncate text-sm font-semibold text-foreground">{detail.user.email}</div>
+                  </div>
+                </a>
+
                 {/* Profile info */}
                 <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-secondary/30 p-3 text-xs">
                   <Info icon={AtSign} label="Username" value={`@${detail.user.username || '—'}`} />
-                  <Info icon={Mail} label="Email" value={detail.user.email} />
                   <Info icon={Hash} label="UID" value={detail.user.uid} />
                   <Info icon={Mail} label="Phone" value={detail.user.phone || '—'} />
-                  <Info icon={Mail} label="Provider" value={detail.user.provider} />
+                  <Info icon={Mail} label="Country" value={detail.user.country || '—'} />
+                </div>
+
+                {/* Password — never show plaintext, just note it's hashed */}
+                <div className="rounded-xl border border-border bg-secondary/20 p-3">
+                  <div className="flex items-center gap-2 text-xs">
+                    <KeyRound className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Password</div>
+                      {detail.user.hasPassword ? (
+                        <>
+                          <div className="font-mono text-sm font-semibold tracking-wider text-foreground">
+                            •••••••• <span className="text-[10px] font-normal text-muted-foreground">(hashed for security)</span>
+                          </div>
+                          <div className="mt-1 text-[10px] leading-snug text-muted-foreground">
+                            Stored as a one-way bcrypt hash. Plaintext is never saved and cannot be recovered — the user must reset it if forgotten.
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-sm font-semibold text-foreground">No password set</div>
+                          <div className="mt-1 text-[10px] leading-snug text-muted-foreground">
+                            This account signs in with Google only.
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* KYC section */}
+                <div className="rounded-xl border border-border bg-secondary/20 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <ShieldCheck className="h-3.5 w-3.5" /> KYC Verification
+                    </div>
+                    <KycBadge status={detail.user.kycStatus} />
+                  </div>
+                  {detail.user.kycStatus && detail.user.kycStatus !== 'none' ? (
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <Info icon={UserIcon} label="Full Name" value={detail.user.kycFullName || '—'} />
+                      <Info icon={MapPin} label="City" value={detail.user.kycCity || '—'} />
+                      <Info icon={IdCard} label="ID Type" value={ID_LABELS[detail.user.kycIdType || ''] || detail.user.kycIdType || '—'} />
+                      <Info icon={Clock} label="Submitted" value={detail.user.kycSubmittedAt ? new Date(detail.user.kycSubmittedAt).toLocaleDateString() : '—'} />
+                    </div>
+                  ) : (
+                    <div className="text-[11px] text-muted-foreground">User has not submitted KYC verification.</div>
+                  )}
+
+                  {detail.user.kycStatus === 'rejected' && detail.user.kycRejectReason && (
+                    <div className="mt-2 flex items-start gap-2 rounded-lg border border-down/40 bg-down/5 p-2 text-[11px] text-down">
+                      <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                      <span>Reject reason: {detail.user.kycRejectReason}</span>
+                    </div>
+                  )}
+
+                  {/* KYC documents (front + back) — only visible if they still exist in DB */}
+                  {detail.kycApplications.length > 0 && (
+                    <div className="mt-3 space-y-3">
+                      {detail.kycApplications.map((app) => (
+                        <div key={app.id} className="rounded-lg border border-border/60 bg-secondary/30 p-2">
+                          <div className="mb-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
+                            <span>Application · {app.status}</span>
+                            <span>{new Date(app.submittedAt).toLocaleDateString()}</span>
+                          </div>
+                          {app.documents.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-2">
+                              {app.documents.map((doc) => (
+                                <div key={doc.id} className="space-y-1">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gold">
+                                      {doc.side === 'back' ? 'Back of ID' : 'Front of ID'}
+                                    </span>
+                                    {doc.deleteAfter && (
+                                      <span className="text-[9px] text-muted-foreground">
+                                        Auto-deletes {new Date(doc.deleteAfter).toLocaleDateString()}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="rounded border border-border overflow-hidden">
+                                    <img
+                                      src={`/api/kyc/document?id=${doc.id}`}
+                                      alt={`${doc.side} of ID`}
+                                      className="w-full max-h-[180px] object-contain bg-black/30"
+                                    />
+                                  </div>
+                                  <div className="flex gap-1.5">
+                                    <a
+                                      href={`/api/kyc/document?id=${doc.id}&download=true`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="flex-1"
+                                    >
+                                      <Button size="sm" variant="outline" className="h-7 w-full text-[10px]">
+                                        <Download className="mr-1 h-3 w-3" /> Download
+                                      </Button>
+                                    </a>
+                                    <a
+                                      href={`/api/kyc/document?id=${doc.id}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="flex-1"
+                                    >
+                                      <Button size="sm" variant="outline" className="h-7 w-full text-[10px]">
+                                        <ExternalLink className="mr-1 h-3 w-3" /> Open
+                                      </Button>
+                                    </a>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="rounded border border-dashed border-border p-2 text-center text-[10px] text-muted-foreground">
+                              ID documents auto-deleted (retention period expired)
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {detail.user.isBlocked && detail.user.blockedReason && (
@@ -401,4 +592,16 @@ function Info({ icon: Icon, label, value }: { icon: any; label: string; value: s
       </div>
     </div>
   )
+}
+
+/** Colored pill showing the user's KYC status. */
+function KycBadge({ status }: { status: string | null }) {
+  const map: Record<string, { label: string; cls: string }> = {
+    approved: { label: 'KYC APPROVED', cls: 'bg-up/15 text-up' },
+    pending: { label: 'KYC PENDING', cls: 'bg-gold/15 text-gold' },
+    rejected: { label: 'KYC REJECTED', cls: 'bg-down/15 text-down' },
+    none: { label: 'NO KYC', cls: 'bg-secondary text-muted-foreground' },
+  }
+  const s = map[status || 'none'] || map.none
+  return <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${s.cls}`}>{s.label}</span>
 }

@@ -8,12 +8,21 @@ import { Label } from '@/components/ui/label'
 import { useUI } from '@/hooks/use-ui'
 import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/hooks/use-toast'
-import { apiFetch, uploadFile } from '@/lib/api-client'
+import { apiFetch, getStoredToken } from '@/lib/api-client'
 import { compressImage, formatBytes } from '@/lib/compress-image'
 import { ShieldCheck, Loader2, Upload, Check, ChevronRight, ArrowLeft, IdCard, MapPin, User, CheckCircle2, Clock, XCircle, AlertCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 type Step = 'info' | 'name' | 'id' | 'submitting' | 'done'
+
+interface DocState {
+  id: string | null
+  url: string | null
+  name: string
+  uploading: boolean
+}
+
+const EMPTY_DOC: DocState = { id: null, url: null, name: '', uploading: false }
 
 const ID_TYPES = [
   { code: 'driver_license', label: "Driver's License", desc: 'Valid driving permit' },
@@ -29,12 +38,11 @@ export function KycModal() {
   const [fullName, setFullName] = useState('')
   const [city, setCity] = useState('')
   const [idType, setIdType] = useState('')
-  const [docUrl, setDocUrl] = useState<string | null>(null)
-  const [docId, setDocId] = useState<string | null>(null)
-  const [docName, setDocName] = useState('')
-  const [uploading, setUploading] = useState(false)
+  const [frontDoc, setFrontDoc] = useState<DocState>(EMPTY_DOC)
+  const [backDoc, setBackDoc] = useState<DocState>(EMPTY_DOC)
   const [submitting, setSubmitting] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const frontFileRef = useRef<HTMLInputElement>(null)
+  const backFileRef = useRef<HTMLInputElement>(null)
 
   const open = kycOpen
   function close() {
@@ -46,7 +54,7 @@ export function KycModal() {
     if (!open) {
       const t = setTimeout(() => {
         setStep('info'); setFullName(''); setCity(''); setIdType('')
-        setDocUrl(null); setDocId(null); setDocName('')
+        setFrontDoc(EMPTY_DOC); setBackDoc(EMPTY_DOC)
       }, 300)
       return () => clearTimeout(t)
     }
@@ -59,7 +67,10 @@ export function KycModal() {
 
   const status = user?.kycStatus || 'none'
 
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleUpload(
+    e: React.ChangeEvent<HTMLInputElement>,
+    side: 'front' | 'back',
+  ) {
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
@@ -72,7 +83,8 @@ export function KycModal() {
       e.target.value = ''
       return
     }
-    setUploading(true)
+    const setUploading = side === 'front' ? setFrontDoc : setBackDoc
+    setUploading((s) => ({ ...s, uploading: true }))
     try {
       // Compress in the browser first — dramatically reduces upload time.
       const originalSize = file.size
@@ -82,16 +94,29 @@ export function KycModal() {
       if (savedPct > 10) {
         toast({ title: 'Image compressed', description: `${formatBytes(originalSize)} → ${formatBytes(compressedSize)} (${savedPct}% smaller)` })
       }
-      const res = await uploadFile<{ id: string; url: string }>('/api/kyc/upload', compressed)
-      setDocUrl(res.url)
-      setDocId(res.id)
-      setDocName(compressed.name)
-      toast({ title: 'ID photo uploaded' })
+      // Build multipart form with the `side` field so the backend knows
+      // whether this is the front or back of the ID.
+      const form = new FormData()
+      form.append('file', compressed)
+      form.append('side', side)
+      const token = getStoredToken()
+      const headers: Record<string, string> = {}
+      if (token) headers['Authorization'] = `Bearer ${token}`
+      const res = await fetch('/api/kyc/upload', { method: 'POST', body: form, headers })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error((data as any)?.error || 'Upload failed')
+      const parsed = data as { id: string; url: string; side: string }
+      setUploading({
+        id: parsed.id,
+        url: parsed.url,
+        name: compressed.name,
+        uploading: false,
+      })
+      toast({ title: `${side === 'back' ? 'Back' : 'Front'} of ID uploaded` })
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Upload failed', description: err.message || 'Could not upload image.' })
+      setUploading((s) => ({ ...s, uploading: false }))
       e.target.value = ''
-    } finally {
-      setUploading(false)
     }
   }
 
@@ -99,9 +124,10 @@ export function KycModal() {
     setSubmitting(true)
     setStep('submitting')
     try {
+      const documents = [frontDoc.id, backDoc.id].filter((d): d is string => !!d)
       await apiFetch('/api/kyc', {
         method: 'POST',
-        body: JSON.stringify({ fullName, city, idType, documentId: docId }),
+        body: JSON.stringify({ fullName, city, idType, documents }),
       })
       await fetchMe()
       setStep('done')
@@ -226,7 +252,7 @@ export function KycModal() {
             </motion.div>
           )}
 
-          {/* STEP 2: ID type + upload */}
+          {/* STEP 2: ID type + upload (front + back) */}
           {step === 'id' && (
             <motion.div key="id" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
               <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
@@ -257,35 +283,25 @@ export function KycModal() {
                 </div>
               </div>
 
-              {/* Upload ID photo */}
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Upload a photo of your ID</Label>
-                <button
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  className="flex w-full items-center gap-3 rounded-xl border border-dashed border-border bg-secondary/30 p-3 text-left transition-colors hover:border-primary/50"
-                >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><Upload className="h-4 w-4" /></div>
-                  <div className="flex-1">
-                    <div className="text-xs font-semibold">{docName || 'Click to upload ID photo'}</div>
-                    <div className="text-[10px] text-muted-foreground">Any image type · max 8MB</div>
-                  </div>
-                  {uploading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
-                  {docUrl && !uploading && <Check className="h-4 w-4 text-up" />}
-                </button>
-                <input ref={fileRef} type="file" accept="image/*,.heic,.heif,.avif" className="hidden" onChange={handleUpload} />
-              </div>
+              {/* Upload FRONT of ID */}
+              <UploadField
+                label="Front of ID"
+                doc={frontDoc}
+                onClick={() => frontFileRef.current?.click()}
+              />
+              <input ref={frontFileRef} type="file" accept="image/*,.heic,.heif,.avif" className="hidden" onChange={(e) => handleUpload(e, 'front')} />
 
-              {/* Preview */}
-              {docUrl && (
-                <div className="rounded-lg border border-border overflow-hidden">
-                  <img src={docUrl} alt="ID document" className="w-full max-h-[200px] object-contain bg-black/30" />
-                </div>
-              )}
+              {/* Upload BACK of ID */}
+              <UploadField
+                label="Back of ID"
+                doc={backDoc}
+                onClick={() => backFileRef.current?.click()}
+              />
+              <input ref={backFileRef} type="file" accept="image/*,.heic,.heif,.avif" className="hidden" onChange={(e) => handleUpload(e, 'back')} />
 
               <Button
                 className="w-full bg-primary font-semibold text-primary-foreground"
-                disabled={!idType || !docId || submitting}
+                disabled={!idType || !frontDoc.id || !backDoc.id || submitting}
                 onClick={submit}
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Submit for Review <ChevronRight className="ml-1 h-4 w-4" /></>}
@@ -318,5 +334,44 @@ export function KycModal() {
         </AnimatePresence>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/**
+ * A reusable upload tile for one side (front | back) of the ID. Shows the
+ * file picker button, the chosen file name, an uploading spinner, a done
+ * checkmark, and — once uploaded — a small preview image.
+ */
+function UploadField({
+  label,
+  doc,
+  onClick,
+}: {
+  label: string
+  doc: DocState
+  onClick: () => void
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex w-full items-center gap-3 rounded-xl border border-dashed border-border bg-secondary/30 p-3 text-left transition-colors hover:border-primary/50"
+      >
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><Upload className="h-4 w-4" /></div>
+        <div className="flex-1">
+          <div className="text-xs font-semibold">{doc.name || `Click to upload ${label.toLowerCase()}`}</div>
+          <div className="text-[10px] text-muted-foreground">Any image type · max 8MB</div>
+        </div>
+        {doc.uploading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+        {doc.url && !doc.uploading && <Check className="h-4 w-4 text-up" />}
+      </button>
+      {doc.url && (
+        <div className="rounded-lg border border-border overflow-hidden">
+          <img src={doc.url} alt={label} className="w-full max-h-[160px] object-contain bg-black/30" />
+        </div>
+      )}
+    </div>
   )
 }

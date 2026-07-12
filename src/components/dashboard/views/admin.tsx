@@ -48,23 +48,26 @@ export function AdminView() {
   const [loading, setLoading] = useState(false)
   const [acting, setActing] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
-    if (section === 'users' || section === 'buys' || section === 'support') {
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    if (section === 'users' || section === 'buys' || section === 'support' || section === 'kyc') {
       // These sections load their own data internally.
       setLoading(false)
       return
     }
-    setLoading(true)
+    if (!opts?.silent) setLoading(true)
     try {
       if (section === 'deposits') {
         // Map 'approved'/'rejected' to deposit statuses; 'all' passes through.
         const q = statusTab === 'approved' ? 'approved' : statusTab === 'rejected' ? 'rejected' : statusTab
         const data = await apiFetch<{ deposits: AdminDeposit[] }>(`/api/admin/deposits?status=${q}`)
-        setDeposits(data.deposits)
+        const next = data.deposits
+        // Only update state if data actually changed (prevents flicker during polling)
+        setDeposits((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
       } else {
         const q = statusTab === 'approved' ? 'completed' : statusTab === 'rejected' ? 'rejected' : statusTab === 'all' ? 'all' : 'pending'
         const data = await apiFetch<{ withdrawals: AdminWithdrawal[] }>(`/api/admin/withdrawals?status=${q}`)
-        setWithdrawals(data.withdrawals)
+        const next = data.withdrawals
+        setWithdrawals((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
       }
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Failed to load', description: err.message })
@@ -77,6 +80,20 @@ export function AdminView() {
     load()
   }, [load])
 
+  // Fast polling: when on deposits/withdrawals section, refresh pending items every 5s
+  // so new requests show up quickly without manual refresh.
+  // Stop polling when on other sections or when the tab is hidden.
+  useEffect(() => {
+    if (section !== 'deposits' && section !== 'withdrawals') return
+    let id: ReturnType<typeof setInterval> | null = null
+    const start = () => { if (!id) id = setInterval(() => load({ silent: true }), 5000) }
+    const stop = () => { if (id) { clearInterval(id); id = null } }
+    const onVis = () => { document.hidden ? stop() : start() }
+    start()
+    document.addEventListener('visibilitychange', onVis)
+    return () => { stop(); document.removeEventListener('visibilitychange', onVis) }
+  }, [section, load])
+
   async function actDeposit(id: string, action: 'approve' | 'reject') {
     setActing(id)
     try {
@@ -85,7 +102,7 @@ export function AdminView() {
         body: JSON.stringify({ depositId: id }),
       })
       toast({ title: action === 'approve' ? 'Deposit Approved' : 'Deposit Rejected', description: res.message })
-      await load()
+      await load({ silent: true })
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Action failed', description: err.message })
     } finally {
@@ -101,7 +118,7 @@ export function AdminView() {
         body: JSON.stringify({ id }),
       })
       toast({ title: action === 'approve' ? 'Withdrawal Approved' : 'Withdrawal Rejected', description: res.message })
-      await load()
+      await load({ silent: true })
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Action failed', description: err.message })
     } finally {

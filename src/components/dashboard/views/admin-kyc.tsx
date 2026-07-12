@@ -12,6 +12,7 @@ import { Check, X, Loader2, Inbox, Download, Eye, ShieldCheck, Search, ExternalL
 
 interface KycDoc {
   id: string
+  side: string
   fileName: string
   mimeType: string
   size: number
@@ -27,7 +28,7 @@ interface KycApp {
   submittedAt: string
   reviewedAt: string | null
   user: { id: string; uid: string; email: string; username: string | null; name: string | null }
-  document: KycDoc | null
+  documents: KycDoc[]
 }
 
 const ID_LABELS: Record<string, string> = {
@@ -45,19 +46,34 @@ export function KycAdmin({ refreshKey }: { refreshKey: number }) {
   const [rejectReason, setRejectReason] = useState('')
   const [search, setSearch] = useState('')
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true)
     try {
       const data = await apiFetch<{ applications: KycApp[] }>('/api/admin/kyc?status=pending')
-      setApps(data.applications)
+      const next = data.applications
+      // Only update state if data actually changed (prevents flicker during polling)
+      setApps((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Failed to load', description: err.message })
+      // Only show error toast on non-silent (manual) loads — silent polls fail quietly
+      if (!opts?.silent) toast({ variant: 'destructive', title: 'Failed to load', description: err.message })
     } finally {
       setLoading(false)
     }
   }, [toast])
 
   useEffect(() => { load() }, [load, refreshKey])
+
+  // Fast polling: refresh pending KYC applications every 5s so new ones show up quickly.
+  // Stop polling when the tab is hidden.
+  useEffect(() => {
+    let id: ReturnType<typeof setInterval> | null = null
+    const start = () => { if (!id) id = setInterval(() => load({ silent: true }), 5000) }
+    const stop = () => { if (id) { clearInterval(id); id = null } }
+    const onVis = () => { document.hidden ? stop() : start() }
+    start()
+    document.addEventListener('visibilitychange', onVis)
+    return () => { stop(); document.removeEventListener('visibilitychange', onVis) }
+  }, [load])
 
   // Client-side filter (by name, uid, email, city)
   const filtered = search.trim()
@@ -81,7 +97,7 @@ export function KycAdmin({ refreshKey }: { refreshKey: number }) {
         body: JSON.stringify({ applicationId: id }),
       })
       toast({ title: 'KYC Approved', description: res.message })
-      await load()
+      await load({ silent: true })
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Failed', description: err.message })
     } finally {
@@ -99,7 +115,7 @@ export function KycAdmin({ refreshKey }: { refreshKey: number }) {
       toast({ title: 'KYC Rejected', description: res.message })
       setRejecting(null)
       setRejectReason('')
-      await load()
+      await load({ silent: true })
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Failed', description: err.message })
     } finally {
@@ -175,48 +191,58 @@ export function KycAdmin({ refreshKey }: { refreshKey: number }) {
                 </div>
               </div>
 
-              {/* ID document */}
-              {a.document ? (
-                <div className="space-y-2">
-                  <div className="text-[11px] font-semibold text-muted-foreground">ID Document</div>
-                  <div className="rounded-lg border border-border overflow-hidden">
-                    <img
-                      src={`/api/kyc/document?id=${a.document.id}`}
-                      alt="ID document"
-                      className="w-full max-h-[240px] object-contain bg-black/30"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <a
-                      href={`/api/kyc/document?id=${a.document.id}&download=true`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex-1"
-                    >
-                      <Button size="sm" variant="outline" className="w-full">
-                        <Download className="mr-1 h-3.5 w-3.5" /> Download
-                      </Button>
-                    </a>
-                    <a
-                      href={`/api/kyc/document?id=${a.document.id}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex-1"
-                    >
-                      <Button size="sm" variant="outline" className="w-full">
-                        <ExternalLink className="mr-1 h-3.5 w-3.5" /> Open
-                      </Button>
-                    </a>
-                  </div>
-                  {a.document.deleteAfter && (
-                    <div className="text-[10px] text-muted-foreground text-center">
-                      Auto-deletes on {new Date(a.document.deleteAfter).toLocaleString()}
+              {/* ID documents (front + back) */}
+              {a.documents.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="text-[11px] font-semibold text-muted-foreground">ID Documents ({a.documents.length})</div>
+                  {a.documents.map((doc) => (
+                    <div key={doc.id} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="text-[11px] font-bold uppercase tracking-wider text-primary">
+                          {doc.side === 'back' ? 'Back of ID' : 'Front of ID'}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground">{doc.fileName}</div>
+                      </div>
+                      <div className="rounded-lg border border-border overflow-hidden">
+                        <img
+                          src={`/api/kyc/document?id=${doc.id}`}
+                          alt={`${doc.side} of ID`}
+                          className="w-full max-h-[240px] object-contain bg-black/30"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <a
+                          href={`/api/kyc/document?id=${doc.id}&download=true`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1"
+                        >
+                          <Button size="sm" variant="outline" className="w-full">
+                            <Download className="mr-1 h-3.5 w-3.5" /> Download
+                          </Button>
+                        </a>
+                        <a
+                          href={`/api/kyc/document?id=${doc.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1"
+                        >
+                          <Button size="sm" variant="outline" className="w-full">
+                            <ExternalLink className="mr-1 h-3.5 w-3.5" /> Open
+                          </Button>
+                        </a>
+                      </div>
+                      {doc.deleteAfter && (
+                        <div className="text-[10px] text-muted-foreground text-center">
+                          Auto-deletes on {new Date(doc.deleteAfter).toLocaleString()}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
               ) : (
                 <div className="rounded-lg border border-border bg-secondary/20 p-3 text-center text-[11px] text-muted-foreground">
-                  Document auto-deleted (retention period expired)
+                  Documents auto-deleted (retention period expired)
                 </div>
               )}
 

@@ -8,8 +8,8 @@ import { cleanupExpiredKyc, KYC_RETENTION_DAYS } from '@/lib/kyc-helpers'
  * GET /api/admin/kyc?status=pending|approved|rejected|all
  *
  * Returns KYC applications for the admin to review. Each item includes the
- * user info and a `documentId` the admin can use to view/download the ID photo
- * via /api/kyc/document?id=...&download=true.
+ * user info and a `documents` array — each document has an `id` the admin can
+ * use to view/download the ID photo via /api/kyc/document?id=...&download=true.
  */
 export async function GET(req: NextRequest) {
   try {
@@ -33,7 +33,10 @@ export async function GET(req: NextRequest) {
         user: {
           select: { id: true, uid: true, email: true, username: true, name: true },
         },
-        document: { select: { id: true, fileName: true, mimeType: true, size: true, deleteAfter: true } },
+        documents: {
+          select: { id: true, side: true, fileName: true, mimeType: true, size: true, deleteAfter: true },
+          orderBy: { side: 'asc' },
+        },
       },
       orderBy: { submittedAt: 'desc' },
       take: 100,

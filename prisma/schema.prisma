@@ -201,14 +201,15 @@ model KycApplication {
   submittedAt DateTime @default(now())
   reviewedAt  DateTime? // set when admin acts
   reviewedBy  String?  // admin user id
-  document    KycDocument?
+  documents   KycDocument[]
 }
 
 model KycDocument {
   id            String   @id @default(cuid())
-  applicationId String   @unique
+  applicationId String
   application   KycApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   userId        String
+  side          String   @default("front") // front | back
   mimeType      String
   fileName      String
   data          String   // base64 data URL
@@ -233,4 +234,30 @@ model PushSubscription {
   p256dh    String   // client public key (base64url)
   auth      String   // auth secret (base64url)
   createdAt DateTime @default(now())
+}
+
+// ============================================================================
+// User Settings (persisted preferences)
+// ============================================================================
+// Stores the user's exchange, wallet, and notification preferences so the
+// Settings page is functional (not just for show). One row per user.
+model UserSettings {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  // Exchange
+  defaultToken        String   @default("USDT")
+  slippage            Float    @default(1.0)
+  showBalanceUsd      Boolean  @default(true)
+  compactView         Boolean  @default(false)
+  // Wallet
+  defaultNetwork      String   @default("TRON (TRC20)")
+  autoConvertDust     Boolean  @default(false)
+  hideSmallBalances   Boolean  @default(false)
+  // Notifications
+  emailNotifs         Boolean  @default(true)
+  pushNotifs          Boolean  @default(true)
+  depositAlerts       Boolean  @default(true)
+  withdrawAlerts      Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }

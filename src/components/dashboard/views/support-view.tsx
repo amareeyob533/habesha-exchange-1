@@ -45,7 +45,9 @@ export function SupportView() {
   const load = useCallback(async () => {
     try {
       const data = await apiFetch<{ tickets: Ticket[] }>('/api/support/ticket')
-      setTickets(data.tickets || [])
+      const next = data.tickets || []
+      // Only update state if data actually changed (prevents flicker during polling)
+      setTickets((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
     } catch (err: any) {
       // Don't show error toast — just set empty tickets (DB might not be ready on Vercel)
       setTickets([])
@@ -53,6 +55,19 @@ export function SupportView() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  // Real-time polling: when a ticket conversation is open, fetch new replies every 2s.
+  // Stop polling when no ticket is selected or when the tab is hidden.
+  useEffect(() => {
+    if (!selectedTicket) return
+    let id: ReturnType<typeof setInterval> | null = null
+    const start = () => { if (!id) id = setInterval(() => load(), 2000) }
+    const stop = () => { if (id) { clearInterval(id); id = null } }
+    const onVis = () => { document.hidden ? stop() : start() }
+    start()
+    document.addEventListener('visibilitychange', onVis)
+    return () => { stop(); document.removeEventListener('visibilitychange', onVis) }
+  }, [selectedTicket, load])
 
   async function sendReply() {
     if (!selectedTicket || !replyText.trim()) return
@@ -63,6 +78,7 @@ export function SupportView() {
         body: JSON.stringify({ ticketId: selectedTicket.id, message: replyText }),
       })
       setReplyText('')
+      // Immediately reload replies (don't wait for next poll tick) so the user sees their message instantly
       await load()
       toast({ title: 'Reply sent' })
     } catch (err: any) {

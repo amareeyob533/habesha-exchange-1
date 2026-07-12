@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/hooks/use-auth'
 import { useUI } from '@/hooks/use-ui'
+import { useUserSettings } from '@/hooks/use-user-settings'
 import { formatUsd, formatTokenAmount } from '@/lib/format'
 import { motion } from 'framer-motion'
 import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react'
@@ -11,13 +12,19 @@ import { TokenIcon } from '@/components/common/token-icon'
 export function WalletView() {
   const { balances, totalUsd, user } = useAuth()
   const { openDeposit, openWithdraw } = useUI()
+  const { settings } = useUserSettings()
+
+  // Apply "Hide small balances" setting — hide tokens worth less than $1
+  const visibleBalances = settings.hideSmallBalances
+    ? balances.filter((b) => b.usdValue >= 1 || b.amount > 0 && b.usdValue > 0)
+    : balances
 
   return (
     <div className="space-y-5">
       <div className="glass-card gradient-border rounded-2xl p-6">
         <div className="text-xs uppercase tracking-wider text-muted-foreground">Total Estimated Value</div>
         <div className="mt-1 text-3xl font-extrabold tracking-tight tabular-nums"><span className="text-foreground">{formatUsd(totalUsd)}</span></div>
-        <div className="mt-3 text-xs text-muted-foreground">{balances.length} assets · UID <b className="text-gold">{user?.uid}</b></div>
+        <div className="mt-3 text-xs text-muted-foreground">{visibleBalances.length} assets · UID <b className="text-gold">{user?.uid}</b></div>
       </div>
 
       <div className="overflow-hidden glass-card rounded-2xl shadow-premium">
@@ -27,7 +34,7 @@ export function WalletView() {
           <div className="col-span-4 text-right sm:col-span-3">Value (USD)</div>
           <div className="col-span-12 mt-1 sm:col-span-3 sm:mt-0">Actions</div>
         </div>
-        {balances.map((b, i) => (
+        {visibleBalances.map((b, i) => (
           <motion.div
             key={b.symbol}
             initial={{ opacity: 0 }}

@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       const alreadyDeposited = await getTotalDepositedUsd(user.id)
       // Approximate USD value of this deposit using static fallback prices.
       const PRICES: Record<string, number> = {
-        USDT: 1, USDC: 1, BTC: 97500, TON: 5.42,
+        USDT: 1, USDC: 1, BTC: 97500, ETH: 3400, SOL: 180, TRX: 0.24, TON: 5.42,
       }
       const thisDepositUsd = amt * (PRICES[token] ?? 0)
       const totalAfter = alreadyDeposited + thisDepositUsd

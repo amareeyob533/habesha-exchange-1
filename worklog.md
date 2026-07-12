@@ -1304,3 +1304,36 @@ Stage Summary:
 - Uses pre-rendered PNGs for the robot (fast loading) + Framer Motion for animations
 - All animations are smooth, cinematic, and lightweight (no heavy 3D libraries)
 - Everything before login is now animated and attractive
+
+---
+Task ID: UPDATE-WALLETS-NEW-TOKENS
+Agent: main
+Task: Update wallet addresses + add 3 new tokens (ETH, SOL, TRX) with real market prices
+
+Work Log:
+- Analyzed uploaded image (1783857134471.png) using VLM — identified 3 logos: TRX (left, red), SOL (middle, black with gradient bars), ETH (right, light blue with silver diamond)
+- Cropped the 1024x1024 image into 3 separate 256x256 PNGs using sharp:
+  * /public/tokens/trx.png (TRON logo)
+  * /public/tokens/sol.png (Solana logo)
+  * /public/tokens/eth.png (Ethereum logo)
+- Updated src/lib/tokens.ts TOKENS array:
+  * USDT: updated TRON address → TBVhUqz5KarVFfK1k2UEALFxL6Pu8cfGHc, added TON Network → UQBy0SwWKArNPiErzHpILtENz6y6GgNjPAoVTv9PGnWI8YrZ, updated Ethereum → 0xbec7b38f38e7e6239981d4118a69f68cfbf99f98
+  * USDC: updated Ethereum → 0xbec7b38f38e7e6239981d4118a69f68cfbf99f98
+  * BTC: updated Bitcoin → 12AhGK4X4RnvdfNdsq7aQxpA4KQ2W12Wtp
+  * NEW: ETH (Ethereum) — CoinGecko ID "ethereum", price $3400, Ethereum network, address 0xbec7b38f38e7e6239981d4118a69f68cfbf99f98, icon /tokens/eth.png
+  * NEW: SOL (Solana) — CoinGecko ID "solana", price $180, Solana network, address 3peKof5MyQaxXbMZdd1uQCefewvJFTbnLFPM8QPRHLji, icon /tokens/sol.png
+  * NEW: TRX (TRON) — CoinGecko ID "tron", price $0.24, TRON network, address TBVhUqz5KarVFfK1k2UEALFxL6Pu8cfGHc, icon /tokens/trx.png
+  * TON: kept existing
+- Updated formatTokenAmount in tokens.ts + format.ts for new token decimals (ETH=6, SOL=4, TRX=2)
+- Updated PRICES maps in kyc-helpers.ts + deposit/route.ts to include ETH, SOL, TRX
+- Updated admin-users.tsx TOKENS array to include all 7 tokens
+- Updated settings.tsx trading pair dropdown to include ETH, SOL, TRX
+- Updated price-history.ts volatilityFor() with ETH (0.04), SOL (0.06), TRX (0.03)
+- Lint: 0 errors (1 pre-existing warning)
+
+Stage Summary:
+- 7 tokens now listed: USDT, USDC, BTC, ETH, SOL, TRX, TON
+- All wallet addresses updated to the user's new addresses
+- 3 new tokens (ETH, SOL, TRX) have real CoinGecko live prices + the cropped logo images as profile pictures
+- New signups automatically get balances for all 7 tokens via ensureBalances(TOKEN_SYMBOLS)
+- Existing users get new token balances created on-the-fly when they deposit/withdraw

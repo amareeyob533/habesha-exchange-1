@@ -130,6 +130,9 @@ export function SettingsView() {
                   <SelectItem value="USDT">USDT</SelectItem>
                   <SelectItem value="BTC">BTC</SelectItem>
                   <SelectItem value="TON">TON</SelectItem>
+                  <SelectItem value="ETH">ETH</SelectItem>
+                  <SelectItem value="SOL">SOL</SelectItem>
+                  <SelectItem value="TRX">TRX</SelectItem>
                 </SelectContent>
               </Select>
             </div>

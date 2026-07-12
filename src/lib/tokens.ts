@@ -39,8 +39,9 @@ export const TOKENS: TokenConfig[] = [
     coingeckoId: 'tether',
     change24h: 0.01,
     networks: [
-      { name: 'TRON (TRC20)', address: 'TLksVFpUGS5SHeR4sJ1fDEajZ2fX59Nu5o' },
-      { name: 'Ethereum (ERC20)', address: '0xb2ba1a5b4ada2f3109cd393e7d6610cf6731ac27' },
+      { name: 'TRON (TRC20)', address: 'TBVhUqz5KarVFfK1k2UEALFxL6Pu8cfGHc' },
+      { name: 'TON Network', address: 'UQBy0SwWKArNPiErzHpILtENz6y6GgNjPAoVTv9PGnWI8YrZ' },
+      { name: 'Ethereum (ERC20)', address: '0xbec7b38f38e7e6239981d4118a69f68cfbf99f98' },
     ],
     listed: true,
   },
@@ -54,7 +55,7 @@ export const TOKENS: TokenConfig[] = [
     coingeckoId: 'usd-coin',
     change24h: -0.02,
     networks: [
-      { name: 'Ethereum (ERC20)', address: '0xb2ba1a5b4ada2f3109cd393e7d6610cf6731ac27' },
+      { name: 'Ethereum (ERC20)', address: '0xbec7b38f38e7e6239981d4118a69f68cfbf99f98' },
     ],
     listed: true,
   },
@@ -68,7 +69,49 @@ export const TOKENS: TokenConfig[] = [
     coingeckoId: 'bitcoin',
     change24h: 2.34,
     networks: [
-      { name: 'Bitcoin Network', address: '15dQRtHdefyx8VmkSRKXyinzWyLUTGp9SA' },
+      { name: 'Bitcoin Network', address: '12AhGK4X4RnvdfNdsq7aQxpA4KQ2W12Wtp' },
+    ],
+    listed: true,
+  },
+  {
+    symbol: 'ETH',
+    name: 'Ethereum',
+    color: '#627EEA',
+    icon: 'Ξ',
+    iconUrl: '/tokens/eth.png',
+    price: 3400,
+    coingeckoId: 'ethereum',
+    change24h: 3.12,
+    networks: [
+      { name: 'Ethereum (ERC20)', address: '0xbec7b38f38e7e6239981d4118a69f68cfbf99f98' },
+    ],
+    listed: true,
+  },
+  {
+    symbol: 'SOL',
+    name: 'Solana',
+    color: '#9945FF',
+    icon: '◎',
+    iconUrl: '/tokens/sol.png',
+    price: 180,
+    coingeckoId: 'solana',
+    change24h: 5.67,
+    networks: [
+      { name: 'Solana Network', address: '3peKof5MyQaxXbMZdd1uQCefewvJFTbnLFPM8QPRHLji' },
+    ],
+    listed: true,
+  },
+  {
+    symbol: 'TRX',
+    name: 'TRON',
+    color: '#EF0027',
+    icon: 'T',
+    iconUrl: '/tokens/trx.png',
+    price: 0.24,
+    coingeckoId: 'tron',
+    change24h: 1.45,
+    networks: [
+      { name: 'TRON (TRC20)', address: 'TBVhUqz5KarVFfK1k2UEALFxL6Pu8cfGHc' },
     ],
     listed: true,
   },
@@ -95,7 +138,7 @@ export function getToken(symbol: string): TokenConfig | undefined {
 export const TOKEN_SYMBOLS = TOKENS.map((t) => t.symbol)
 
 export function formatTokenAmount(amount: number, symbol: string): string {
-  const decimals = symbol === 'BTC' ? 6 : 2
+  const decimals = symbol === 'BTC' ? 6 : symbol === 'ETH' ? 6 : symbol === 'SOL' ? 4 : symbol === 'TRX' ? 2 : 2
   return amount.toLocaleString('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,

@@ -31,6 +31,9 @@ function seedFromSymbol(symbol: string): number {
 function volatilityFor(symbol: string): number {
   if (symbol === 'USDT' || symbol === 'USDC') return 0.0015
   if (symbol === 'BTC') return 0.03
+  if (symbol === 'ETH') return 0.04
+  if (symbol === 'SOL') return 0.06
+  if (symbol === 'TRX') return 0.03
   if (symbol === 'TON') return 0.05
   return 0.04
 }

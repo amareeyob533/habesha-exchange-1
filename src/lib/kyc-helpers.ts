@@ -58,6 +58,9 @@ export async function getTotalDepositedUsd(userId: string): Promise<number> {
     USDT: 1,
     USDC: 1,
     BTC: 97500,
+    ETH: 3400,
+    SOL: 180,
+    TRX: 0.24,
     TON: 5.42,
   }
   return deposits.reduce((sum, d) => {

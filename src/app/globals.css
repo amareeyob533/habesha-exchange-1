@@ -91,11 +91,12 @@
 
 /* ============================================================================
    LIGHT THEME — "Warm Sand & Emerald"
-   Warm sand-tinted base (NOT pure white — easier on the eyes) · Emerald primary
-   · Deep navy text · Rich warm cards · Premium fintech feel
+   Deep warm sand base (clearly colored, NOT near-white) · Bright cream cards
+   that POP against the background (same contrast pattern as dark mode)
+   · Emerald primary · Deep navy text · Premium fintech feel
    ============================================================================ */
 .light {
-  --background: #F4F1EC;
+  --background: #D9D3C7;
   --foreground: #1A1F2E;
   --card: #FFFBF5;
   --card-foreground: #1A1F2E;
@@ -103,15 +104,15 @@
   --popover-foreground: #1A1F2E;
   --primary: #00A565;
   --primary-foreground: #FFFFFF;
-  --secondary: #ECE6DC;
+  --secondary: #C9C1B3;
   --secondary-foreground: #1A1F2E;
-  --muted: #E8E1D5;
-  --muted-foreground: #6B6356;
-  --accent: #ECE6DC;
+  --muted: #CFC7B8;
+  --muted-foreground: #5C5448;
+  --accent: #C9C1B3;
   --accent-foreground: #1A1F2E;
   --destructive: #D63550;
-  --border: rgba(60, 50, 30, 0.1);
-  --input: rgba(60, 50, 30, 0.12);
+  --border: rgba(60, 50, 30, 0.14);
+  --input: rgba(60, 50, 30, 0.16);
   --ring: #00A565;
   --gold: #B8860B;
   --neon: #0891B2;
@@ -122,13 +123,13 @@
   --chart-3: #D63550;
   --chart-4: #7C3AED;
   --chart-5: #B8860B;
-  --sidebar: #EDE6D9;
+  --sidebar: #CDC6B8;
   --sidebar-foreground: #1A1F2E;
   --sidebar-primary: #00A565;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #E5DDCC;
+  --sidebar-accent: #BFB7A8;
   --sidebar-accent-foreground: #1A1F2E;
-  --sidebar-border: rgba(60, 50, 30, 0.1);
+  --sidebar-border: rgba(60, 50, 30, 0.14);
   --sidebar-ring: #00A565;
 }
 
@@ -271,9 +272,9 @@
   animation-delay: -14s;
   opacity: 0.06;
 }
-.light .mesh-orb-1 { background: radial-gradient(circle, #00A565, transparent 70%) !important; opacity: 0.08 !important; }
-.light .mesh-orb-2 { background: radial-gradient(circle, #0891B2, transparent 70%) !important; opacity: 0.06 !important; }
-.light .mesh-orb-3 { background: radial-gradient(circle, #B8860B, transparent 70%) !important; opacity: 0.05 !important; }
+.light .mesh-orb-1 { background: radial-gradient(circle, #00A565, transparent 70%) !important; opacity: 0.12 !important; }
+.light .mesh-orb-2 { background: radial-gradient(circle, #0891B2, transparent 70%) !important; opacity: 0.1 !important; }
+.light .mesh-orb-3 { background: radial-gradient(circle, #B8860B, transparent 70%) !important; opacity: 0.08 !important; }
 
 @keyframes orb-float {
   0%, 100% { transform: translate(0, 0) scale(1); }

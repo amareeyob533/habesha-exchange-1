@@ -1631,3 +1631,33 @@ Stage Summary:
 - All gradients, shadows, borders, scrollbars use warm tones
 - Browser chrome (mobile address bar) adapts to the theme color
 - Dark mode is unchanged (still "Obsidian Aurora")
+
+---
+Task ID: LIGHT-MODE-CONTRAST-FIX
+Agent: main
+Task: Make light mode have real color contrast like dark mode (cards distinct from background)
+
+Work Log:
+- Problem: light mode cards (cream #FFFBF5) were too similar to background (pale sand #F4F1EC) — everything blended together into flat white. Dark mode works because cards (brown #11151C) are clearly different from background (black #07090D).
+- Fix: deepened the background so cream cards POP against it (same contrast pattern as dark mode):
+  * Background: #F4F1EC → #D9D3C7 (deep warm sand — clearly colored, NOT near-white)
+  * Cards: #FFFBF5 (bright cream — now pops sharply against the deeper background)
+  * Secondary: #ECE6DC → #C9C1B3 (deeper sand for secondary elements)
+  * Muted: #E8E1D5 → #CFC7B8 (deeper tone)
+  * Sidebar: #EDE6D9 → #CDC6B8 (deeper, distinct from cards)
+  * Sidebar accent: #E5DDCC → #BFB7A8
+  * Muted text: #6B6356 → #5C5448 (darker for better contrast on deeper bg)
+  * Borders: opacity 0.1 → 0.14 (more visible on deeper bg)
+  * Input: opacity 0.12 → 0.16
+- Increased mesh orb opacity (0.08/0.06/0.05 → 0.12/0.10/0.08) — more visible aurora against deeper bg
+- Updated viewport themeColor: #F4F1EC → #D9D3C7
+- Verified via VLM: "The cards are VISUALLY DISTINCT from the background — the white of the cards contrasts sharply with the light beige background, creating clear separation. The contrast is strong enough that the cards stand out without blending."
+- Lint: 0 errors (6 pre-existing warnings)
+
+Stage Summary:
+- Light mode now has the SAME type of color contrast as dark mode:
+  * Dark mode: black background + brown cards (cards are lighter, pop against dark)
+  * Light mode: deep sand background + cream cards (cards are lighter, pop against sand)
+- Cards/balance bars/market bars are now clearly VISUALLY DISTINCT from the background
+- The deeper background gives the light mode actual COLOR (warm sand) instead of flat white
+- Mesh orbs more visible, borders stronger, overall much more visual hierarchy

@@ -21,15 +21,34 @@ interface TokenInfo {
   price: number
   color: string
   icon: string
+  iconUrl?: string | null
   networks: { name: string; address: string }[]
 }
 
 const TOKENS_FALLBACK: TokenInfo[] = [
-  { symbol: 'USDT', name: 'Tether USD', price: 1, color: '#26A17B', icon: '₮', networks: [
-    { name: 'TRON (TRC20)', address: '' }, { name: 'Ethereum (ERC20)', address: '' } ]},
-  { symbol: 'USDC', name: 'USD Coin', price: 1, color: '#2775CA', icon: '$', networks: [{ name: 'Ethereum (ERC20)', address: '' }]},
-  { symbol: 'BTC', name: 'Bitcoin', price: 97500, color: '#F7931A', icon: '₿', networks: [{ name: 'Bitcoin Network', address: '' }]},
-  { symbol: 'TON', name: 'Toncoin', price: 5.42, color: '#0098EA', icon: '◆', networks: [{ name: 'TON Network', address: '' }]},
+  { symbol: 'USDT', name: 'Tether USD', price: 1, color: '#26A17B', icon: '₮', iconUrl: '/tokens/usdt.png', networks: [
+    { name: 'TRON (TRC20)', address: 'TBVhUqz5KarVFfK1k2UEALFxL6Pu8cfGHc' },
+    { name: 'TON Network', address: 'UQBy0SwWKArNPiErzHpILtENz6y6GgNjPAoVTv9PGnWI8YrZ' },
+    { name: 'Ethereum (ERC20)', address: '0xbec7b38f38e7e6239981d4118a69f68cfbf99f98' },
+  ]},
+  { symbol: 'USDC', name: 'USD Coin', price: 1, color: '#2775CA', icon: '$', iconUrl: '/tokens/usdc.png', networks: [
+    { name: 'Ethereum (ERC20)', address: '0xbec7b38f38e7e6239981d4118a69f68cfbf99f98' },
+  ]},
+  { symbol: 'BTC', name: 'Bitcoin', price: 97500, color: '#F7931A', icon: '₿', iconUrl: '/tokens/btc.png', networks: [
+    { name: 'Bitcoin Network', address: '12AhGK4X4RnvdfNdsq7aQxpA4KQ2W12Wtp' },
+  ]},
+  { symbol: 'ETH', name: 'Ethereum', price: 3400, color: '#627EEA', icon: 'Ξ', iconUrl: '/tokens/eth.png', networks: [
+    { name: 'Ethereum (ERC20)', address: '0xbec7b38f38e7e6239981d4118a69f68cfbf99f98' },
+  ]},
+  { symbol: 'SOL', name: 'Solana', price: 180, color: '#9945FF', icon: '◎', iconUrl: '/tokens/sol.png', networks: [
+    { name: 'Solana Network', address: '3peKof5MyQaxXbMZdd1uQCefewvJFTbnLFPM8QPRHLji' },
+  ]},
+  { symbol: 'TRX', name: 'TRON', price: 0.24, color: '#EF0027', icon: 'T', iconUrl: '/tokens/trx.png', networks: [
+    { name: 'TRON (TRC20)', address: 'TBVhUqz5KarVFfK1k2UEALFxL6Pu8cfGHc' },
+  ]},
+  { symbol: 'TON', name: 'Toncoin', price: 5.42, color: '#0098EA', icon: '◆', iconUrl: '/tokens/ton.png', networks: [
+    { name: 'TON Network', address: 'UQC6BnUFgNB-8AxBQxo7_V7tblornEiUI6eSt8UOS4opKeiA' },
+  ]},
 ]
 
 type Mode = 'internal' | 'external' | 'bank'
@@ -195,7 +214,12 @@ function WithdrawForm({ initialSymbol, onClose }: { initialSymbol: string; onClo
                 {tokens.map((t) => (
                   <SelectItem key={t.symbol} value={t.symbol}>
                     <span className="flex items-center gap-2">
-                      <span style={{ color: t.color }}>{t.icon}</span> {t.symbol}
+                      {t.iconUrl ? (
+                        <img src={t.iconUrl} alt={t.symbol} className="h-5 w-5 rounded-full object-cover" />
+                      ) : (
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold" style={{ backgroundColor: t.color + '20', color: t.color }}>{t.icon}</span>
+                      )}
+                      <span className="font-semibold">{t.symbol}</span>
                     </span>
                   </SelectItem>
                 ))}

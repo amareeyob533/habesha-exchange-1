@@ -1360,3 +1360,26 @@ Stage Summary:
 - 3 token logos cropped with complete accuracy as perfect circles
 - Transparent corners (RGBA) so they blend seamlessly on any background
 - Used as profile pictures for ETH, SOL, TRX tokens in the exchange
+
+---
+Task ID: FIX-TOKEN-LOGOS-IN-MODALS
+Agent: main
+Task: Show real token logos (not text glyphs) in deposit + withdraw asset selectors
+
+Work Log:
+- Root cause: deposit-modal.tsx + withdraw-modal.tsx used <span style={{color}}>{t.icon}</span> which shows the text glyph (₮, $, ₿) instead of the real logo image
+- Fixed src/components/modals/deposit-modal.tsx:
+  * Added iconUrl to TokenInfo interface
+  * Added iconUrl + updated wallet addresses to all 7 fallback tokens (USDT, USDC, BTC, ETH, SOL, TRX, TON)
+  * Replaced text glyph with <img src={t.iconUrl}> in the asset SelectItem — shows the real circular logo image (20x20) next to the token symbol + name
+  * Falls back to a colored circle with the glyph if iconUrl is missing
+- Fixed src/components/modals/withdraw-modal.tsx:
+  * Same interface + fallback updates (7 tokens with real addresses)
+  * Same SelectItem fix — real logo image next to token symbol
+- The logo now shows in BOTH the dropdown list AND the selected trigger (SelectValue renders the selected item's children)
+- Lint: 0 errors (1 pre-existing warning)
+
+Stage Summary:
+- Deposit + Withdraw modals now show the real token logo images (circular, 20x20) alongside the token symbol + name
+- All 7 tokens supported: USDT, USDC, BTC, ETH, SOL, TRX, TON
+- Fallback addresses also updated to the new wallet addresses

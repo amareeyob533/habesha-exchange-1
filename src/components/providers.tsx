@@ -15,7 +15,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
       }),
   )
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange={false}>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="light"
+      enableSystem={false}
+      disableTransitionOnChange={false}
+      storageKey="habesha-theme-v2"
+    >
       <QueryClientProvider client={client}>
         {children}
         <Toaster />

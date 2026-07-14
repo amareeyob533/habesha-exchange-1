@@ -1,18 +1,40 @@
 'use client'
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { useUI } from '@/hooks/use-ui'
+import { useUI, type ViewKey } from '@/hooks/use-ui'
 import { useAuth } from '@/hooks/use-auth'
 import { apiFetch } from '@/lib/api-client'
 import { timeAgo } from '@/lib/format'
-import { Bell, CheckCircle2, Info, AlertTriangle } from 'lucide-react'
+import { Bell, CheckCircle2, Info, AlertTriangle, ArrowRight } from 'lucide-react'
 import { useEffect } from 'react'
 
 const ICON: Record<string, any> = { success: CheckCircle2, info: Info, warning: AlertTriangle }
 const COLOR: Record<string, string> = { success: 'text-up', info: 'text-gold', warning: 'text-down' }
 
+/**
+ * Map a notification to the view it should navigate to when clicked.
+ * Returns null if the notification isn't clickable.
+ */
+function getNotificationTarget(title: string): ViewKey | null {
+  const t = title.toLowerCase()
+  // Deposit / withdrawal / buy / transfer / reward → transactions
+  if (t.includes('deposit') || t.includes('withdraw') || t.includes('buy order') || t.includes('transfer') || t.includes('reward') || t.includes('exchange')) {
+    return 'transactions'
+  }
+  // KYC → profile (KYC info now lives in profile)
+  if (t.includes('kyc') || t.includes('verification') || t.includes('verified')) {
+    return 'profile'
+  }
+  // Support → support
+  if (t.includes('support') || t.includes('ticket')) {
+    return 'support'
+  }
+  // Default → transactions (most notifications are transaction-related)
+  return 'transactions'
+}
+
 export function NotificationPanel() {
-  const { notifOpen, openNotif } = useUI()
+  const { notifOpen, openNotif, setView } = useUI()
   const { notifications, fetchMe } = useAuth()
 
   useEffect(() => {
@@ -24,6 +46,14 @@ export function NotificationPanel() {
 
   function close() {
     useUI.setState({ notifOpen: false })
+  }
+
+  function handleClick(title: string) {
+    const target = getNotificationTarget(title)
+    if (target) {
+      close()
+      setView(target)
+    }
   }
 
   return (
@@ -43,17 +73,25 @@ export function NotificationPanel() {
           ) : (
             notifications.map((n) => {
               const Icon = ICON[n.type] || Info
+              const target = getNotificationTarget(n.title)
               return (
-                <div key={n.id} className={`rounded-xl border p-3 ${n.read ? 'border-border bg-secondary/20' : 'border-gold/30 bg-gold/5'}`}>
-                  <div className="flex items-start gap-2.5">
-                    <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${COLOR[n.type] || 'text-gold'}`} />
-                    <div className="flex-1">
-                      <div className="text-sm font-semibold">{n.title}</div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">{n.message}</div>
-                      <div className="mt-1.5 text-[10px] text-muted-foreground">{timeAgo(n.createdAt)}</div>
+                <button
+                  key={n.id}
+                  onClick={() => handleClick(n.title)}
+                  className={`group flex w-full items-start gap-2.5 rounded-xl border p-3 text-left transition-all hover:shadow-premium ${
+                    n.read ? 'border-border bg-secondary/20' : 'border-gold/30 bg-gold/5'
+                  } ${target ? 'cursor-pointer hover:border-primary/40 hover:bg-primary/5' : 'cursor-default'}`}
+                >
+                  <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${COLOR[n.type] || 'text-gold'}`} />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-semibold">{n.title}</span>
+                      {target && <ArrowRight className="ml-auto h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />}
                     </div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">{n.message}</div>
+                    <div className="mt-1.5 text-[10px] text-muted-foreground">{timeAgo(n.createdAt)}</div>
                   </div>
-                </div>
+                </button>
               )
             })
           )}

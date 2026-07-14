@@ -2,11 +2,12 @@
 
 import { useState, useRef } from 'react'
 import { useAuth } from '@/hooks/use-auth'
+import { useUI } from '@/hooks/use-ui'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import { Copy, Check, LogOut, ShieldCheck, Mail, Calendar, KeyRound, Camera, Loader2 } from 'lucide-react'
+import { Copy, Check, LogOut, ShieldCheck, Mail, Calendar, KeyRound, Camera, Loader2, Clock, CheckCircle2, AlertCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { VerifiedAvatar } from '@/components/common/verified-avatar'
 import { compressImage, formatBytes } from '@/lib/compress-image'
@@ -14,6 +15,7 @@ import { apiFetch, uploadFile } from '@/lib/api-client'
 
 export function ProfileView() {
   const { user, updateProfile, fetchMe, logout } = useAuth()
+  const { openKyc } = useUI()
   const { toast } = useToast()
   const [name, setName] = useState(user?.name || '')
   const [country, setCountry] = useState(user?.country || '')
@@ -184,6 +186,64 @@ export function ProfileView() {
           </div>
         </motion.div>
       </div>
+
+      {/* KYC Verification Card — moved here from Settings */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl glass-card p-5 ring-1 ring-primary/20">
+        <div className="mb-4 flex items-center gap-2">
+          <div className={`flex h-9 w-9 items-center justify-center rounded-xl ring-1 ${
+            user?.kycStatus === 'approved'
+              ? 'bg-up/10 text-up ring-up/20'
+              : user?.kycStatus === 'pending'
+                ? 'bg-primary/10 text-primary ring-primary/20'
+                : 'bg-down/10 text-down ring-down/20'
+          }`}>
+            {user?.kycStatus === 'approved' ? <CheckCircle2 className="h-4 w-4" /> : user?.kycStatus === 'pending' ? <Clock className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
+          </div>
+          <h3 className="text-base font-bold">Identity Verification (KYC)</h3>
+          {user?.kycStatus && user.kycStatus !== 'none' && (
+            <span className={`ml-auto inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+              user.kycStatus === 'approved' ? 'bg-up/15 text-up' : user.kycStatus === 'pending' ? 'bg-primary/15 text-primary' : 'bg-down/15 text-down'
+            }`}>{user.kycStatus}</span>
+          )}
+        </div>
+        <div className="space-y-3">
+          {user?.kycStatus === 'approved' ? (
+            <div className="rounded-lg border border-up/30 bg-up/5 p-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 font-semibold text-up"><CheckCircle2 className="h-3.5 w-3.5" /> Verified</div>
+              <p className="mt-1">Your identity is verified. You have unlimited deposit and withdrawal limits.</p>
+              {user?.kycFullName && (
+                <div className="mt-2 grid grid-cols-2 gap-2 border-t border-up/20 pt-2">
+                  <div><span className="text-muted-foreground">Name:</span> <b>{user.kycFullName}</b></div>
+                  <div><span className="text-muted-foreground">City:</span> <b>{user.kycCity}</b></div>
+                </div>
+              )}
+            </div>
+          ) : user?.kycStatus === 'pending' ? (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 font-semibold text-primary"><Clock className="h-3.5 w-3.5" /> Under Review</div>
+              <p className="mt-1">Your KYC application is being reviewed by our admin team. You'll be notified once it's approved.</p>
+            </div>
+          ) : user?.kycStatus === 'rejected' ? (
+            <div className="rounded-lg border border-down/30 bg-down/5 p-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 font-semibold text-down"><AlertCircle className="h-3.5 w-3.5" /> KYC Rejected</div>
+              <p className="mt-1">{user?.kycRejectReason || 'Your KYC was rejected. You can re-submit your verification.'}</p>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-down/30 bg-down/5 p-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5 font-semibold text-down"><AlertCircle className="h-3.5 w-3.5" /> Deposit Limit Active</div>
+              <p className="mt-1">Without KYC verification, you can deposit up to <b className="text-foreground">$500 USD</b> total. Verify your identity to unlock unlimited deposits & withdrawals.</p>
+            </div>
+          )}
+          <Button
+            className="w-full font-semibold"
+            variant={user?.kycStatus === 'approved' ? 'outline' : 'default'}
+            onClick={openKyc}
+          >
+            <ShieldCheck className="mr-2 h-4 w-4" />
+            {user?.kycStatus === 'approved' ? 'View KYC Details' : user?.kycStatus === 'pending' ? 'View Status' : 'Verify Now'}
+          </Button>
+        </div>
+      </motion.div>
     </div>
   )
 }

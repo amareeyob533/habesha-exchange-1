@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
-import { useUI } from '@/hooks/use-ui'
 import { useToast } from '@/hooks/use-toast'
 import { useTheme } from 'next-themes'
 import { useUserSettings } from '@/hooks/use-user-settings'
@@ -12,11 +11,10 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { motion } from 'framer-motion'
-import { Settings, Moon, Sun, Wallet, Bell, Shield, Sliders, Loader2, ShieldCheck, Clock, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Settings, Moon, Sun, Wallet, Bell, Shield, Sliders, Loader2, ShieldCheck } from 'lucide-react'
 
 export function SettingsView() {
   const { user, updateProfile } = useAuth()
-  const { openKyc } = useUI()
   const { theme, setTheme } = useTheme()
   const { toast } = useToast()
   const { settings, loading, save } = useUserSettings()
@@ -58,53 +56,6 @@ export function SettingsView() {
         </h2>
         <p className="text-sm text-muted-foreground">Manage your exchange, wallet, and account preferences</p>
       </div>
-
-      {/* KYC Verification Card */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card gradient-border rounded-2xl p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <div className={`flex h-9 w-9 items-center justify-center rounded-xl ring-1 ${
-            user?.kycStatus === 'approved'
-              ? 'bg-up/10 text-up ring-up/20'
-              : user?.kycStatus === 'pending'
-                ? 'bg-primary/10 text-primary ring-primary/20'
-                : 'bg-down/10 text-down ring-down/20'
-          }`}>
-            {user?.kycStatus === 'approved' ? <CheckCircle2 className="h-4 w-4" /> : user?.kycStatus === 'pending' ? <Clock className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
-          </div>
-          <h3 className="text-base font-bold">Identity Verification (KYC)</h3>
-          {user?.kycStatus && user.kycStatus !== 'none' && (
-            <span className={`ml-auto inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
-              user.kycStatus === 'approved' ? 'bg-up/15 text-up' : user.kycStatus === 'pending' ? 'bg-primary/15 text-primary' : 'bg-down/15 text-down'
-            }`}>{user.kycStatus}</span>
-          )}
-        </div>
-        <div className="space-y-3">
-          {user?.kycStatus === 'approved' ? (
-            <div className="rounded-lg border border-up/30 bg-up/5 p-3 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5 font-semibold text-up"><CheckCircle2 className="h-3.5 w-3.5" /> Verified</div>
-              <p className="mt-1">Your identity is verified. You have unlimited deposit and withdrawal limits.</p>
-            </div>
-          ) : user?.kycStatus === 'pending' ? (
-            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5 font-semibold text-primary"><Clock className="h-3.5 w-3.5" /> Under Review</div>
-              <p className="mt-1">Your KYC application is being reviewed by our admin team. You'll be notified once it's approved.</p>
-            </div>
-          ) : (
-            <div className="rounded-lg border border-down/30 bg-down/5 p-3 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5 font-semibold text-down"><AlertCircle className="h-3.5 w-3.5" /> Deposit Limit Active</div>
-              <p className="mt-1">Without KYC verification, you can deposit up to <b className="text-foreground">$500 USD</b> total. Verify your identity to unlock unlimited deposits & withdrawals.</p>
-            </div>
-          )}
-          <Button
-            className="w-full font-semibold"
-            variant={user?.kycStatus === 'approved' ? 'outline' : 'default'}
-            onClick={openKyc}
-          >
-            <ShieldCheck className="mr-2 h-4 w-4" />
-            {user?.kycStatus === 'approved' ? 'View KYC Details' : user?.kycStatus === 'pending' ? 'View Status' : 'Verify Now'}
-          </Button>
-        </div>
-      </motion.div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">

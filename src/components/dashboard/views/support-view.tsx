@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { apiFetch } from '@/lib/api-client'
+import { apiFetch, getStoredToken } from '@/lib/api-client'
 import { useToast } from '@/hooks/use-toast'
 import { timeAgo } from '@/lib/format'
 import { Button } from '@/components/ui/button'
@@ -43,12 +43,16 @@ export function SupportView() {
   const [replying, setReplying] = useState(false)
 
   const load = useCallback(async () => {
+    if (!getStoredToken()) return
     try {
       const data = await apiFetch<{ tickets: Ticket[] }>('/api/support/ticket')
       const next = data.tickets || []
       // Only update state if data actually changed (prevents flicker during polling)
       setTickets((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
     } catch (err: any) {
+      // Silently skip auth errors (happens during logout)
+      const msg = String(err?.message || '')
+      if (msg.includes('401') || msg.toLowerCase().includes('unauthorized')) return
       // Don't show error toast — just set empty tickets (DB might not be ready on Vercel)
       setTickets([])
     } finally { setLoading(false) }

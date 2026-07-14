@@ -1661,3 +1661,36 @@ Stage Summary:
 - Cards/balance bars/market bars are now clearly VISUALLY DISTINCT from the background
 - The deeper background gives the light mode actual COLOR (warm sand) instead of flat white
 - Mesh orbs more visible, borders stronger, overall much more visual hierarchy
+
+---
+Task ID: FIX-LOGOUT-401-ERRORS
+Agent: general-purpose
+Task: Fix logout 401 error toasts by checking token before API calls
+
+Work Log:
+- src/components/dashboard/views/admin.tsx
+  * Added `getStoredToken` to the `@/lib/api-client` import.
+  * Added `if (!getStoredToken()) return` at the start of the `load` function (before any state/section logic) so polling and manual refreshes bail out immediately after logout.
+  * Added silent auth-error guard in the catch block: if err.message contains "401" or "unauthorized", return without showing the "Failed to load" toast (happens during the ~1s logout transition before unmount).
+- src/components/dashboard/views/admin-kyc.tsx
+  * Same import + `if (!getStoredToken()) return` at start of `load`.
+  * Same silent auth-error guard in the catch block (still respects the existing "only toast on non-silent load" behavior).
+- src/components/dashboard/views/admin-buys.tsx
+  * Same import + `if (!getStoredToken()) return` at start of `load`.
+  * Same silent auth-error guard in the catch block.
+- src/components/dashboard/views/admin-support.tsx
+  * Same import + `if (!getStoredToken()) return` at start of `load`.
+  * Changed `catch {` (no err binding) to `catch (err: any) {` so we can inspect the error, then added the silent auth-error guard before the existing "Failed to load" toast.
+- src/components/dashboard/views/admin-users.tsx
+  * Same import + `if (!getStoredToken()) return` at start of `loadDetail` (the load-equivalent function at ~line 132).
+  * Added silent auth-error guard in the loadDetail catch block. (Other action functions like `act`/`sendNotify`/`sendReward` are user-initiated, not polling, so left untouched.)
+- src/components/dashboard/views/support-view.tsx
+  * Same import + `if (!getStoredToken()) return` at start of `load`.
+  * Added silent auth-error guard at top of the catch block (before the existing `setTickets([])` fallback) so we don't wipe the ticket list during the logout transition.
+- Verified: `bun run lint` → 0 errors, 6 pre-existing warnings (all unrelated `no-unused-expressions` warnings on the existing `if (!id) id = setInterval(...)` polling pattern; identical to baseline before this change).
+
+Stage Summary:
+- Logout no longer spams "Failed to load — Unauthorized" toasts. The polling components (admin deposits/withdrawals, admin KYC, admin buys, admin support tickets, admin user-detail, user support tickets) now check `getStoredToken()` at the start of every load and bail out instantly when the token has been cleared.
+- As a defense-in-depth, every load catch block now silently swallows 401/unauthorized errors so that even if a request was already in-flight when the token was cleared, no error toast reaches the user.
+- No behavioral changes to user-initiated actions (approve/reject/reply/notify/reward) — those still surface errors normally.
+- Lint is clean (0 errors).

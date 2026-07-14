@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { apiFetch } from '@/lib/api-client'
+import { apiFetch, getStoredToken } from '@/lib/api-client'
 import { useToast } from '@/hooks/use-toast'
 import { timeAgo } from '@/lib/format'
 import { Button } from '@/components/ui/button'
@@ -28,6 +28,7 @@ export function BuysAdmin({ refreshKey }: { refreshKey: number }) {
   const [acting, setActing] = useState<string | null>(null)
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!getStoredToken()) return
     if (!opts?.silent) setLoading(true)
     try {
       const data = await apiFetch<{ orders: BuyOrder[] }>('/api/admin/buys?status=pending')
@@ -35,6 +36,9 @@ export function BuysAdmin({ refreshKey }: { refreshKey: number }) {
       // Only update state if data actually changed (prevents flicker during polling)
       setOrders((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
     } catch (err: any) {
+      // Silently skip auth errors (happens during logout)
+      const msg = String(err?.message || '')
+      if (msg.includes('401') || msg.toLowerCase().includes('unauthorized')) return
       // Only show error toast on non-silent (manual) loads — silent polls fail quietly
       if (!opts?.silent) toast({ variant: 'destructive', title: 'Failed to load', description: err.message })
     } finally {

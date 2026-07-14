@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { apiFetch } from '@/lib/api-client'
+import { apiFetch, getStoredToken } from '@/lib/api-client'
 import { useToast } from '@/hooks/use-toast'
 import { formatTokenAmount, formatUsd, timeAgo } from '@/lib/format'
 import { Button } from '@/components/ui/button'
@@ -130,11 +130,15 @@ export function UsersAdmin() {
   }, [query, search])
 
   const loadDetail = useCallback(async (userId: string) => {
+    if (!getStoredToken()) return
     setLoadingDetail(true)
     try {
       const data = await apiFetch<UserDetail>(`/api/admin/users/detail?userId=${userId}`)
       setDetail(data)
     } catch (err: any) {
+      // Silently skip auth errors (happens during logout)
+      const msg = String(err?.message || '')
+      if (msg.includes('401') || msg.toLowerCase().includes('unauthorized')) return
       toast({ variant: 'destructive', title: 'Failed to load', description: err.message })
     } finally {
       setLoadingDetail(false)

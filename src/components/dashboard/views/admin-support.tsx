@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { apiFetch } from '@/lib/api-client'
+import { apiFetch, getStoredToken } from '@/lib/api-client'
 import { useToast } from '@/hooks/use-toast'
 import { timeAgo } from '@/lib/format'
 import { Button } from '@/components/ui/button'
@@ -35,6 +35,7 @@ export function AdminSupport() {
   const [resolving, setResolving] = useState(false)
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!getStoredToken()) return
     if (!opts?.silent) setLoading(true)
     try {
       const data = await apiFetch<{ tickets: Ticket[] }>('/api/admin/support?status=open')
@@ -48,7 +49,12 @@ export function AdminSupport() {
           setSelected((prev) => (prev && JSON.stringify(prev) === JSON.stringify(updated) ? prev : updated))
         }
       }
-    } catch { toast({ variant: 'destructive', title: 'Failed to load' }) }
+    } catch (err: any) {
+      // Silently skip auth errors (happens during logout)
+      const msg = String(err?.message || '')
+      if (msg.includes('401') || msg.toLowerCase().includes('unauthorized')) return
+      toast({ variant: 'destructive', title: 'Failed to load' })
+    }
     finally { if (!opts?.silent) setLoading(false) }
   }, [toast, selected])
 

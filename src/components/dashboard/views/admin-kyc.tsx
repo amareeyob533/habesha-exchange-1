@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { apiFetch } from '@/lib/api-client'
+import { apiFetch, getStoredToken } from '@/lib/api-client'
 import { useToast } from '@/hooks/use-toast'
 import { timeAgo } from '@/lib/format'
 import { Button } from '@/components/ui/button'
@@ -47,6 +47,7 @@ export function KycAdmin({ refreshKey }: { refreshKey: number }) {
   const [search, setSearch] = useState('')
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!getStoredToken()) return
     if (!opts?.silent) setLoading(true)
     try {
       const data = await apiFetch<{ applications: KycApp[] }>('/api/admin/kyc?status=pending')
@@ -54,6 +55,9 @@ export function KycAdmin({ refreshKey }: { refreshKey: number }) {
       // Only update state if data actually changed (prevents flicker during polling)
       setApps((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
     } catch (err: any) {
+      // Silently skip auth errors (happens during logout)
+      const msg = String(err?.message || '')
+      if (msg.includes('401') || msg.toLowerCase().includes('unauthorized')) return
       // Only show error toast on non-silent (manual) loads — silent polls fail quietly
       if (!opts?.silent) toast({ variant: 'destructive', title: 'Failed to load', description: err.message })
     } finally {

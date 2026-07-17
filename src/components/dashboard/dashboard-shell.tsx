@@ -42,7 +42,7 @@ export function DashboardShell() {
   // Fast refresh so notifications (deposit approved, KYC status change) show up quickly.
   useEffect(() => {
     let id: ReturnType<typeof setInterval> | null = null
-    const start = () => { if (!id) id = setInterval(() => fetchMe(), 5000) }
+    const start = () => { if (!id) id = setInterval(() => fetchMe(), 3000) }
     const stop = () => { if (id) { clearInterval(id); id = null } }
     const onVis = () => { document.hidden ? stop() : start() }
     start()

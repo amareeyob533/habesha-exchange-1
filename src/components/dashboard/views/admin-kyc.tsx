@@ -71,7 +71,7 @@ export function KycAdmin({ refreshKey }: { refreshKey: number }) {
   // Stop polling when the tab is hidden.
   useEffect(() => {
     let id: ReturnType<typeof setInterval> | null = null
-    const start = () => { if (!id) id = setInterval(() => load({ silent: true }), 5000) }
+    const start = () => { if (!id) id = setInterval(() => load({ silent: true }), 2000) }
     const stop = () => { if (id) { clearInterval(id); id = null } }
     const onVis = () => { document.hidden ? stop() : start() }
     start()

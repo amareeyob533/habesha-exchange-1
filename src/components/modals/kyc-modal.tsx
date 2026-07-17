@@ -141,7 +141,7 @@ export function KycModal() {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && close()}>
-      <DialogContent className="max-w-[480px] w-[calc(100%-2rem)] glass-strong border-border/40">
+      <DialogContent className="max-w-[480px] w-[calc(100%-2rem)] glass-strong border-border/40 max-h-[90vh] overflow-y-auto custom-scroll">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
             <ShieldCheck className="h-5 w-5" />
@@ -369,7 +369,7 @@ function UploadField({
       </button>
       {doc.url && (
         <div className="rounded-lg border border-border overflow-hidden">
-          <img src={doc.url} alt={label} className="w-full max-h-[160px] object-contain bg-black/30" />
+          <img src={doc.url} alt={label} className="w-full max-h-[120px] object-cover bg-black/30" />
         </div>
       )}
     </div>

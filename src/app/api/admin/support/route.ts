@@ -17,7 +17,20 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: 'desc' },
         include: {
           user: { select: { uid: true, email: true, username: true, name: true } },
-          replies: { orderBy: { createdAt: 'asc' } },
+          replies: {
+            orderBy: { createdAt: 'asc' },
+            // Explicitly include voice fields alongside text fields.
+            select: {
+              id: true,
+              senderId: true,
+              senderRole: true,
+              message: true,
+              voiceData: true,
+              voiceMime: true,
+              voiceDuration: true,
+              createdAt: true,
+            },
+          },
         },
       })
       return NextResponse.json({ tickets, count: tickets.length })

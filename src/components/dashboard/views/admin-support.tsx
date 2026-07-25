@@ -7,12 +7,17 @@ import { timeAgo } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { motion } from 'framer-motion'
-import { Headphones, Send, Loader2, CheckCircle2, MessageCircle } from 'lucide-react'
+import { Headphones, Send, Loader2, CheckCircle2, MessageCircle, Mic, Square, X } from 'lucide-react'
+import { useVoiceRecorder } from '@/hooks/use-voice-recorder'
+import { VoiceMessage } from '@/components/support/voice-message'
 
 interface Reply {
   id: string
   senderRole: string
   message: string
+  voiceData?: string | null
+  voiceMime?: string | null
+  voiceDuration?: number | null
   createdAt: string
 }
 interface Ticket {
@@ -25,6 +30,12 @@ interface Ticket {
   replies: Reply[]
 }
 
+function fmtDur(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
 export function AdminSupport() {
   const { toast } = useToast()
   const [tickets, setTickets] = useState<Ticket[]>([])
@@ -33,6 +44,7 @@ export function AdminSupport() {
   const [replyText, setReplyText] = useState('')
   const [replying, setReplying] = useState(false)
   const [resolving, setResolving] = useState(false)
+  const recorder = useVoiceRecorder()
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!getStoredToken()) return
@@ -73,21 +85,47 @@ export function AdminSupport() {
     return () => { stop(); document.removeEventListener('visibilitychange', onVis) }
   }, [selected, load])
 
+  // When the admin navigates away from a conversation, drop any in-progress recording.
+  useEffect(() => {
+    if (!selected) {
+      recorder.cancelRecording()
+      setReplyText('')
+    }
+  }, [selected])
+
   async function sendReply() {
-    if (!selected || !replyText.trim()) return
+    if (!selected) return
+    const text = replyText.trim()
+    const voice = recorder.audioData
+    if (!text && !voice) return
     setReplying(true)
     try {
       await apiFetch('/api/admin/support/reply', {
         method: 'POST',
-        body: JSON.stringify({ ticketId: selected.id, message: replyText }),
+        body: JSON.stringify({
+          ticketId: selected.id,
+          message: text,
+          voiceData: voice,
+          voiceMime: recorder.mime,
+          voiceDuration: recorder.duration,
+        }),
       })
       setReplyText('')
+      recorder.reset()
       // Immediately reload replies (don't wait for next poll tick) so the admin sees their message instantly
       await load({ silent: true })
       toast({ title: 'Reply sent' })
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Failed', description: err.message })
     } finally { setReplying(false) }
+  }
+
+  async function startVoice() {
+    try {
+      await recorder.startRecording()
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Microphone unavailable', description: err?.message || 'Please allow microphone access' })
+    }
   }
 
   async function resolve() {
@@ -131,22 +169,87 @@ export function AdminSupport() {
           <div className="max-h-[350px] space-y-3 overflow-y-auto custom-scroll pr-1">
             <ChatBubble role="user" message={selected.message} time={selected.createdAt} name={selected.user.name || selected.user.email} />
             {selected.replies.map((r) => (
-              <ChatBubble key={r.id} role={r.senderRole} message={r.message} time={r.createdAt} name={r.senderRole === 'admin' ? 'You (Admin)' : selected.user.name || selected.user.email} />
+              <ChatBubble
+                key={r.id}
+                role={r.senderRole}
+                message={r.message}
+                voiceData={r.voiceData}
+                voiceMime={r.voiceMime}
+                voiceDuration={r.voiceDuration}
+                time={r.createdAt}
+                name={r.senderRole === 'admin' ? 'You (Admin)' : selected.user.name || selected.user.email}
+              />
             ))}
           </div>
 
           {/* Reply */}
-          <div className="mt-4 flex gap-2">
-            <Input
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              placeholder="Type your reply..."
-              className="bg-secondary/40"
-              onKeyDown={(e) => { if (e.key === 'Enter' && !replying) sendReply() }}
-            />
-            <Button className="bg-gold-gradient font-semibold text-primary-foreground" onClick={sendReply} disabled={replying || !replyText.trim()}>
-              {replying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </Button>
+          <div className="mt-4 space-y-2">
+            {/* Recording / preview strip — shown above the text input while
+                the admin is recording or after they've captured a take. */}
+            {recorder.isRecording && (
+              <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-3 py-2">
+                <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-60" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                </span>
+                <span className="flex-1 text-xs font-semibold text-red-500">
+                  Recording… {fmtDur(recorder.duration)}
+                </span>
+                <Button size="sm" variant="outline" className="h-7 border-red-500/40 text-red-500 hover:bg-red-500/10" onClick={() => recorder.cancelRecording()}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+                <Button size="sm" className="h-7 bg-gold-gradient font-semibold text-primary-foreground" onClick={() => recorder.stopRecording()}>
+                  <Square className="h-3.5 w-3.5" /> Stop
+                </Button>
+              </div>
+            )}
+            {!recorder.isRecording && recorder.audioData && (
+              <div className="flex items-center gap-2 rounded-xl border border-gold/30 bg-gold/5 px-3 py-2">
+                <div className="flex-1">
+                  <VoiceMessage
+                    voiceData={recorder.audioData}
+                    voiceMime={recorder.mime}
+                    voiceDuration={recorder.duration}
+                    compact
+                  />
+                </div>
+                <Button size="sm" variant="outline" className="h-7 border-border text-muted-foreground hover:bg-secondary" onClick={() => recorder.reset()}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-7 bg-gold-gradient font-semibold text-primary-foreground"
+                  disabled={replying}
+                  onClick={sendReply}
+                >
+                  {replying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                </Button>
+              </div>
+            )}
+
+            {/* Default row: text input + mic + send */}
+            {!recorder.isRecording && !recorder.audioData && (
+              <div className="flex gap-2">
+                <Input
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Type your reply..."
+                  className="bg-secondary/40"
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !replying) sendReply() }}
+                />
+                <Button
+                  variant="outline"
+                  className="border-gold/30 text-gold hover:bg-gold/10"
+                  onClick={startVoice}
+                  aria-label="Record voice message"
+                >
+                  <Mic className="h-4 w-4" />
+                </Button>
+                <Button className="bg-gold-gradient font-semibold text-primary-foreground" onClick={sendReply} disabled={replying || !replyText.trim()}>
+                  {replying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -200,8 +303,20 @@ export function AdminSupport() {
   )
 }
 
-function ChatBubble({ role, message, time, name }: { role: string; message: string; time: string; name: string }) {
+interface ChatBubbleProps {
+  role: string
+  message: string
+  voiceData?: string | null
+  voiceMime?: string | null
+  voiceDuration?: number | null
+  time: string
+  name: string
+}
+
+function ChatBubble({ role, message, voiceData, voiceMime, voiceDuration, time, name }: ChatBubbleProps) {
   const isAdmin = role === 'admin'
+  const hasText = !!message?.trim()
+  const hasVoice = !!voiceData
   return (
     <div className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
@@ -210,7 +325,13 @@ function ChatBubble({ role, message, time, name }: { role: string; message: stri
         <div className="mb-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
           {name}
         </div>
-        <div>{message}</div>
+        {hasText && <div>{message}</div>}
+        {hasVoice && (
+          <div className={hasText ? 'mt-2' : ''}>
+            <VoiceMessage voiceData={voiceData!} voiceMime={voiceMime} voiceDuration={voiceDuration} />
+          </div>
+        )}
+        {!hasText && !hasVoice && <div className="italic text-muted-foreground">(empty)</div>}
         <div className="mt-1 text-[9px] text-muted-foreground">{timeAgo(time)}</div>
       </div>
     </div>

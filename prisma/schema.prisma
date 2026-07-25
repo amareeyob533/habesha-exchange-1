@@ -139,13 +139,16 @@ model SupportMessage {
 }
 
 model SupportReply {
-  id        String   @id @default(cuid())
-  ticketId  String
-  ticket    SupportMessage @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  senderId  String   // user id of sender (could be user or admin)
-  senderRole String  // "user" | "admin"
-  message   String
-  createdAt DateTime @default(now())
+  id            String   @id @default(cuid())
+  ticketId      String
+  ticket        SupportMessage @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId      String   // user id of sender (could be user or admin)
+  senderRole    String  // "user" | "admin"
+  message       String   @default("") // text message (empty for voice-only)
+  voiceData     String?  // base64 data URL of voice message audio
+  voiceMime     String?  // audio/webm, audio/mp4, etc.
+  voiceDuration Float?   // duration in seconds
+  createdAt     DateTime @default(now())
 }
 
 
@@ -260,4 +263,43 @@ model UserSettings {
   withdrawAlerts      Boolean  @default(true)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+}
+
+// ============================================================================
+// Broadcast System (admin → all users)
+// ============================================================================
+// Admin can send a broadcast message with an optional short video to ALL users.
+// Users see it in their notification panel, can watch the video, and react
+// (like). If a user hasn't seen the broadcast within 2 minutes, a push
+// notification is sent again (handled lazily by the /api/broadcasts endpoint).
+model Broadcast {
+  id          String   @id @default(cuid())
+  adminId     String   // admin user id
+  title       String
+  message     String
+  videoData   String?  // base64 data URL (compressed short video, max ~5MB)
+  videoMime   String?  // video/mp4, video/webm, etc.
+  videoSize   Int      @default(0)
+  createdAt   DateTime @default(now())
+  reactions   BroadcastReaction[]
+  seenBy      BroadcastSeen[]
+}
+
+model BroadcastReaction {
+  id          String   @id @default(cuid())
+  broadcastId String
+  broadcast   Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  userId      String
+  type        String   @default("like") // like | love | thumbsup
+  createdAt   DateTime @default(now())
+  @@unique([broadcastId, userId]) // one reaction per user per broadcast
+}
+
+model BroadcastSeen {
+  id          String   @id @default(cuid())
+  broadcastId String
+  broadcast   Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  userId      String
+  seenAt      DateTime @default(now())
+  @@unique([broadcastId, userId]) // one seen record per user per broadcast
 }

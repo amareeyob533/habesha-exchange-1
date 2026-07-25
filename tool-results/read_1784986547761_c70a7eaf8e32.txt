@@ -1,0 +1,612 @@
+     1→'use client'
+     2→
+     3→import { useEffect, useState, useCallback } from 'react'
+     4→import { apiFetch, getStoredToken } from '@/lib/api-client'
+     5→import { useToast } from '@/hooks/use-toast'
+     6→import { formatTokenAmount, formatUsd, timeAgo } from '@/lib/format'
+     7→import { Button } from '@/components/ui/button'
+     8→import { Input } from '@/components/ui/input'
+     9→import { Label } from '@/components/ui/label'
+    10→import { Textarea } from '@/components/ui/textarea'
+    11→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+    12→import {
+    13→  Sheet,
+    14→  SheetContent,
+    15→  SheetHeader,
+    16→  SheetTitle,
+    17→  SheetDescription,
+    18→} from '@/components/ui/sheet'
+    19→import {
+    20→  Dialog,
+    21→  DialogContent,
+    22→  DialogTitle,
+    23→  DialogDescription,
+    24→} from '@/components/ui/dialog'
+    25→import { motion } from 'framer-motion'
+    26→import { TokenIcon } from '@/components/common/token-icon'
+    27→import { VerifiedAvatar } from '@/components/common/verified-avatar'
+    28→import {
+    29→  Search, Loader2, ShieldCheck, Ban, Trash2, Send, Gift,
+    30→  Lock, Unlock, AlertTriangle, Mail, AtSign, Hash,
+    31→  Download, ExternalLink, KeyRound, IdCard, MapPin, User as UserIcon, Clock,
+    32→} from 'lucide-react'
+    33→
+    34→interface SearchUser {
+    35→  id: string
+    36→  uid: string
+    37→  username: string | null
+    38→  email: string
+    39→  name: string | null
+    40→  avatarUrl: string | null
+    41→  isBlocked: boolean
+    42→  createdAt: string
+    43→  totalUsd: number
+    44→}
+    45→
+    46→interface KycDoc {
+    47→  id: string
+    48→  side: string
+    49→  fileName: string
+    50→  mimeType: string
+    51→  size: number
+    52→  deleteAfter: string | null
+    53→}
+    54→interface KycApplicationRow {
+    55→  id: string
+    56→  fullName: string
+    57→  city: string
+    58→  idType: string
+    59→  status: string
+    60→  rejectReason: string | null
+    61→  submittedAt: string
+    62→  reviewedAt: string | null
+    63→  documents: KycDoc[]
+    64→}
+    65→
+    66→interface UserDetail {
+    67→  user: {
+    68→    id: string; uid: string; username: string | null; email: string; name: string | null
+    69→    avatarUrl: string | null; isBlocked: boolean; blockedReason: string | null
+    70→    provider: string; country: string | null; phone: string | null; createdAt: string
+    71→    // KYC summary (denormalized onto User)
+    72→    kycStatus: string | null
+    73→    kycSubmittedAt: string | null
+    74→    kycApprovedAt: string | null
+    75→    kycFullName: string | null
+    76→    kycCity: string | null
+    77→    kycIdType: string | null
+    78→    kycRejectReason: string | null
+    79→    // Whether a bcrypt password hash is set (Google-only users have none)
+    80→    hasPassword: boolean
+    81→  }
+    82→  balances: { symbol: string; name: string; amount: number; usdValue: number; price: number; color: string; icon: string }[]
+    83→  totalUsd: number
+    84→  transactions: { id: string; type: string; token: string; amount: number; status: string; note: string | null; createdAt: string }[]
+    85→  kycApplications: KycApplicationRow[]
+    86→}
+    87→
+    88→const TOKENS = ['USDT', 'USDC', 'BTC', 'ETH', 'SOL', 'TRX', 'TON']
+    89→
+    90→const ID_LABELS: Record<string, string> = {
+    91→  driver_license: "Driver's License",
+    92→  national_id: 'National ID',
+    93→  passport: 'Passport',
+    94→}
+    95→
+    96→export function UsersAdmin() {
+    97→  const { toast } = useToast()
+    98→  const [query, setQuery] = useState('')
+    99→  const [results, setResults] = useState<SearchUser[]>([])
+   100→  const [searching, setSearching] = useState(false)
+   101→  const [selectedId, setSelectedId] = useState<string | null>(null)
+   102→  const [detail, setDetail] = useState<UserDetail | null>(null)
+   103→  const [loadingDetail, setLoadingDetail] = useState(false)
+   104→  const [acting, setActing] = useState<string | null>(null)
+   105→  // notify + reward dialogs
+   106→  const [notifyOpen, setNotifyOpen] = useState(false)
+   107→  const [rewardOpen, setRewardOpen] = useState(false)
+   108→  const [notifTitle, setNotifTitle] = useState('')
+   109→  const [notifMsg, setNotifMsg] = useState('')
+   110→  const [rewardToken, setRewardToken] = useState('USDT')
+   111→  const [rewardAmount, setRewardAmount] = useState('')
+   112→  const [rewardNote, setRewardNote] = useState('')
+   113→
+   114→  const search = useCallback(async (q: string) => {
+   115→    if (!q.trim()) { setResults([]); return }
+   116→    setSearching(true)
+   117→    try {
+   118→      const data = await apiFetch<{ users: SearchUser[] }>(`/api/admin/users/search?q=${encodeURIComponent(q.trim())}`)
+   119→      setResults(data.users)
+   120→    } catch (err: any) {
+   121→      toast({ variant: 'destructive', title: 'Search failed', description: err.message })
+   122→    } finally {
+   123→      setSearching(false)
+   124→    }
+   125→  }, [toast])
+   126→
+   127→  useEffect(() => {
+   128→    const id = setTimeout(() => search(query), 350)
+   129→    return () => clearTimeout(id)
+   130→  }, [query, search])
+   131→
+   132→  const loadDetail = useCallback(async (userId: string) => {
+   133→    if (!getStoredToken()) return
+   134→    setLoadingDetail(true)
+   135→    try {
+   136→      const data = await apiFetch<UserDetail>(`/api/admin/users/detail?userId=${userId}`)
+   137→      setDetail(data)
+   138→    } catch (err: any) {
+   139→      // Silently skip auth errors (happens during logout)
+   140→      const msg = String(err?.message || '')
+   141→      if (msg.includes('401') || msg.toLowerCase().includes('unauthorized')) return
+   142→      toast({ variant: 'destructive', title: 'Failed to load', description: err.message })
+   143→    } finally {
+   144→      setLoadingDetail(false)
+   145→    }
+   146→  }, [toast])
+   147→
+   148→  useEffect(() => {
+   149→    if (selectedId) loadDetail(selectedId)
+   150→  }, [selectedId, loadDetail])
+   151→
+   152→  async function act(kind: 'block' | 'unblock' | 'delete', extra?: { reason?: string }) {
+   153→    if (!detail) return
+   154→    setActing(kind)
+   155→    try {
+   156→      const body = kind === 'block' ? { userId: detail.user.id, reason: extra?.reason } : { userId: detail.user.id }
+   157→      const res = await apiFetch<{ ok: boolean; message: string }>(`/api/admin/users/${kind}`, {
+   158→        method: 'POST',
+   159→        body: JSON.stringify(body),
+   160→      })
+   161→      toast({ title: kind === 'block' ? 'User Blocked' : kind === 'unblock' ? 'User Unblocked' : 'User Deleted', description: res.message })
+   162→      if (kind === 'delete') {
+   163→        setDetail(null)
+   164→        setSelectedId(null)
+   165→        setQuery('')
+   166→        setResults([])
+   167→      } else {
+   168→        await loadDetail(detail.user.id)
+   169→      }
+   170→    } catch (err: any) {
+   171→      toast({ variant: 'destructive', title: 'Action failed', description: err.message })
+   172→    } finally {
+   173→      setActing(null)
+   174→    }
+   175→  }
+   176→
+   177→  async function sendNotify() {
+   178→    if (!detail) return
+   179→    setActing('notify')
+   180→    try {
+   181→      const res = await apiFetch<{ ok: boolean; message: string }>(`/api/admin/users/notify`, {
+   182→        method: 'POST',
+   183→        body: JSON.stringify({ userId: detail.user.id, title: notifTitle, message: notifMsg }),
+   184→      })
+   185→      toast({ title: 'Notification sent', description: res.message })
+   186→      setNotifyOpen(false); setNotifTitle(''); setNotifMsg('')
+   187→    } catch (err: any) {
+   188→      toast({ variant: 'destructive', title: 'Failed', description: err.message })
+   189→    } finally {
+   190→      setActing(null)
+   191→    }
+   192→  }
+   193→
+   194→  async function sendReward() {
+   195→    if (!detail) return
+   196→    setActing('reward')
+   197→    try {
+   198→      const res = await apiFetch<{ ok: boolean; message: string }>(`/api/admin/users/reward`, {
+   199→        method: 'POST',
+   200→        body: JSON.stringify({ userId: detail.user.id, token: rewardToken, amount: Number(rewardAmount), note: rewardNote }),
+   201→      })
+   202→      toast({ title: 'Reward sent 🎁', description: res.message })
+   203→      setRewardOpen(false); setRewardAmount(''); setRewardNote('')
+   204→      await loadDetail(detail.user.id)
+   205→    } catch (err: any) {
+   206→      toast({ variant: 'destructive', title: 'Failed', description: err.message })
+   207→    } finally {
+   208→      setActing(null)
+   209→    }
+   210→  }
+   211→
+   212→  return (
+   213→    <div className="space-y-5">
+   214→      <div>
+   215→        <h2 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
+   216→          <ShieldCheck className="h-6 w-6 text-gold" /> User Management
+   217→        </h2>
+   218→        <p className="text-sm text-muted-foreground">Search by username, UID, email, or name — then view balances, block, delete, notify, or reward.</p>
+   219→      </div>
+   220→
+   221→      {/* Search bar */}
+   222→      <div className="relative">
+   223→        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+   224→        <Input
+   225→          value={query}
+   226→          onChange={(e) => setQuery(e.target.value)}
+   227→          placeholder="Search username, UID, email, or name…"
+   228→          className="border-border bg-card pl-10"
+   229→        />
+   230→        {searching && <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />}
+   231→      </div>
+   232→
+   233→      {/* Search results */}
+   234→      {query.trim() && (
+   235→        <div className="overflow-hidden glass-card rounded-2xl shadow-premium">
+   236→          {results.length === 0 ? (
+   237→            <div className="flex flex-col items-center justify-center py-12 text-center text-sm text-muted-foreground">
+   238→              <Search className="mb-2 h-7 w-7 opacity-30" />
+   239→              No users found
+   240→            </div>
+   241→          ) : (
+   242→            results.map((u) => (
+   243→              <button
+   244→                key={u.id}
+   245→                onClick={() => setSelectedId(u.id)}
+   246→                className="flex w-full items-center gap-3 border-b border-border/50 px-4 py-3 text-left last:border-0 transition-colors hover:bg-secondary/40"
+   247→              >
+   248→                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold/15 text-sm font-bold text-gold">
+   249→                  {(u.username || u.email)[0].toUpperCase()}
+   250→                </div>
+   251→                <div className="flex-1 min-w-0">
+   252→                  <div className="flex items-center gap-2">
+   253→                    <span className="font-bold truncate">@{u.username || '—'}</span>
+   254→                    {u.isBlocked && <span className="rounded bg-down/15 px-1.5 py-0.5 text-[9px] font-bold text-down">BLOCKED</span>}
+   255→                  </div>
+   256→                  <div className="truncate text-[11px] text-muted-foreground">{u.email} · UID {u.uid}</div>
+   257→                </div>
+   258→                <div className="text-right">
+   259→                  <div className="font-mono text-sm font-semibold">{formatUsd(u.totalUsd)}</div>
+   260→                  <div className="text-[10px] text-muted-foreground">{timeAgo(u.createdAt)}</div>
+   261→                </div>
+   262→              </button>
+   263→            ))
+   264→          )}
+   265→        </div>
+   266→      )}
+   267→
+   268→      {/* User detail drawer */}
+   269→      <Sheet open={!!selectedId} onOpenChange={(v) => !v && (setSelectedId(null), setDetail(null))}>
+   270→        <SheetContent className="w-full overflow-y-auto border-border bg-card sm:max-w-lg">
+   271→          {loadingDetail || !detail ? (
+   272→            <div className="flex h-full items-center justify-center">
+   273→              <Loader2 className="h-8 w-8 animate-spin text-gold" />
+   274→            </div>
+   275→          ) : (
+   276→            <>
+   277→              <SheetHeader>
+   278→                <SheetTitle className="flex items-center gap-2">
+   279→                  User @{detail.user.username || '—'}
+   280→                  {detail.user.isBlocked && <span className="rounded bg-down/15 px-1.5 py-0.5 text-[10px] font-bold text-down">BLOCKED</span>}
+   281→                </SheetTitle>
+   282→                <SheetDescription>UID {detail.user.uid} · joined {timeAgo(detail.user.createdAt)}</SheetDescription>
+   283→              </SheetHeader>
+   284→
+   285→              <div className="mt-4 space-y-5">
+   286→                {/* Profile picture + identity summary */}
+   287→                <div className="flex flex-col items-center gap-2 rounded-xl border border-border bg-secondary/30 p-4 text-center">
+   288→                  <VerifiedAvatar
+   289→                    src={detail.user.avatarUrl}
+   290→                    fallback={(detail.user.username || detail.user.email)[0].toUpperCase()}
+   291→                    size="lg"
+   292→                    verified={detail.user.kycStatus === 'approved'}
+   293→                  />
+   294→                  <div className="mt-1 text-base font-bold leading-tight">
+   295→                    {detail.user.name || `@${detail.user.username || '—'}`}
+   296→                  </div>
+   297→                  <div className="flex flex-wrap items-center justify-center gap-1.5">
+   298→                    <KycBadge status={detail.user.kycStatus} />
+   299→                    {detail.user.isBlocked && (
+   300→                      <span className="rounded bg-down/15 px-1.5 py-0.5 text-[9px] font-bold text-down">BLOCKED</span>
+   301→                    )}
+   302→                    <span className="rounded bg-secondary px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">
+   303→                      {detail.user.provider === 'google' ? 'GOOGLE' : 'CREDENTIALS'}
+   304→                    </span>
+   305→                  </div>
+   306→                </div>
+   307→
+   308→                {/* Email — prominent */}
+   309→                <a
+   310→                  href={`mailto:${detail.user.email}`}
+   311→                  className="flex items-center gap-3 rounded-xl border border-gold/30 bg-gold/5 p-3 transition-colors hover:bg-gold/10"
+   312→                >
+   313→                  <Mail className="h-5 w-5 shrink-0 text-gold" />
+   314→                  <div className="min-w-0 flex-1">
+   315→                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Email</div>
+   316→                    <div className="truncate text-sm font-semibold text-foreground">{detail.user.email}</div>
+   317→                  </div>
+   318→                </a>
+   319→
+   320→                {/* Profile info */}
+   321→                <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-secondary/30 p-3 text-xs">
+   322→                  <Info icon={AtSign} label="Username" value={`@${detail.user.username || '—'}`} />
+   323→                  <Info icon={Hash} label="UID" value={detail.user.uid} />
+   324→                  <Info icon={Mail} label="Phone" value={detail.user.phone || '—'} />
+   325→                  <Info icon={Mail} label="Country" value={detail.user.country || '—'} />
+   326→                </div>
+   327→
+   328→                {/* Password — never show plaintext, just note it's hashed */}
+   329→                <div className="rounded-xl border border-border bg-secondary/20 p-3">
+   330→                  <div className="flex items-center gap-2 text-xs">
+   331→                    <KeyRound className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+   332→                    <div className="flex-1 min-w-0">
+   333→                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Password</div>
+   334→                      {detail.user.hasPassword ? (
+   335→                        <>
+   336→                          <div className="font-mono text-sm font-semibold tracking-wider text-foreground">
+   337→                            •••••••• <span className="text-[10px] font-normal text-muted-foreground">(hashed for security)</span>
+   338→                          </div>
+   339→                          <div className="mt-1 text-[10px] leading-snug text-muted-foreground">
+   340→                            Stored as a one-way bcrypt hash. Plaintext is never saved and cannot be recovered — the user must reset it if forgotten.
+   341→                          </div>
+   342→                        </>
+   343→                      ) : (
+   344→                        <>
+   345→                          <div className="text-sm font-semibold text-foreground">No password set</div>
+   346→                          <div className="mt-1 text-[10px] leading-snug text-muted-foreground">
+   347→                            This account signs in with Google only.
+   348→                          </div>
+   349→                        </>
+   350→                      )}
+   351→                    </div>
+   352→                  </div>
+   353→                </div>
+   354→
+   355→                {/* KYC section */}
+   356→                <div className="rounded-xl border border-border bg-secondary/20 p-3">
+   357→                  <div className="mb-2 flex items-center justify-between">
+   358→                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+   359→                      <ShieldCheck className="h-3.5 w-3.5" /> KYC Verification
+   360→                    </div>
+   361→                    <KycBadge status={detail.user.kycStatus} />
+   362→                  </div>
+   363→                  {detail.user.kycStatus && detail.user.kycStatus !== 'none' ? (
+   364→                    <div className="grid grid-cols-2 gap-2 text-xs">
+   365→                      <Info icon={UserIcon} label="Full Name" value={detail.user.kycFullName || '—'} />
+   366→                      <Info icon={MapPin} label="City" value={detail.user.kycCity || '—'} />
+   367→                      <Info icon={IdCard} label="ID Type" value={ID_LABELS[detail.user.kycIdType || ''] || detail.user.kycIdType || '—'} />
+   368→                      <Info icon={Clock} label="Submitted" value={detail.user.kycSubmittedAt ? new Date(detail.user.kycSubmittedAt).toLocaleDateString() : '—'} />
+   369→                    </div>
+   370→                  ) : (
+   371→                    <div className="text-[11px] text-muted-foreground">User has not submitted KYC verification.</div>
+   372→                  )}
+   373→
+   374→                  {detail.user.kycStatus === 'rejected' && detail.user.kycRejectReason && (
+   375→                    <div className="mt-2 flex items-start gap-2 rounded-lg border border-down/40 bg-down/5 p-2 text-[11px] text-down">
+   376→                      <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+   377→                      <span>Reject reason: {detail.user.kycRejectReason}</span>
+   378→                    </div>
+   379→                  )}
+   380→
+   381→                  {/* KYC documents (front + back) — only visible if they still exist in DB */}
+   382→                  {detail.kycApplications.length > 0 && (
+   383→                    <div className="mt-3 space-y-3">
+   384→                      {detail.kycApplications.map((app) => (
+   385→                        <div key={app.id} className="rounded-lg border border-border/60 bg-secondary/30 p-2">
+   386→                          <div className="mb-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
+   387→                            <span>Application · {app.status}</span>
+   388→                            <span>{new Date(app.submittedAt).toLocaleDateString()}</span>
+   389→                          </div>
+   390→                          {app.documents.length > 0 ? (
+   391→                            <div className="grid grid-cols-1 gap-2">
+   392→                              {app.documents.map((doc) => (
+   393→                                <div key={doc.id} className="space-y-1">
+   394→                                  <div className="flex items-center justify-between">
+   395→                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gold">
+   396→                                      {doc.side === 'back' ? 'Back of ID' : 'Front of ID'}
+   397→                                    </span>
+   398→                                    {doc.deleteAfter && (
+   399→                                      <span className="text-[9px] text-muted-foreground">
+   400→                                        Auto-deletes {new Date(doc.deleteAfter).toLocaleDateString()}
+   401→                                      </span>
+   402→                                    )}
+   403→                                  </div>
+   404→                                  <div className="rounded border border-border overflow-hidden">
+   405→                                    <img
+   406→                                      src={`/api/kyc/document?id=${doc.id}`}
+   407→                                      alt={`${doc.side} of ID`}
+   408→                                      className="w-full max-h-[180px] object-contain bg-black/30"
+   409→                                    />
+   410→                                  </div>
+   411→                                  <div className="flex gap-1.5">
+   412→                                    <a
+   413→                                      href={`/api/kyc/document?id=${doc.id}&download=true`}
+   414→                                      target="_blank"
+   415→                                      rel="noreferrer"
+   416→                                      className="flex-1"
+   417→                                    >
+   418→                                      <Button size="sm" variant="outline" className="h-7 w-full text-[10px]">
+   419→                                        <Download className="mr-1 h-3 w-3" /> Download
+   420→                                      </Button>
+   421→                                    </a>
+   422→                                    <a
+   423→                                      href={`/api/kyc/document?id=${doc.id}`}
+   424→                                      target="_blank"
+   425→                                      rel="noreferrer"
+   426→                                      className="flex-1"
+   427→                                    >
+   428→                                      <Button size="sm" variant="outline" className="h-7 w-full text-[10px]">
+   429→                                        <ExternalLink className="mr-1 h-3 w-3" /> Open
+   430→                                      </Button>
+   431→                                    </a>
+   432→                                  </div>
+   433→                                </div>
+   434→                              ))}
+   435→                            </div>
+   436→                          ) : (
+   437→                            <div className="rounded border border-dashed border-border p-2 text-center text-[10px] text-muted-foreground">
+   438→                              ID documents auto-deleted (retention period expired)
+   439→                            </div>
+   440→                          )}
+   441→                        </div>
+   442→                      ))}
+   443→                    </div>
+   444→                  )}
+   445→                </div>
+   446→
+   447→                {detail.user.isBlocked && detail.user.blockedReason && (
+   448→                  <div className="flex items-start gap-2 rounded-lg border border-down/40 bg-down/5 p-2.5 text-[11px] text-down">
+   449→                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+   450→                    <span>Blocked reason: {detail.user.blockedReason}</span>
+   451→                  </div>
+   452→                )}
+   453→
+   454→                {/* Total balance */}
+   455→                <div className="rounded-xl border border-gold/30 bg-gold/5 p-3">
+   456→                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total Balance</div>
+   457→                  <div className="mt-0.5 text-2xl font-extrabold tabular-nums text-foreground">{formatUsd(detail.totalUsd)}</div>
+   458→                </div>
+   459→
+   460→                {/* Token balances */}
+   461→                <div>
+   462→                  <div className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Token Holdings</div>
+   463→                  <div className="space-y-1.5">
+   464→                    {detail.balances.map((b) => (
+   465→                      <div key={b.symbol} className="flex items-center gap-2 rounded-lg border border-border bg-secondary/20 px-3 py-2">
+   466→                        <TokenIcon symbol={b.symbol} iconUrl={(b as any).iconUrl} icon={b.icon} color={b.color} size={28} />
+   467→                        <div className="flex-1">
+   468→                          <div className="text-xs font-bold">{b.symbol}</div>
+   469→                          <div className="text-[10px] text-muted-foreground">{b.name}</div>
+   470→                        </div>
+   471→                        <div className="text-right">
+   472→                          <div className="font-mono text-sm font-semibold">{formatTokenAmount(b.amount, b.symbol)}</div>
+   473→                          <div className="text-[10px] text-muted-foreground">{formatUsd(b.usdValue)}</div>
+   474→                        </div>
+   475→                      </div>
+   476→                    ))}
+   477→                  </div>
+   478→                </div>
+   479→
+   480→                {/* Recent transactions */}
+   481→                <div>
+   482→                  <div className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Recent Transactions</div>
+   483→                  <div className="max-h-48 space-y-1 overflow-y-auto custom-scroll">
+   484→                    {detail.transactions.length === 0 ? (
+   485→                      <div className="rounded-lg border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">No transactions</div>
+   486→                    ) : (
+   487→                      detail.transactions.map((t) => (
+   488→                        <div key={t.id} className="flex items-center justify-between rounded border border-border/50 bg-secondary/20 px-2.5 py-1.5 text-[11px]">
+   489→                          <div>
+   490→                            <div className="font-semibold">{t.type} · {t.token}</div>
+   491→                            <div className="text-[10px] text-muted-foreground">{t.note || ''} · {timeAgo(t.createdAt)}</div>
+   492→                          </div>
+   493→                          <div className="font-mono font-bold">{t.amount}</div>
+   494→                        </div>
+   495→                      ))
+   496→                    )}
+   497→                  </div>
+   498→                </div>
+   499→
+   500→                {/* Admin actions */}
+   501→                <div className="space-y-2 border-t border-border pt-4">
+   502→                  <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Admin Actions</div>
+   503→                  <div className="grid grid-cols-2 gap-2">
+   504→                    <Button variant="outline" className="h-10 border-gold/30 text-gold hover:bg-gold/10" onClick={() => setRewardOpen(true)}>
+   505→                      <Gift className="mr-1 h-4 w-4" /> Reward
+   506→                    </Button>
+   507→                    <Button variant="outline" className="h-10 border-border hover:bg-secondary" onClick={() => setNotifyOpen(true)}>
+   508→                      <Send className="mr-1 h-4 w-4" /> Notify
+   509→                    </Button>
+   510→                    {detail.user.isBlocked ? (
+   511→                      <Button variant="outline" className="h-10 border-up/40 text-up hover:bg-up/10" disabled={acting === 'unblock'} onClick={() => act('unblock')}>
+   512→                        {acting === 'unblock' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlock className="mr-1 h-4 w-4" />} Unblock
+   513→                      </Button>
+   514→                    ) : (
+   515→                      <Button variant="outline" className="h-10 border-gold/40 text-gold hover:bg-gold/10" disabled={acting === 'block'} onClick={() => {
+   516→                        const reason = prompt('Reason for blocking? (optional)')
+   517→                        act('block', { reason: reason || undefined })
+   518→                      }}>
+   519→                        {acting === 'block' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="mr-1 h-4 w-4" />} Block
+   520→                      </Button>
+   521→                    )}
+   522→                    <Button variant="outline" className="h-10 border-down/40 text-down hover:bg-down/10" disabled={acting === 'delete'} onClick={() => {
+   523→                      if (confirm(`Permanently delete @${detail.user.username}? This removes ALL their data (balances, transactions). This cannot be undone.`)) act('delete')
+   524→                    }}>
+   525→                      {acting === 'delete' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="mr-1 h-4 w-4" />} Delete
+   526→                    </Button>
+   527→                  </div>
+   528→                </div>
+   529→              </div>
+   530→            </>
+   531→          )}
+   532→        </SheetContent>
+   533→      </Sheet>
+   534→
+   535→      {/* Notify dialog */}
+   536→      <Dialog open={notifyOpen} onOpenChange={setNotifyOpen}>
+   537→        <DialogContent className="max-w-[420px] border-border bg-card">
+   538→          <DialogTitle className="text-lg font-bold">Send Notification</DialogTitle>
+   539→          <DialogDescription className="text-xs">Write a message to @{detail?.user.username}</DialogDescription>
+   540→          <div className="space-y-3">
+   541→            <div className="space-y-1.5">
+   542→              <Label className="text-xs text-muted-foreground">Title</Label>
+   543→              <Input value={notifTitle} onChange={(e) => setNotifTitle(e.target.value)} placeholder="e.g. Account Update" className="bg-secondary/40" />
+   544→            </div>
+   545→            <div className="space-y-1.5">
+   546→              <Label className="text-xs text-muted-foreground">Message</Label>
+   547→              <Textarea value={notifMsg} onChange={(e) => setNotifMsg(e.target.value)} placeholder="Type your message…" className="min-h-[100px] bg-secondary/40" />
+   548→            </div>
+   549→            <Button className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground" disabled={acting === 'notify' || !notifTitle.trim() || !notifMsg.trim()} onClick={sendNotify}>
+   550→              {acting === 'notify' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="mr-1 h-4 w-4" />} Send Notification
+   551→            </Button>
+   552→          </div>
+   553→        </DialogContent>
+   554→      </Dialog>
+   555→
+   556→      {/* Reward dialog */}
+   557→      <Dialog open={rewardOpen} onOpenChange={setRewardOpen}>
+   558→        <DialogContent className="max-w-[420px] border-border bg-card">
+   559→          <DialogTitle className="text-lg font-bold">Reward User 🎁</DialogTitle>
+   560→          <DialogDescription className="text-xs">Credit any token to @{detail?.user.username}</DialogDescription>
+   561→          <div className="space-y-3">
+   562→            <div className="space-y-1.5">
+   563→              <Label className="text-xs text-muted-foreground">Token</Label>
+   564→              <Select value={rewardToken} onValueChange={setRewardToken}>
+   565→                <SelectTrigger className="bg-secondary/40"><SelectValue /></SelectTrigger>
+   566→                <SelectContent>
+   567→                  {TOKENS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+   568→                </SelectContent>
+   569→              </Select>
+   570→            </div>
+   571→            <div className="space-y-1.5">
+   572→              <Label className="text-xs text-muted-foreground">Amount</Label>
+   573→              <Input type="number" min="0" step="any" value={rewardAmount} onChange={(e) => setRewardAmount(e.target.value)} placeholder="0.00" className="bg-secondary/40" />
+   574→            </div>
+   575→            <div className="space-y-1.5">
+   576→              <Label className="text-xs text-muted-foreground">Note (optional)</Label>
+   577→              <Input value={rewardNote} onChange={(e) => setRewardNote(e.target.value)} placeholder="e.g. Loyalty bonus" className="bg-secondary/40" />
+   578→            </div>
+   579→            <Button className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground" disabled={acting === 'reward' || !rewardAmount} onClick={sendReward}>
+   580→              {acting === 'reward' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gift className="mr-1 h-4 w-4" />} Send Reward
+   581→            </Button>
+   582→          </div>
+   583→        </DialogContent>
+   584→      </Dialog>
+   585→    </div>
+   586→  )
+   587→}
+   588→
+   589→function Info({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+   590→  return (
+   591→    <div className="flex items-center gap-2">
+   592→      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+   593→      <div className="min-w-0">
+   594→        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+   595→        <div className="truncate font-medium text-foreground">{value}</div>
+   596→      </div>
+   597→    </div>
+   598→  )
+   599→}
+   600→
+   601→/** Colored pill showing the user's KYC status. */
+   602→function KycBadge({ status }: { status: string | null }) {
+   603→  const map: Record<string, { label: string; cls: string }> = {
+   604→    approved: { label: 'KYC APPROVED', cls: 'bg-up/15 text-up' },
+   605→    pending: { label: 'KYC PENDING', cls: 'bg-gold/15 text-gold' },
+   606→    rejected: { label: 'KYC REJECTED', cls: 'bg-down/15 text-down' },
+   607→    none: { label: 'NO KYC', cls: 'bg-secondary text-muted-foreground' },
+   608→  }
+   609→  const s = map[status || 'none'] || map.none
+   610→  return <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${s.cls}`}>{s.label}</span>
+   611→}
+   612→

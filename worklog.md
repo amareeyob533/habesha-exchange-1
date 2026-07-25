@@ -1763,3 +1763,152 @@ Stage Summary:
 - ALL modals now scroll when content is tall (global dialog fix)
 - ID preview images are slightly smaller to save vertical space
 - No other behavior changed
+
+---
+Task ID: BROADCAST-SYSTEM
+Agent: general-purpose
+Task: Build broadcast system — admin sends video+message to all users, users see+react
+
+Work Log:
+- src/app/api/admin/broadcast/route.ts (NEW)
+  * GET — admin lists all broadcasts (with reaction + seen counts, videoData stripped to keep payload small).
+  * POST — admin creates a broadcast via multipart/form-data (title + message + optional `file` video, max 10 MB, any video/* type).
+    * Video is converted to a base64 data URL (`data:<mime>;base64,…`) and stored in Broadcast.videoData.
+    * After insert: fan-out creates a Notification row for EVERY user (chunked in batches of 200) and sends a web push notification to every user (concurrency-limited to 8 workers, best-effort `.catch(()=>{})`).
+- src/app/api/broadcasts/route.ts (NEW)
+  * GET — lists the 20 most recent broadcasts for the current user.
+  * Each item includes: seen (BroadcastSeen exists for user), reaction (user's reaction type or null), reactionCount, hasVideo, videoMime, videoSize.
+  * videoData is NOT returned here (use /api/broadcasts/video?id=… instead).
+  * AUTO-REPUSH: for every broadcast the user hasn't seen AND that was created >2 minutes ago, a push notification is re-sent. Lazy — runs on every fetch.
+- src/app/api/broadcasts/seen/route.ts (NEW)
+  * POST { broadcastId } — upserts BroadcastSeen for the current user (idempotent).
+- src/app/api/broadcasts/react/route.ts (NEW)
+  * POST { broadcastId, type='like' } — toggles reaction. If a reaction already exists → delete it (toggle off); else create one.
+- src/app/api/broadcasts/video/route.ts (NEW)
+  * GET ?id=<broadcastId> — serves the raw video bytes for any authenticated user with correct Content-Type, Content-Length, and Cache-Control.
+- src/components/dashboard/views/admin-broadcast.tsx (NEW)
+  * Compose card: title input, message textarea, optional video upload (accept video/*, 10 MB cap, with click-to-upload dropzone + inline <video> preview + remove button).
+  * "Send to All Users" button posts multipart form (uses fetch directly because apiFetch hard-codes Content-Type: application/json — FormData needs the browser to set its multipart boundary).
+  * Past-broadcasts grid: title, video badge if attached, message preview, time-ago, reaction count, seen count. Polls every 5s for fresh counts.
+  * Uses apiFetch + getStoredToken from @/lib/api-client, useToast, getStoredToken guard + silent-auth-error catch (matches the established admin-* polling pattern).
+- src/components/dashboard/views/admin.tsx (EDITED)
+  * Added 'broadcast' to the Section union type.
+  * Imported Megaphone icon + BroadcastAdmin component.
+  * Added 'broadcast' to the load() early-return list (loads its own data).
+  * Added a 5th StatCard "Broadcast" (Megaphone, gold) and a new SectionPill "Broadcast".
+  * Added `<BroadcastAdmin refreshKey={0} />` to the content-area switch.
+- src/components/dashboard/notification-panel.tsx (EDITED)
+  * Added a "Notifications | Broadcasts" tab switcher at the top of the sheet.
+  * Broadcasts tab: fetches /api/broadcasts, renders each as a card (title, message, optional <video> player that streams from /api/broadcasts/video?id=…, like button with optimistic toggle + server reconcile, date, NEW badge if unseen).
+  * Auto-marks every visible broadcast as seen (lazy, fire-and-forget POST to /api/broadcasts/seen — uses a ref Set to avoid re-posting during polling).
+  * Polls for new broadcasts every 5s while the panel is open on the Broadcasts tab (same visibility-aware pattern as the rest of the app). Resets the seen-memory when the panel closes so reopening re-marks.
+  * Notifications tab behavior unchanged.
+
+Stage Summary:
+- Admin can compose a broadcast (title + message + optional short video up to 10 MB) and send it to every user.
+- Every user receives: (a) a Notification row in their panel, (b) a web push notification to all their subscribed devices.
+- Users see broadcasts in a new "Broadcasts" tab inside the notification panel — title, message, inline video player, and a heart "like" button with optimistic toggle.
+- Unseen broadcasts older than 2 minutes are auto-re-pushed to the user on every fetch (lazy, no cron needed).
+- Admin panel has a new "Broadcast" section (stat card + section pill) showing past broadcasts with reaction + seen counts.
+- Lint: 0 errors, 8 warnings — all 8 are the same `no-unused-expressions` warning on the established `document.hidden ? stop() : start()` polling pattern used across admin-broadcast, notification-panel, dashboard-shell, admin, admin-buys, admin-kyc, admin-support, support-view. 2 new warnings (admin-broadcast, notification-panel) follow the exact same pattern as the existing 6 (task explicitly required using the same polling pattern as other views).
+
+---
+Task ID: VOICE-MESSAGES
+Agent: general-purpose
+Task: Add voice message recording + playback to support chat
+
+Work Log:
+- prisma/schema.prisma (already updated by previous step) — SupportReply now has voiceData String?, voiceMime String?, voiceDuration Float?, message String @default(""). Schema was already pushed to DB. Ran `bunx prisma generate` to regenerate the Prisma client so the new fields are recognised.
+- src/app/api/support/reply/route.ts
+  * POST body now accepts optional `voiceData` (base64 data URL), `voiceMime` (audio/webm|audio/mp4|...), `voiceDuration` (number, seconds).
+  * Validation changed from `!message?.trim()` to `(!message?.trim() && !voiceData)` so voice-only messages pass (message defaults to empty string in DB).
+  * Mime auto-derivation: if `voiceMime` isn't passed, the route extracts it from the data URL prefix (`data:audio/webm;base64,...` → `audio/webm`) so Safari's audio/mp4 recordings are still tagged correctly.
+  * Stores voiceData/voiceMime/voiceDuration on the new SupportReply row; returns them in the response (Prisma returns all fields by default).
+- src/app/api/admin/support/reply/route.ts
+  * Same changes as the user route — accepts and stores voiceData/voiceMime/voiceDuration. Mime auto-derivation also applied.
+- src/app/api/support/ticket/route.ts (GET handler)
+  * Added explicit `select` on the replies relation so voiceData, voiceMime, voiceDuration are always returned alongside id/senderId/senderRole/message/createdAt. (Prisma would have returned them anyway with default include behaviour, but the explicit select makes the contract clear and prevents accidental field removal later.)
+- src/app/api/admin/support/route.ts (GET handler)
+  * Same explicit `select` clause added to the replies include so the admin ticket list returns voice fields.
+- src/hooks/use-voice-recorder.ts (NEW)
+  * A self-contained `useVoiceRecorder()` hook using the browser MediaRecorder API.
+  * State: `isRecording`, `duration` (live seconds counter), `audioData` (base64 data URL), `mime`, `error`.
+  * Functions: `startRecording()` (requests mic, starts MediaRecorder + 1s timer), `stopRecording()` (stops recorder → triggers ondataavailable → Blob → FileReader.readAsDataURL → setAudioData), `cancelRecording()` (stops recorder + stream + drops the audio), `reset()` (clears audioData/duration so a fresh take can be recorded).
+  * Cleanup: stops all MediaStream tracks on stop/cancel so the browser's red "recording" indicator disappears.
+  * Surfaces a friendly `error` state for browsers that don't support `navigator.mediaDevices.getUserMedia`.
+- src/components/support/voice-message.tsx (NEW)
+  * Compact inline audio player (~210px wide, ~170px in compact mode) that fits inside a chat bubble.
+  * Renders a gold circular play/pause button, a deterministic pseudo-waveform (28 or 18 bars, heights derived from `Math.sin(i)` so they don't reshuffle on re-render), and a `m:ss / m:ss` time display.
+  * Bars before the playhead are gold; bars after are muted — gives the visual "filling" effect as the audio plays.
+  * Uses a hidden `<audio>` element with `preload="metadata"`; passes an explicit `<source type="...">` for Safari compatibility when `voiceMime` is available.
+  * Audio events drive all UI state (onPlay, onPause, onEnded, onTimeUpdate, onLoadedMetadata) — no `useEffect` with setState, so no cascading-render lint error.
+- src/components/dashboard/views/support-view.tsx
+  * Added voiceData/voiceMime/voiceDuration to the `Reply` interface.
+  * Imported `useVoiceRecorder` and `VoiceMessage`; added a `recorder` instance to component state.
+  * Imported `Mic`, `Square`, `X` icons from lucide-react.
+  * `sendReply()` now reads both `replyText` and `recorder.audioData` — sends whatever's present (text-only, voice-only, or both). Calls `recorder.reset()` after a successful send.
+  * Added a `startVoice()` wrapper that catches mic-permission errors and surfaces them via the toast system.
+  * Three-state reply input row:
+    - Default: [text input] [mic outline button] [send gold button]
+    - Recording: red pulsing dot + "Recording… m:ss" + Cancel + Stop buttons (red-themed strip)
+    - Have recording: VoiceMessage preview (compact) + Discard + Send buttons (gold-themed strip)
+  * When the conversation modal closes, the `useEffect([selectedTicket])` calls `recorder.cancelRecording()` and clears `replyText` so no orphan recording leaks into the next conversation.
+  * `ChatBubble` component now accepts optional `voiceData`/`voiceMime`/`voiceDuration` props and renders text first (if present), then the VoiceMessage player below (if present). Falls back to "(empty)" only if neither is present.
+- src/components/dashboard/views/admin-support.tsx
+  * Same three-state input row, same ChatBubble voice support, same `useEffect` cleanup on conversation exit.
+  * Admin's voice replies are sent via `/api/admin/support/reply` with senderRole='admin' (set by the API).
+  * Maintained the existing "Back to tickets" + "Mark Resolved" header and all the polling/visibility/flicker-prevention logic from previous tasks.
+
+Backend E2E verified via curl:
+- Created ticket as user "voicetest@test.com" (UID 980272).
+- User sent 3 replies: text-only, voice-only (auto-derived mime audio/webm), voice+text. All three stored correctly; voice-only reply has `message=""`.
+- Empty reply (no message, no voice) correctly rejected with HTTP 400.
+- GET /api/support/ticket returns all 3 replies with the voice fields populated exactly as stored.
+- Admin login (amareeyob533@gmail.com / admin123) → GET /api/admin/support?status=open shows the same ticket with all 3 user replies + voice fields.
+- Admin sent 2 voice replies: voice-only with explicit audio/mp4 mime, voice+text with mime auto-derived from `data:audio/mp4;base64,...` prefix. Both stored with senderRole='admin'.
+- Final admin support list shows 5 replies total (3 user + 2 admin) with correct role/message/voiceData/voiceMime/voiceDuration on each.
+
+Stage Summary:
+- Both users and admins can record voice messages in the support chat using the MediaRecorder API. Recordings are stored as base64 data URLs in the SupportReply table alongside the optional text message.
+- The new `useVoiceRecorder` hook handles mic permission, recording lifecycle, and produces a base64 data URL + mime type that the API can store directly.
+- The new `VoiceMessage` component renders a polished compact inline audio player (gold play/pause button + waveform bars + m:ss timestamps) inside any chat bubble.
+- Both support views (`support-view.tsx` for users, `admin-support.tsx` for admins) have a 3-state reply input: idle (text + mic + send), recording (red pulsing dot + stop/cancel), preview (voice player + send/discard). Text and voice can be sent in the same message.
+- Chat bubbles render text first, then the voice player below when both are present; voice-only bubbles render just the player.
+- MIME-type handling is robust: the API accepts an explicit `voiceMime` field but also auto-derives it from the data URL prefix (`data:audio/webm;base64,...` → `audio/webm`, `data:audio/mp4;base64,...` → `audio/mp4`) — this makes Safari's audio/mp4 recordings work transparently even if the client forgets to pass the mime.
+- Existing text messaging, 2-second polling, visibility-change pause, flicker-prevention (JSON.stringify compare), and silent-401-on-logout guards are all preserved.
+- Lint: 0 errors. (8 pre-existing `no-unused-expressions` warnings on the `document.hidden ? stop() : start()` polling pattern — all baseline, none introduced by this task.)
+- TypeScript: 0 errors in any of the files touched by this task (pre-existing TS errors in unrelated files like kyc-actions.ts, wallet.tsx, token-chart.tsx are unaffected).
+- Prisma client regenerated (`bunx prisma generate`) so the new voiceData/voiceMime/voiceDuration fields are recognised by the ORM.
+- Dev server restarted on :3000, HTTP 200, lint clean.
+
+---
+Task ID: BROADCAST-VOICE-SUMMARY
+Agent: main
+Task: Summary of broadcast system + voice messages
+
+Stage Summary:
+1. BROADCAST SYSTEM — admin can send video + text to ALL users:
+   - Admin panel has new "Broadcast" section (Megaphone icon)
+   - Compose: title + message + optional video upload (max 10MB, any video type)
+   - On send: creates Broadcast record + Notification for every user + push notification to all
+   - Users see broadcasts in the notification panel (new "Broadcasts" tab)
+   - Users can watch the video inline + like/react
+   - Auto-repush: if user hasn't seen a broadcast within 2 minutes, push is re-sent on next fetch
+   - Polling every 5s for new broadcasts
+
+2. VOICE MESSAGES in support chat:
+   - Both users and admins can record voice messages using the MediaRecorder API
+   - Mic button next to text input — click to start recording
+   - Shows recording timer + stop/cancel buttons
+   - Preview before sending
+   - Voice messages stored as base64 in SupportReply.voiceData
+   - Playback via inline audio player with play/pause + waveform + timestamps
+   - Works on Chrome (audio/webm), Safari (audio/mp4), Firefox
+   - Text + voice can be combined in a single message
+   - Existing polling + flicker prevention + 401 guards preserved
+
+3. PERFORMANCE:
+   - Push fan-out uses 8 parallel workers for large user bases
+   - Video streamed on-demand (not sent in the list payload)
+   - All polling uses visibility-aware pattern (pauses when tab hidden)
+   - Lint: 0 errors (8 pre-existing warnings)

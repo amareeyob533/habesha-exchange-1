@@ -12,7 +12,22 @@ export async function GET() {
       const tickets = await db.supportMessage.findMany({
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
-        include: { replies: { orderBy: { createdAt: 'asc' } } },
+        include: {
+          replies: {
+            orderBy: { createdAt: 'asc' },
+            // Explicitly include voice fields alongside text fields.
+            select: {
+              id: true,
+              senderId: true,
+              senderRole: true,
+              message: true,
+              voiceData: true,
+              voiceMime: true,
+              voiceDuration: true,
+              createdAt: true,
+            },
+          },
+        },
       })
       return NextResponse.json({ tickets })
     } catch (dbErr: any) {

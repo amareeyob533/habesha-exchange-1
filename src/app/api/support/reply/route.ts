@@ -3,14 +3,14 @@ import { db } from '@/lib/db'
 import { requireAuth } from '@/lib/api'
 import { sendPushNotification } from '@/lib/push'
 
-/** POST /api/support/reply — user replies to their own ticket */
+/** POST /api/support/reply — user replies to their own ticket (text and/or voice) */
 export async function POST(req: NextRequest) {
   try {
     const { user, response } = await requireAuth()
     if (!user) return response!
-    const { ticketId, message } = await req.json()
-    if (!ticketId || !message?.trim()) {
-      return NextResponse.json({ error: 'ticketId and message required' }, { status: 400 })
+    const { ticketId, message, voiceData, voiceMime, voiceDuration } = await req.json()
+    if (!ticketId || (!message?.trim() && !voiceData)) {
+      return NextResponse.json({ error: 'ticketId and message or voiceData required' }, { status: 400 })
     }
     const ticket = await db.supportMessage.findUnique({ where: { id: ticketId } })
     if (!ticket || ticket.userId !== user.id) {
@@ -19,8 +19,22 @@ export async function POST(req: NextRequest) {
     if (ticket.status === 'resolved') {
       return NextResponse.json({ error: 'This ticket is resolved' }, { status: 400 })
     }
+    // Derive mime type from the data URL prefix if not explicitly provided.
+    let mime: string | null = voiceMime || null
+    if (voiceData && !mime) {
+      const match = String(voiceData).match(/^data:([^;,]+)/)
+      if (match) mime = match[1]
+    }
     const reply = await db.supportReply.create({
-      data: { ticketId, senderId: user.id, senderRole: 'user', message: message.trim() },
+      data: {
+        ticketId,
+        senderId: user.id,
+        senderRole: 'user',
+        message: message?.trim() || '',
+        voiceData: voiceData || null,
+        voiceMime: mime,
+        voiceDuration: voiceDuration != null ? Number(voiceDuration) : null,
+      },
     })
     // Notify admin
     try {

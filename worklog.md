@@ -1912,3 +1912,34 @@ Stage Summary:
    - Video streamed on-demand (not sent in the list payload)
    - All polling uses visibility-aware pattern (pauses when tab hidden)
    - Lint: 0 errors (8 pre-existing warnings)
+
+---
+Task ID: FIX-VIDEO-BROADCAST-BADGE-NEWUSERS
+Agent: main
+Task: Fix video not playing + add unseen broadcast badge with glow + send broadcasts to new users
+
+Work Log:
+- FIX 1: Video not playing
+  * Root cause: <video> element sends requests with cookies but NOT the Bearer token header. In cross-origin iframe (preview panel), cookies are blocked → 401 → video won't load.
+  * Fix: Updated /api/broadcasts/video/route.ts to support ?token=<jwt> query parameter authentication. The <video> element now appends the stored JWT token to the video URL: `/api/broadcasts/video?id=xxx&token=yyy`
+  * The route tries: Bearer header → cookie → query param token
+
+- FIX 2: Broadcast tab badge + glow
+  * Updated notification-panel.tsx to count unseen broadcasts: `broadcasts.filter(b => !b.seen).length`
+  * Added emerald badge with count on the "Broadcasts" tab button (shows "3" or "9+")
+  * Added `ring-2 ring-primary/50 animate-pulse` glow on the Broadcasts tab when there are unseen broadcasts and the tab is not active
+  * Also added unread count badge on the Notifications tab (red badge)
+
+- FIX 3: Send broadcasts to new users immediately
+  * Updated /api/auth/signup/route.ts:
+    - After creating a new user, fetches the 10 most recent broadcasts
+    - Creates a Notification record for each broadcast for the new user
+    - Sends a push notification for the most recent broadcast
+    - New users see all existing broadcasts in their notification panel immediately on signup
+
+- Lint: 0 errors (8 pre-existing warnings)
+
+Stage Summary:
+- Videos now play in the notification panel (token-based auth for <video> elements)
+- Broadcasts tab glows emerald + shows unseen count when there are new broadcasts
+- New users automatically receive all existing broadcasts as notifications on signup

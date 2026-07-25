@@ -176,6 +176,10 @@ export function NotificationPanel() {
     }
   }
 
+  // Count unseen broadcasts for the badge
+  const unseenBroadcasts = broadcasts.filter((b) => !b.seen).length
+  const unreadNotifications = notifications.filter((n) => !n.read).length
+
   return (
     <Sheet open={notifOpen} onOpenChange={(v) => !v && close()}>
       <SheetContent className="w-full border-border bg-card sm:max-w-md">
@@ -185,23 +189,35 @@ export function NotificationPanel() {
           </SheetTitle>
         </SheetHeader>
 
-        {/* Tab switcher */}
+        {/* Tab switcher with unread counts + glow */}
         <div className="mt-3 flex gap-1 rounded-xl bg-secondary/40 p-1">
           <button
             onClick={() => setTab('notifications')}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold transition-all ${
+            className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold transition-all ${
               tab === 'notifications' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <Bell className="h-3.5 w-3.5" /> Notifications
+            {unreadNotifications > 0 && tab !== 'notifications' && (
+              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-down px-1 text-[9px] font-bold text-white">
+                {unreadNotifications > 9 ? '9+' : unreadNotifications}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setTab('broadcasts')}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold transition-all ${
+            className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold transition-all ${
               tab === 'broadcasts' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-            }`}
+            } ${unseenBroadcasts > 0 && tab !== 'broadcasts' ? 'ring-2 ring-primary/50 animate-pulse' : ''}`}
           >
             <Megaphone className="h-3.5 w-3.5" /> Broadcasts
+            {unseenBroadcasts > 0 && (
+              <span className={`flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold text-white ${
+                tab !== 'broadcasts' ? 'bg-primary' : 'bg-primary/60'
+              }`}>
+                {unseenBroadcasts > 9 ? '9+' : unseenBroadcasts}
+              </span>
+            )}
           </button>
         </div>
 
@@ -270,7 +286,7 @@ export function NotificationPanel() {
                 {b.hasVideo && (
                   <div className="mt-2 overflow-hidden rounded-lg border border-border bg-black/30">
                     <video
-                      src={`/api/broadcasts/video?id=${b.id}`}
+                      src={`/api/broadcasts/video?id=${b.id}${getStoredToken() ? `&token=${getStoredToken()}` : ''}`}
                       controls
                       playsInline
                       preload="metadata"

@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { hashPassword, setSessionCookie } from '@/lib/auth'
 import { generateUid, ensureBalances } from '@/lib/uid'
 import { TOKEN_SYMBOLS } from '@/lib/tokens'
+import { sendPushNotification } from '@/lib/push'
 
 function normalizeUsername(raw: string): string {
   return raw.toLowerCase().trim().replace(/\s+/g, '')
@@ -67,6 +68,32 @@ export async function POST(req: NextRequest) {
           type: 'info',
         },
       })
+    }
+
+    // Send all existing broadcasts to the new user as notifications + push.
+    // This ensures new users immediately see any pending announcements.
+    const broadcasts = await db.broadcast.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 10, // most recent 10 broadcasts
+    })
+    for (const bc of broadcasts) {
+      await db.notification.create({
+        data: {
+          userId: user.id,
+          title: bc.title,
+          message: bc.message,
+          type: 'info',
+        },
+      })
+    }
+    // Send a push notification for the most recent broadcast (if any).
+    if (broadcasts.length > 0) {
+      const latest = broadcasts[0]
+      await sendPushNotification(user.id, {
+        title: latest.title,
+        body: latest.message,
+        url: '/?open_broadcasts=1',
+      }).catch(() => {})
     }
 
     const token = await setSessionCookie({ userId: user.id, uid: user.uid, email: user.email })

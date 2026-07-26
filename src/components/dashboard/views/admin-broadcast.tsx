@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { apiFetch, getStoredToken } from '@/lib/api-client'
 import { compressImage, formatBytes as compressFormatBytes } from '@/lib/compress-image'
 import { useToast } from '@/hooks/use-toast'
+import { upload } from '@vercel/blob/client'
 import { timeAgo } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -45,6 +46,7 @@ export function BroadcastAdmin({ refreshKey }: { refreshKey: number }) {
   const [mediaPreviewUrl, setMediaPreviewUrl] = useState<string | null>(null)
   const [mediaType, setMediaType] = useState<'video' | 'image' | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
@@ -138,21 +140,67 @@ export function BroadcastAdmin({ refreshKey }: { refreshKey: number }) {
       return
     }
     setSending(true)
+    setUploadProgress(0)
     try {
-      // Build multipart form with title + message + optional media file.
-      const form = new FormData()
-      form.append('title', t)
-      form.append('message', m)
-      if (mediaFile) form.append('file', mediaFile)
+      let mediaUrl: string | null = null
 
-      // We bypass apiFetch here because it hard-codes Content-Type: application/json.
-      // FormData needs the browser to set its own multipart boundary.
+      if (mediaFile) {
+        // Try Vercel Blob client upload first (handles files up to 25MB+,
+        // bypasses Vercel's 4.5MB API body limit).
+        try {
+          setUploading(true)
+          const blob = await upload(mediaFile.name, mediaFile, {
+            access: 'public',
+            handleUploadUrl: '/api/blob-upload',
+            onUploadProgress: (progress: any) => {
+              setUploadProgress(Math.round((progress.percentage || 0)))
+            },
+          })
+          mediaUrl = blob.url
+          setUploading(false)
+        } catch (blobErr: any) {
+          setUploading(false)
+          // Blob upload failed — maybe BLOB_READ_WRITE_TOKEN isn't set.
+          // Fall back to FormData (works for files < 4.5MB on Vercel).
+          if (mediaFile.size > 4.5 * 1024 * 1024) {
+            toast({
+              variant: 'destructive',
+              title: 'Upload failed',
+              description: 'Large file upload requires Vercel Blob storage. Connect Blob in Vercel → Storage → Create → Blob. For now, use a file under 4.5 MB.',
+            })
+            setSending(false)
+            return
+          }
+          // Small file — will be sent via FormData below
+        }
+      }
+
+      // Build the request: if we have a Blob URL, send JSON; otherwise FormData
       const token = getStoredToken()
-      const res = await fetch('/api/admin/broadcast', {
-        method: 'POST',
-        body: form,
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      })
+      let res: Response
+      if (mediaUrl) {
+        // Blob URL — send as JSON (no body size issue)
+        res = await fetch('/api/admin/broadcast', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ title: t, message: m, mediaUrl }),
+        })
+      } else {
+        // FormData (small file or no file)
+        const form = new FormData()
+        form.append('title', t)
+        form.append('message', m)
+        if (mediaFile) form.append('file', mediaFile)
+        res = await fetch('/api/admin/broadcast', {
+          method: 'POST',
+          body: form,
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+      }
+
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error((data as any)?.error || `Request failed (${res.status})`)
 
@@ -161,11 +209,13 @@ export function BroadcastAdmin({ refreshKey }: { refreshKey: number }) {
       setTitle('')
       setMessage('')
       clearMedia()
+      setUploadProgress(0)
       await load({ silent: true })
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Failed to send', description: err.message })
     } finally {
       setSending(false)
+      setUploading(false)
     }
   }
 
@@ -265,11 +315,11 @@ export function BroadcastAdmin({ refreshKey }: { refreshKey: number }) {
             </div>
             <Button
               onClick={send}
-              disabled={sending || !title.trim() || !message.trim()}
+              disabled={sending || uploading || !title.trim() || !message.trim()}
               className="bg-gold text-black hover:bg-gold/90"
             >
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {sending ? 'Sending…' : 'Send to All Users'}
+              {sending || uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {uploading ? `Uploading… ${uploadProgress}%` : sending ? 'Sending…' : 'Send to All Users'}
             </Button>
           </div>
         </div>

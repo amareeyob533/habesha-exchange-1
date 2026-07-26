@@ -61,33 +61,61 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
-    const form = await req.formData()
-    const title = (form.get('title') as string | null)?.trim()
-    const message = (form.get('message') as string | null)?.trim()
-    const file = form.get('file')
+    // The request can be either:
+    // 1. multipart/form-data (title, message, file) — for small files < 4.5MB
+    // 2. application/json (title, message, mediaUrl) — for large files uploaded via Vercel Blob
+    const contentType = req.headers.get('content-type') || ''
 
-    if (!title || !message) {
-      return NextResponse.json({ error: 'Title and message are required' }, { status: 400 })
-    }
-
+    let title: string
+    let message: string
     let videoData: string | null = null
     let videoMime: string | null = null
     let videoSize = 0
 
-    if (file && file instanceof File) {
-      // Accept video/* OR image/* types. Reject other types and oversize files.
-      const isVideo = file.type.startsWith('video/')
-      const isImage = file.type.startsWith('image/')
-      if (!isVideo && !isImage) {
-        return NextResponse.json({ error: 'File must be a video or image' }, { status: 400 })
+    if (contentType.includes('application/json')) {
+      // JSON body with Blob URL
+      const body = await req.json()
+      title = (body.title || '').trim()
+      message = (body.message || '').trim()
+      const mediaUrl = body.mediaUrl || null
+      if (!title || !message) {
+        return NextResponse.json({ error: 'Title and message are required' }, { status: 400 })
       }
-      if (file.size > MAX_MEDIA_BYTES) {
-        return NextResponse.json({ error: 'File must be 25 MB or less' }, { status: 400 })
+      if (mediaUrl) {
+        // Store the Blob URL directly — the video/image serving route will redirect to it
+        videoData = mediaUrl
+        // Infer MIME from the URL extension
+        const ext = mediaUrl.split('.').pop()?.toLowerCase() || ''
+        if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(ext)) videoMime = `video/${ext === 'mov' ? 'quicktime' : ext}`
+        else if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'heic'].includes(ext)) videoMime = ext === 'jpg' ? 'image/jpeg' : `image/${ext}`
+        else videoMime = 'video/mp4' // default
+        videoSize = 0 // unknown when using Blob URL
       }
-      videoMime = file.type
-      videoSize = file.size
-      const buf = Buffer.from(await file.arrayBuffer())
-      videoData = `data:${videoMime};base64,${buf.toString('base64')}`
+    } else {
+      // FormData with file
+      const form = await req.formData()
+      title = (form.get('title') as string | null)?.trim() || ''
+      message = (form.get('message') as string | null)?.trim() || ''
+      const file = form.get('file')
+
+      if (!title || !message) {
+        return NextResponse.json({ error: 'Title and message are required' }, { status: 400 })
+      }
+
+      if (file && file instanceof File) {
+        const isVideo = file.type.startsWith('video/')
+        const isImage = file.type.startsWith('image/')
+        if (!isVideo && !isImage) {
+          return NextResponse.json({ error: 'File must be a video or image' }, { status: 400 })
+        }
+        if (file.size > MAX_MEDIA_BYTES) {
+          return NextResponse.json({ error: 'File must be 25 MB or less' }, { status: 400 })
+        }
+        videoMime = file.type
+        videoSize = file.size
+        const buf = Buffer.from(await file.arrayBuffer())
+        videoData = `data:${videoMime};base64,${buf.toString('base64')}`
+      }
     }
 
     // Create the broadcast row.

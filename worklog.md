@@ -1980,3 +1980,48 @@ Stage Summary:
 - Videos up to 25MB supported
 - next.config.ts body size limit increased to 25MB
 - Users see images as <img> and videos as <video> in the notification panel
+
+---
+Task ID: FIX-BROADCAST-BLOB-UPLOAD
+Agent: main
+Task: Fix broadcast upload failing on Vercel (4.5MB body limit) using Vercel Blob client upload
+
+Work Log:
+- Root cause: Vercel has a 4.5MB body size limit for API Route Handlers. The `experimental.serverActions.bodySizeLimit` in next.config.ts only applies to Server Actions, not Route Handlers. So any file > 4.5MB uploaded via FormData fails on Vercel.
+- Fix: Implemented Vercel Blob client-side upload — the file goes DIRECTLY from the browser to Vercel's Blob storage servers, bypassing the API body limit entirely.
+
+- Created src/app/api/blob-upload/route.ts:
+  * Admin-only endpoint that generates a client upload token using handleUpload() from @vercel/blob
+  * The client uses this token to upload directly to Blob storage
+
+- Updated src/components/dashboard/views/admin-broadcast.tsx:
+  * Imports `upload` from @vercel/blob/client
+  * When sending a broadcast with media:
+    1. First tries Vercel Blob client upload (handles files up to 25MB+, bypasses API body limit)
+    2. Shows upload progress: "Uploading… 45%" on the send button
+    3. If Blob upload fails (no BLOB_READ_WRITE_TOKEN), falls back to FormData for files < 4.5MB
+    4. For files > 4.5MB without Blob, shows a clear error: "Large file upload requires Vercel Blob storage"
+  * If Blob URL is available, sends JSON { title, message, mediaUrl } (no body size issue)
+  * If no Blob URL, sends FormData (small files only)
+
+- Updated src/app/api/admin/broadcast/route.ts:
+  * Accepts BOTH content types:
+    1. application/json with { title, message, mediaUrl } — for Blob URLs
+    2. multipart/form-data with { title, message, file } — for small files
+  * When mediaUrl is provided, stores the Blob URL directly in videoData
+  * Infers MIME type from the Blob URL file extension
+
+- Updated src/app/api/broadcasts/video/route.ts:
+  * If videoData starts with http/https (Blob URL), redirects to it (Blob URLs are public)
+  * If videoData is a base64 data URL, serves the raw bytes (as before)
+
+- Added upload progress indicator on the Send button: "Uploading… 45%"
+- Lint: 0 errors (8 pre-existing warnings)
+
+Stage Summary:
+- Broadcast upload now works for files up to 25MB on Vercel using Vercel Blob storage
+- Images are still compressed client-side before upload (fast + small)
+- Videos upload directly to Blob (bypasses 4.5MB API body limit)
+- Upload progress shown on the send button
+- Falls back to FormData for small files when Blob isn't configured
+- REQUIRES: Set BLOB_READ_WRITE_TOKEN in Vercel → Settings → Environment Variables (auto-set when you connect Vercel Blob storage)

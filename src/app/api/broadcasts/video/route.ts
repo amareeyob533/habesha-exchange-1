@@ -47,7 +47,13 @@ export async function GET(req: NextRequest) {
     if (!broadcast) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     if (!broadcast.videoData) return NextResponse.json({ error: 'No video attached' }, { status: 404 })
 
-    // The stored data is a base64 data URL: data:<mime>;base64,<payload>
+    // If the videoData is a Blob URL (starts with http), redirect to it.
+    // Vercel Blob URLs are publicly accessible, so no auth needed for the redirect.
+    if (broadcast.videoData.startsWith('http://') || broadcast.videoData.startsWith('https://')) {
+      return NextResponse.redirect(broadcast.videoData)
+    }
+
+    // Otherwise, it's a base64 data URL: data:<mime>;base64,<payload>
     const match = broadcast.videoData.match(/^data:([^;]+);base64,(.+)$/)
     if (!match) {
       return NextResponse.json({ error: 'Invalid video data' }, { status: 500 })

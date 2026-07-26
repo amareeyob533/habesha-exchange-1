@@ -1943,3 +1943,40 @@ Stage Summary:
 - Videos now play in the notification panel (token-based auth for <video> elements)
 - Broadcasts tab glows emerald + shows unseen count when there are new broadcasts
 - New users automatically receive all existing broadcasts as notifications on signup
+
+---
+Task ID: FIX-BROADCAST-25MB-IMAGES
+Agent: main
+Task: Fix broadcast upload failing + increase to 25MB + allow images
+
+Work Log:
+- FIX 1: Upload limit increased from 10MB → 25MB
+  * src/app/api/admin/broadcast/route.ts: MAX_VIDEO_BYTES (10MB) → MAX_MEDIA_BYTES (25MB)
+  * src/components/dashboard/views/admin-broadcast.tsx: updated constant + error messages
+  * src/next.config.ts: added experimental.serverActions.bodySizeLimit = '25mb' so Vercel accepts large uploads
+
+- FIX 2: Images now supported (not just videos)
+  * API route: accepts both video/* and image/* types (was video-only)
+  * Admin UI: file input accepts "video/*,image/*,.heic,.heif,.avif"
+  * Admin UI: shows Film icon for videos, ImageIcon for images
+  * Admin UI: video preview uses <video>, image preview uses <img>
+  * Notification panel: checks videoMime — if it starts with "image/", renders <img>, otherwise <video>
+
+- FIX 3: Image compression before upload
+  * Images are compressed in the browser using compressImage(file, 1280, 0.8) before upload
+  * Shows "Compressing…" spinner + compression toast: "5.2 MB → 180 KB (97% smaller)"
+  * Videos are NOT compressed client-side (too complex for browser) but the 25MB limit handles most short videos
+
+- FIX 4: Upload button shows uploading state
+  * Disabled while compressing
+  * Shows spinner + "Compressing…" text
+
+- Updated labels: "Optional media (max 25 MB, video or image)" + "MP4, WebM, MOV, JPG, PNG, HEIC · up to 25 MB"
+- Lint: 0 errors (8 pre-existing warnings)
+
+Stage Summary:
+- Broadcast upload now accepts both videos AND images (max 25MB each)
+- Images are compressed in-browser before upload (fast + small)
+- Videos up to 25MB supported
+- next.config.ts body size limit increased to 25MB
+- Users see images as <img> and videos as <video> in the notification panel

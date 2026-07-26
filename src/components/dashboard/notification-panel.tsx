@@ -282,16 +282,24 @@ export function NotificationPanel() {
                 {/* Message */}
                 {b.message && <p className="mt-1 text-xs text-muted-foreground">{b.message}</p>}
 
-                {/* Video player */}
+                {/* Media player (video or image) */}
                 {b.hasVideo && (
                   <div className="mt-2 overflow-hidden rounded-lg border border-border bg-black/30">
-                    <video
-                      src={`/api/broadcasts/video?id=${b.id}${getStoredToken() ? `&token=${getStoredToken()}` : ''}`}
-                      controls
-                      playsInline
-                      preload="metadata"
-                      className="w-full max-h-[300px]"
-                    />
+                    {b.videoMime && b.videoMime.startsWith('image/') ? (
+                      <img
+                        src={`/api/broadcasts/video?id=${b.id}${getStoredToken() ? `&token=${getStoredToken()}` : ''}`}
+                        alt={b.title}
+                        className="w-full max-h-[300px] object-contain"
+                      />
+                    ) : (
+                      <video
+                        src={`/api/broadcasts/video?id=${b.id}${getStoredToken() ? `&token=${getStoredToken()}` : ''}`}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        className="w-full max-h-[300px]"
+                      />
+                    )}
                   </div>
                 )}
 

@@ -4,7 +4,7 @@ import { requireAuth } from '@/lib/api'
 import { isAdminEmail } from '@/lib/deposit-actions'
 import { sendPushNotification } from '@/lib/push'
 
-const MAX_VIDEO_BYTES = 10 * 1024 * 1024 // 10 MB
+const MAX_MEDIA_BYTES = 25 * 1024 * 1024 // 25 MB
 
 /**
  * GET /api/admin/broadcast
@@ -75,12 +75,14 @@ export async function POST(req: NextRequest) {
     let videoSize = 0
 
     if (file && file instanceof File) {
-      // Accept any video/* type. Reject non-videos and oversize files.
-      if (!file.type.startsWith('video/')) {
-        return NextResponse.json({ error: 'File must be a video' }, { status: 400 })
+      // Accept video/* OR image/* types. Reject other types and oversize files.
+      const isVideo = file.type.startsWith('video/')
+      const isImage = file.type.startsWith('image/')
+      if (!isVideo && !isImage) {
+        return NextResponse.json({ error: 'File must be a video or image' }, { status: 400 })
       }
-      if (file.size > MAX_VIDEO_BYTES) {
-        return NextResponse.json({ error: 'Video must be 10 MB or less' }, { status: 400 })
+      if (file.size > MAX_MEDIA_BYTES) {
+        return NextResponse.json({ error: 'File must be 25 MB or less' }, { status: 400 })
       }
       videoMime = file.type
       videoSize = file.size

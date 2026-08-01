@@ -20,7 +20,7 @@ export const BUY_BANKS: BuyBank[] = [
   {
     code: 'Telebirr',
     name: 'Telebirr',
-    accountName: 'Amare Yalew',
+    accountName: 'Eyob Amare',
     accountNumber: '0906045336',
   },
   {

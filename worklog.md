@@ -2025,3 +2025,37 @@ Stage Summary:
 - Upload progress shown on the send button
 - Falls back to FormData for small files when Blob isn't configured
 - REQUIRES: Set BLOB_READ_WRITE_TOKEN in Vercel → Settings → Environment Variables (auto-set when you connect Vercel Blob storage)
+
+---
+Task ID: COMPLETE-VISUAL-REDESIGN
+Agent: main
+Task: Complete visual redesign — new "Nebula Glass" theme (look only, no system changes)
+
+Work Log:
+- Completely rewrote src/app/globals.css with new "Nebula Glass" design system:
+  * DARK MODE "Nebula Glass": deep space navy (#0A0B14) base, indigo primary (#6366F1), electric violet/blue accents
+  * LIGHT MODE "Cloud Lavender": soft lavender-mist (#E2DFEB) base, indigo primary (#4F46E5), rich warm cards (#FBFAFE)
+  * All CSS variable names kept identical — zero component breakage
+  * New color palette:
+    - Primary: emerald → indigo (#6366F1 dark / #4F46E5 light)
+    - Gold: #FBBF24 (dark) / #D97706 (light) — warmer amber
+    - Up: #34D399 / #059669
+    - Down: #F43F5E / #E11D48
+    - Charts: indigo, sky, rose, violet, amber
+  * Heavier glassmorphism: blur(24px) saturate(1.4) — more depth
+  * Larger border radius: 0.875rem → 1rem — more modern rounding
+  * New mesh orbs: indigo + sky + violet — nebula aurora effect
+  * New gradient borders: indigo → cyan → violet
+  * New shadows: colored indigo glow instead of emerald
+  * New primary gradient: indigo → violet (was emerald)
+  * Updated bottom-nav colors: indigo, sky, amber, violet
+  * Updated viewport themeColor: #0A0B14 (dark) / #E2DFEB (light)
+- NO functionality changed — only colors, shadows, blur, gradients, border radius
+- Lint: 0 errors (8 pre-existing warnings)
+
+Stage Summary:
+- Website looks completely different: "Nebula Glass" dark + "Cloud Lavender" light
+- Indigo/violet primary instead of emerald, warmer gold, richer card contrast
+- Heavier glassmorphism, larger rounded corners, colored glow shadows
+- Nebula aurora mesh background (indigo + sky + violet)
+- Everything else (system, functionality, routes, APIs) is 100% unchanged

@@ -6,10 +6,10 @@ import { LayoutDashboard, LineChart, ArrowLeftRight, Wallet } from 'lucide-react
 import { motion } from 'framer-motion'
 
 const ITEMS: { key: ViewKey; icon: any; label: string; color: string }[] = [
-  { key: 'overview', icon: LayoutDashboard, label: 'Home', color: '#00E08F' },
-  { key: 'markets', icon: LineChart, label: 'Markets', color: '#22D3EE' },
-  { key: 'exchange', icon: ArrowLeftRight, label: 'Trade', color: '#FFC83D' },
-  { key: 'wallet', icon: Wallet, label: 'Wallet', color: '#B47AFF' },
+  { key: 'overview', icon: LayoutDashboard, label: 'Home', color: '#6366F1' },
+  { key: 'markets', icon: LineChart, label: 'Markets', color: '#38BDF8' },
+  { key: 'exchange', icon: ArrowLeftRight, label: 'Trade', color: '#FBBF24' },
+  { key: 'wallet', icon: Wallet, label: 'Wallet', color: '#A78BFA' },
 ]
 
 /**

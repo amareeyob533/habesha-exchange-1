@@ -2059,3 +2059,32 @@ Stage Summary:
 - Heavier glassmorphism, larger rounded corners, colored glow shadows
 - Nebula aurora mesh background (indigo + sky + violet)
 - Everything else (system, functionality, routes, APIs) is 100% unchanged
+
+---
+Task ID: BINANCE-REDESIGN
+Agent: main
+Task: Redesign website to look like Binance — flat dark gold theme, same system/data
+
+Work Log:
+- Analyzed Binance screenshot via VLM — extracted exact color palette + design style
+- Completely rewrote src/app/globals.css with "Binance" theme:
+  * DARK: #181A20 background (charcoal), #1E2329 cards, #F0B90B gold primary, #EAECEF text, #848E9C muted
+  * LIGHT: #FAFAFA background, #FFFFFF cards, #C99400 gold primary
+  * Removed ALL glassmorphism (blur/backdrop-filter) — flat solid cards like Binance
+  * Removed heavy shadows — minimal flat shadows
+  * Removed bright mesh orbs — subtle barely-visible orbs (opacity 0.03)
+  * Up: #0ECB81 (Binance green), Down: #F6465D (Binance red)
+  * Gold gradient: #FCD535 → #F0B90B → #D49B0A
+  * Emerald gradient: flat #0ECB81 (kept for compat, used for balance/values)
+  - Border radius: 0.875rem → 0.75rem (slightly tighter, Binance-like)
+  - Borders: rgba(255,255,255,0.05) (very subtle, Binance style)
+- Updated bottom-nav colors: all gold #F0B90B (was emerald/cyan/violet)
+- Updated viewport themeColor: #181A20 (dark) / #FAFAFA (light)
+- VLM verified: "strongly resembles a Binance-style trading interface, flat design, no glassmorphism"
+- Lint: 0 errors (8 pre-existing warnings)
+
+Stage Summary:
+- Website now looks like Binance: flat dark charcoal + gold accent
+- No glassmorphism, no heavy blur, no bright mesh — clean flat trading terminal
+- All functionality, data, routes, APIs 100% unchanged
+- Telebirr account name remains "Eyob Amare"

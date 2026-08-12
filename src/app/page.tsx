@@ -7,7 +7,7 @@ import { LandingPage } from '@/components/landing/landing-page'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 import { AuthModal } from '@/components/auth/auth-modal'
 import { TokenDetailModal } from '@/components/modals/token-detail-modal'
-import { BrandIntro, LogoLoader } from '@/components/common/logo-loader'
+import { BrandIntro } from '@/components/common/logo-loader'
 import { getStoredToken } from '@/lib/api-client'
 
 export default function Home() {
@@ -22,13 +22,10 @@ export default function Home() {
 
   // AUTO-RETRY: If we have a stored token but fetchMe failed (e.g. the dev
   // server was restarting), retry every 5s until the session is restored.
-  // This makes sessions survive sandbox/server restarts — the user stays
-  // "logged in" and is automatically restored once the server is back.
   useEffect(() => {
     if (!authChecked) return
-    if (user) return // already logged in
-    if (!getStoredToken()) return // no token to restore
-    // authChecked=true, user=null, but token exists → server was unreachable.
+    if (user) return
+    if (!getStoredToken()) return
     const id = setInterval(() => {
       fetchMe()
     }, 5000)
@@ -39,14 +36,10 @@ export default function Home() {
 
   return (
     <>
+      {/* Clean static splash — just logo + name, like Binance */}
       {introDone ? null : <BrandIntro onDone={() => setIntroDone(true)} />}
 
-      {booting && introDone && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-background">
-          <LogoLoader visible label="Loading" />
-        </div>
-      )}
-
+      {/* Once intro is done, show the app (even if auth is still checking) */}
       {!booting && (
         user ? <DashboardShell /> : <LandingPage />
       )}

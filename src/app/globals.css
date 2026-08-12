@@ -47,89 +47,90 @@
 }
 
 /* ============================================================================
-   DARK THEME — "Binance"
-   Deep charcoal base · Gold primary · Flat solid cards · No glassmorphism
-   Clean trading-terminal aesthetic · High contrast data readability
+   DARK THEME — "Aero Glass"
+   Deep blue-charcoal base · Cyan primary accent · Gold brand
+   Glassmorphism with frosted blur · Glowing cyan/gold borders
    ============================================================================ */
 :root {
-  --radius: 0.75rem;
-  --background: #181A20;
-  --foreground: #EAECEF;
-  --card: #1E2329;
-  --card-foreground: #EAECEF;
-  --popover: #1E2329;
-  --popover-foreground: #EAECEF;
-  --primary: #F0B90B;
-  --primary-foreground: #181A20;
-  --secondary: #2B3139;
-  --secondary-foreground: #EAECEF;
-  --muted: #1E2329;
-  --muted-foreground: #848E9C;
-  --accent: #2B3139;
-  --accent-foreground: #EAECEF;
-  --destructive: #F6465D;
-  --border: rgba(255, 255, 255, 0.05);
-  --input: rgba(255, 255, 255, 0.08);
-  --ring: #F0B90B;
+  --radius: 1rem;
+  --background: #0A0E1A;
+  --foreground: #E8ECF4;
+  --card: rgba(22, 28, 45, 0.6);
+  --card-foreground: #E8ECF4;
+  --popover: #121826;
+  --popover-foreground: #E8ECF4;
+  --primary: #00D4FF;
+  --primary-foreground: #0A0E1A;
+  --secondary: rgba(30, 40, 60, 0.5);
+  --secondary-foreground: #E8ECF4;
+  --muted: rgba(20, 26, 40, 0.5);
+  --muted-foreground: #7A8BAA;
+  --accent: rgba(30, 40, 60, 0.5);
+  --accent-foreground: #E8ECF4;
+  --destructive: #FF4D6D;
+  --border: rgba(0, 212, 255, 0.08);
+  --input: rgba(0, 212, 255, 0.1);
+  --ring: #00D4FF;
   --gold: #F0B90B;
-  --neon: #F0B90B;
-  --up: #0ECB81;
-  --down: #F6465D;
-  --chart-1: #F0B90B;
-  --chart-2: #0ECB81;
-  --chart-3: #F6465D;
-  --chart-4: #48528F;
+  --neon: #00D4FF;
+  --up: #00E08F;
+  --down: #FF4D6D;
+  --chart-1: #00D4FF;
+  --chart-2: #00E08F;
+  --chart-3: #FF4D6D;
+  --chart-4: #B47AFF;
   --chart-5: #F0B90B;
-  --sidebar: #181A20;
-  --sidebar-foreground: #EAECEF;
-  --sidebar-primary: #F0B90B;
-  --sidebar-primary-foreground: #181A20;
-  --sidebar-accent: #2B3139;
-  --sidebar-accent-foreground: #EAECEF;
-  --sidebar-border: rgba(255, 255, 255, 0.05);
-  --sidebar-ring: #F0B90B;
+  --sidebar: rgba(10, 14, 26, 0.8);
+  --sidebar-foreground: #E8ECF4;
+  --sidebar-primary: #00D4FF;
+  --sidebar-primary-foreground: #0A0E1A;
+  --sidebar-accent: rgba(30, 40, 60, 0.5);
+  --sidebar-accent-foreground: #E8ECF4;
+  --sidebar-border: rgba(0, 212, 255, 0.08);
+  --sidebar-ring: #00D4FF;
 }
 
 /* ============================================================================
-   LIGHT THEME — "Binance Light"
-   Off-white base · Gold primary · Flat solid cards · Clean and airy
+   LIGHT THEME — "Aero Glass Light"
+   Soft blue-tinted base · Cyan primary · Gold brand
+   Glassmorphism with frosted blur · Clean and airy
    ============================================================================ */
 .light {
-  --background: #FAFAFA;
-  --foreground: #1E2329;
-  --card: #FFFFFF;
-  --card-foreground: #1E2329;
+  --background: #DDE3EE;
+  --foreground: #0F1420;
+  --card: rgba(255, 255, 255, 0.7);
+  --card-foreground: #0F1420;
   --popover: #FFFFFF;
-  --popover-foreground: #1E2329;
-  --primary: #C99400;
+  --popover-foreground: #0F1420;
+  --primary: #0099CC;
   --primary-foreground: #FFFFFF;
-  --secondary: #F5F5F5;
-  --secondary-foreground: #1E2329;
-  --muted: #F0F0F0;
-  --muted-foreground: #707A8A;
-  --accent: #F5F5F5;
-  --accent-foreground: #1E2329;
-  --destructive: #F6465D;
-  --border: rgba(0, 0, 0, 0.06);
-  --input: rgba(0, 0, 0, 0.08);
-  --ring: #C99400;
-  --gold: #C99400;
-  --neon: #C99400;
-  --up: #0ECB81;
-  --down: #F6465D;
-  --chart-1: #C99400;
-  --chart-2: #0ECB81;
-  --chart-3: #F6465D;
-  --chart-4: #48528F;
-  --chart-5: #C99400;
-  --sidebar: #F5F5F5;
-  --sidebar-foreground: #1E2329;
-  --sidebar-primary: #C99400;
+  --secondary: rgba(220, 228, 240, 0.6);
+  --secondary-foreground: #0F1420;
+  --muted: rgba(210, 218, 232, 0.5);
+  --muted-foreground: #5A6B8A;
+  --accent: rgba(220, 228, 240, 0.6);
+  --accent-foreground: #0F1420;
+  --destructive: #E0394A;
+  --border: rgba(0, 153, 204, 0.12);
+  --input: rgba(0, 153, 204, 0.14);
+  --ring: #0099CC;
+  --gold: #B8860B;
+  --neon: #0099CC;
+  --up: #00A565;
+  --down: #E0394A;
+  --chart-1: #0099CC;
+  --chart-2: #00A565;
+  --chart-3: #E0394A;
+  --chart-4: #7C3AED;
+  --chart-5: #B8860B;
+  --sidebar: rgba(221, 227, 238, 0.8);
+  --sidebar-foreground: #0F1420;
+  --sidebar-primary: #0099CC;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #E8E8E8;
-  --sidebar-accent-foreground: #1E2329;
-  --sidebar-border: rgba(0, 0, 0, 0.06);
-  --sidebar-ring: #C99400;
+  --sidebar-accent: rgba(200, 210, 225, 0.6);
+  --sidebar-accent-foreground: #0F1420;
+  --sidebar-border: rgba(0, 153, 204, 0.12);
+  --sidebar-ring: #0099CC;
 }
 
 @layer base {
@@ -147,7 +148,7 @@
     text-rendering: optimizeLegibility;
     overflow-x: hidden;
     width: 100%;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
   main, section, header, footer, nav, aside {
     max-width: 100vw;
@@ -155,89 +156,107 @@
   }
 }
 
-/* ============ GOLD GRADIENT (Binance signature) ============ */
-.text-gold-gradient {
-  background: linear-gradient(135deg, #FCD535 0%, #F0B90B 50%, #D49B0A 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-.bg-gold-gradient {
-  background: linear-gradient(135deg, #FCD535 0%, #F0B90B 50%, #D49B0A 100%);
-}
-.bg-gold-glow {
-  background: radial-gradient(circle at 50% 50%, rgba(240, 185, 11, 0.1), transparent 70%);
-}
-
-/* Emerald gradient kept for compatibility */
+/* ============ CYAN GRADIENT (primary accent) ============ */
 .text-emerald-gradient {
-  background: linear-gradient(135deg, #0ECB81 0%, #0ECB81 100%);
+  background: linear-gradient(135deg, #7AE8FF 0%, #00D4FF 50%, #0099CC 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
 .bg-emerald-gradient {
-  background: linear-gradient(135deg, #0ECB81 0%, #0ECB81 100%);
-}
-.bg-emerald-glow {
-  background: radial-gradient(circle at 50% 50%, rgba(14, 203, 129, 0.1), transparent 70%);
-}
-
-/* Light-mode gold */
-.light .text-gold-gradient {
-  background: linear-gradient(135deg, #D9A82C 0%, #C99400 50%, #A8780C 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-.light .bg-gold-gradient {
-  background: linear-gradient(135deg, #D9A82C 0%, #C99400 50%, #A8780C 100%);
-}
-.light .bg-gold-glow {
-  background: radial-gradient(circle at 50% 50%, rgba(201, 148, 0, 0.08), transparent 70%);
+  background: linear-gradient(135deg, #7AE8FF 0%, #00D4FF 50%, #0099CC 100%);
 }
 .light .text-emerald-gradient {
-  background: linear-gradient(135deg, #0ECB81 0%, #0ECB81 100%);
+  background: linear-gradient(135deg, #00CFFF 0%, #0099CC 50%, #0077AA 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
 .light .bg-emerald-gradient {
-  background: linear-gradient(135deg, #0ECB81 0%, #0ECB81 100%);
+  background: linear-gradient(135deg, #00CFFF 0%, #0099CC 50%, #0077AA 100%);
+}
+.bg-emerald-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.15), transparent 70%);
 }
 .light .bg-emerald-glow {
-  background: radial-gradient(circle at 50% 50%, rgba(14, 203, 129, 0.08), transparent 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(0, 153, 204, 0.1), transparent 70%);
 }
 
-/* ============ FLAT CARDS (Binance style — no glassmorphism) ============ */
+/* ============ GOLD GRADIENT (brand) ============ */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #FFE082 0%, #F0B90B 50%, #D49B0A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.bg-gold-gradient {
+  background: linear-gradient(135deg, #FFE082 0%, #F0B90B 50%, #D49B0A 100%);
+}
+.bg-gold-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(240, 185, 11, 0.18), transparent 70%);
+}
+.light .text-gold-gradient {
+  background: linear-gradient(135deg, #D9A82C 0%, #B8860B 50%, #8B6508 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.light .bg-gold-gradient {
+  background: linear-gradient(135deg, #D9A82C 0%, #B8860B 50%, #8B6508 100%);
+}
+.light .bg-gold-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(184, 134, 11, 0.12), transparent 70%);
+}
+
+/* ============ GLASSMORPHISM (Aero Glass — frosted with blur) ============ */
 .glass-card {
   background: var(--card);
-  border: 1px solid var(--border);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid rgba(0, 212, 255, 0.1);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 .glass-strong {
+  background: color-mix(in srgb, var(--card) 85%, transparent);
+  backdrop-filter: blur(28px) saturate(1.6);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  border: 1px solid rgba(0, 212, 255, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.light .glass-card {
   background: var(--card);
-  border: 1px solid var(--border);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  border: 1px solid rgba(0, 153, 204, 0.1);
+  box-shadow: 0 4px 24px rgba(15, 20, 32, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.light .glass-strong {
+  background: color-mix(in srgb, var(--card) 90%, transparent);
+  backdrop-filter: blur(28px) saturate(1.5);
+  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  border: 1px solid rgba(0, 153, 204, 0.12);
+  box-shadow: 0 8px 32px rgba(15, 20, 32, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-/* ============ FLAT SHADOWS (minimal, Binance style) ============ */
+/* ============ SHADOWS ============ */
 .shadow-gold {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 24px rgba(0, 212, 255, 0.16), 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 .shadow-gold-lg {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 48px rgba(0, 212, 255, 0.24), 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 .shadow-premium {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.16);
 }
 .light .shadow-premium {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 32px rgba(15, 20, 32, 0.1), 0 2px 8px rgba(15, 20, 32, 0.06);
 }
 
-/* ============ MESH BACKGROUND (subtle, Binance keeps it flat) ============ */
+/* ============ ANIMATED MESH BACKGROUND ============ */
 .mesh-bg {
   position: fixed;
   inset: 0;
@@ -249,45 +268,48 @@
 .mesh-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.03;
-  animation: orb-float 25s ease-in-out infinite;
+  filter: blur(90px);
+  opacity: 0.12;
+  animation: orb-float 22s ease-in-out infinite;
 }
 .mesh-orb-1 {
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, #F0B90B, transparent 70%);
-  top: -10%; left: -5%;
+  width: 560px; height: 560px;
+  background: radial-gradient(circle, #00D4FF, transparent 70%);
+  top: -12%; left: -8%;
   animation-delay: 0s;
-  opacity: 0.03;
+  opacity: 0.1;
 }
 .mesh-orb-2 {
-  width: 400px; height: 400px;
-  background: radial-gradient(circle, #0ECB81, transparent 70%);
-  bottom: -5%; right: 10%;
+  width: 440px; height: 440px;
+  background: radial-gradient(circle, #F0B90B, transparent 70%);
+  bottom: -8%; right: 8%;
   animation-delay: -8s;
-  opacity: 0.02;
+  opacity: 0.06;
 }
 .mesh-orb-3 {
-  width: 350px; height: 350px;
-  background: radial-gradient(circle, #48528F, transparent 70%);
-  top: 40%; right: -5%;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, #B47AFF, transparent 70%);
+  top: 38%; right: -6%;
   animation-delay: -15s;
-  opacity: 0.02;
+  opacity: 0.05;
 }
-.light .mesh-orb { opacity: 0.02 !important; }
+.light .mesh-orb-1 { background: radial-gradient(circle, #0099CC, transparent 70%) !important; opacity: 0.1 !important; }
+.light .mesh-orb-2 { background: radial-gradient(circle, #B8860B, transparent 70%) !important; opacity: 0.06 !important; }
+.light .mesh-orb-3 { background: radial-gradient(circle, #7C3AED, transparent 70%) !important; opacity: 0.05 !important; }
 
 @keyframes orb-float {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(25px, -30px) scale(1.05); }
-  66% { transform: translate(-15px, 20px) scale(0.95); }
+  33% { transform: translate(35px, -45px) scale(1.1); }
+  66% { transform: translate(-20px, 30px) scale(0.93); }
 }
 
-/* ============ GRADIENT BORDER (subtle gold, Binance style) ============ */
+/* ============ GRADIENT BORDER — glowing cyan/gold ============ */
 .gradient-border {
   position: relative;
   background: var(--card);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
 }
 .gradient-border::before {
   content: '';
@@ -295,14 +317,14 @@
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(240, 185, 11, 0.15), transparent 50%, transparent);
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.35), rgba(240, 185, 11, 0.12) 50%, rgba(180, 122, 255, 0.15));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
 }
 .light .gradient-border::before {
-  background: linear-gradient(135deg, rgba(201, 148, 0, 0.15), transparent 50%, transparent);
+  background: linear-gradient(135deg, rgba(0, 153, 204, 0.4), rgba(184, 134, 11, 0.2) 50%, rgba(124, 58, 237, 0.18));
 }
 
 /* ============ SHIMMER BUTTON ============ */
@@ -315,8 +337,8 @@
   position: absolute;
   top: 0; left: -100%;
   width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-  transition: left 0.5s ease;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.6s ease;
 }
 .shimmer-btn:hover::after {
   left: 100%;
@@ -331,24 +353,24 @@
   background: transparent;
 }
 .custom-scroll::-webkit-scrollbar-thumb {
-  background: rgba(132, 142, 156, 0.3);
+  background: rgba(0, 212, 255, 0.2);
   border-radius: 999px;
 }
 .custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(132, 142, 156, 0.5);
+  background: rgba(0, 212, 255, 0.4);
 }
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(132, 142, 156, 0.3) transparent;
+  scrollbar-color: rgba(0, 212, 255, 0.2) transparent;
 }
 .light .custom-scroll::-webkit-scrollbar-thumb {
-  background: rgba(112, 122, 138, 0.3);
+  background: rgba(0, 153, 204, 0.25);
 }
 .light .custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(112, 122, 138, 0.5);
+  background: rgba(0, 153, 204, 0.45);
 }
 .light * {
-  scrollbar-color: rgba(112, 122, 138, 0.3) transparent;
+  scrollbar-color: rgba(0, 153, 204, 0.25) transparent;
 }
 
 /* ============ ANIMATIONS ============ */
@@ -357,20 +379,20 @@
   100% { background-position: 200% 0; }
 }
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(240, 185, 11, 0.12), transparent);
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.16), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-10px); }
 }
 .animate-float { animation: float 6s ease-in-out infinite; }
 
 @keyframes pulse-gold {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(240, 185, 11, 0.4); }
-  50% { box-shadow: 0 0 0 12px rgba(240, 185, 11, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.5); }
+  50% { box-shadow: 0 0 0 12px rgba(0, 212, 255, 0); }
 }
 .animate-pulse-gold { animation: pulse-gold 2.4s ease-out infinite; }
 
@@ -391,10 +413,10 @@
 .animate-ticker { animation: ticker 38s linear infinite; }
 
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.animate-fade-in-up { animation: fade-in-up 0.4s ease-out both; }
+.animate-fade-in-up { animation: fade-in-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
 @keyframes glow-pulse {
   0%, 100% { opacity: 0.5; transform: scale(1); }
@@ -405,7 +427,7 @@
 /* utility */
 .glass-card {
   background: var(--card);
-  backdrop-filter: none;
+  backdrop-filter: blur(20px) saturate(1.4);
 }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

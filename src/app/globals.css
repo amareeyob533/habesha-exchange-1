@@ -47,90 +47,90 @@
 }
 
 /* ============================================================================
-   DARK THEME — "Nebula Glass"
-   Deep space navy base · Electric violet-blue primary · Gold brand accent
-   Heavy glassmorphism · Glowing borders · Modern floating cards
+   DARK THEME — "Obsidian Aurora"
+   Cool onyx base · Vibrant emerald primary · Gold reserved for brand only
    ============================================================================ */
 :root {
-  --radius: 1rem;
-  --background: #0A0B14;
-  --foreground: #EEF0FA;
-  --card: #12141F;
-  --card-foreground: #EEF0FA;
-  --popover: #0E1019;
-  --popover-foreground: #EEF0FA;
-  --primary: #6366F1;
-  --primary-foreground: #FFFFFF;
-  --secondary: #1A1D2B;
-  --secondary-foreground: #EEF0FA;
-  --muted: #161826;
-  --muted-foreground: #8B8FA8;
-  --accent: #1A1D2B;
-  --accent-foreground: #EEF0FA;
-  --destructive: #F43F5E;
-  --border: rgba(255, 255, 255, 0.06);
-  --input: rgba(255, 255, 255, 0.08);
-  --ring: #6366F1;
-  --gold: #FBBF24;
-  --neon: #38BDF8;
-  --up: #34D399;
-  --down: #F43F5E;
-  --chart-1: #6366F1;
-  --chart-2: #38BDF8;
-  --chart-3: #F43F5E;
-  --chart-4: #A78BFA;
-  --chart-5: #FBBF24;
-  --sidebar: #0D0E18;
-  --sidebar-foreground: #EEF0FA;
-  --sidebar-primary: #6366F1;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #1A1D2B;
-  --sidebar-accent-foreground: #EEF0FA;
-  --sidebar-border: rgba(255, 255, 255, 0.06);
-  --sidebar-ring: #6366F1;
+  --radius: 0.875rem;
+  --background: #07090D;
+  --foreground: #ECF1F8;
+  --card: #11151C;
+  --card-foreground: #ECF1F8;
+  --popover: #0E1117;
+  --popover-foreground: #ECF1F8;
+  --primary: #00E08F;
+  --primary-foreground: #04130C;
+  --secondary: #181D26;
+  --secondary-foreground: #ECF1F8;
+  --muted: #141821;
+  --muted-foreground: #7C8794;
+  --accent: #181D26;
+  --accent-foreground: #ECF1F8;
+  --destructive: #FF4D6D;
+  --border: rgba(255, 255, 255, 0.07);
+  --input: rgba(255, 255, 255, 0.09);
+  --ring: #00E08F;
+  --gold: #FFC83D;
+  --neon: #22D3EE;
+  --up: #00E08F;
+  --down: #FF4D6D;
+  --chart-1: #00E08F;
+  --chart-2: #22D3EE;
+  --chart-3: #FF4D6D;
+  --chart-4: #B47AFF;
+  --chart-5: #FFC83D;
+  --sidebar: #0A0C11;
+  --sidebar-foreground: #ECF1F8;
+  --sidebar-primary: #00E08F;
+  --sidebar-primary-foreground: #04130C;
+  --sidebar-accent: #181D26;
+  --sidebar-accent-foreground: #ECF1F8;
+  --sidebar-border: rgba(255, 255, 255, 0.07);
+  --sidebar-ring: #00E08F;
 }
 
 /* ============================================================================
-   LIGHT THEME — "Cloud Lavender"
-   Soft lavender-mist base · Indigo primary · Rich warm cards
-   Clean glassmorphism · Subtle colored borders · Premium airy feel
+   LIGHT THEME — "Warm Sand & Emerald"
+   Deep warm sand base (clearly colored, NOT near-white) · Bright cream cards
+   that POP against the background (same contrast pattern as dark mode)
+   · Emerald primary · Deep navy text · Premium fintech feel
    ============================================================================ */
 .light {
-  --background: #E2DFEB;
-  --foreground: #1B1A2E;
-  --card: #FBFAFE;
-  --card-foreground: #1B1A2E;
-  --popover: #FBFAFE;
-  --popover-foreground: #1B1A2E;
-  --primary: #4F46E5;
+  --background: #D9D3C7;
+  --foreground: #1A1F2E;
+  --card: #FFFBF5;
+  --card-foreground: #1A1F2E;
+  --popover: #FFFBF5;
+  --popover-foreground: #1A1F2E;
+  --primary: #00A565;
   --primary-foreground: #FFFFFF;
-  --secondary: #D4D0E0;
-  --secondary-foreground: #1B1A2E;
-  --muted: #D8D4E4;
-  --muted-foreground: #5A5772;
-  --accent: #D4D0E0;
-  --accent-foreground: #1B1A2E;
-  --destructive: #E11D48;
-  --border: rgba(40, 30, 60, 0.12);
-  --input: rgba(40, 30, 60, 0.14);
-  --ring: #4F46E5;
-  --gold: #D97706;
-  --neon: #0284C7;
-  --up: #059669;
-  --down: #E11D48;
-  --chart-1: #4F46E5;
-  --chart-2: #0284C7;
-  --chart-3: #E11D48;
+  --secondary: #C9C1B3;
+  --secondary-foreground: #1A1F2E;
+  --muted: #CFC7B8;
+  --muted-foreground: #5C5448;
+  --accent: #C9C1B3;
+  --accent-foreground: #1A1F2E;
+  --destructive: #D63550;
+  --border: rgba(60, 50, 30, 0.14);
+  --input: rgba(60, 50, 30, 0.16);
+  --ring: #00A565;
+  --gold: #B8860B;
+  --neon: #0891B2;
+  --up: #00A565;
+  --down: #D63550;
+  --chart-1: #00A565;
+  --chart-2: #0891B2;
+  --chart-3: #D63550;
   --chart-4: #7C3AED;
-  --chart-5: #D97706;
-  --sidebar: #D6D2E4;
-  --sidebar-foreground: #1B1A2E;
-  --sidebar-primary: #4F46E5;
+  --chart-5: #B8860B;
+  --sidebar: #CDC6B8;
+  --sidebar-foreground: #1A1F2E;
+  --sidebar-primary: #00A565;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #CCC8DC;
-  --sidebar-accent-foreground: #1B1A2E;
-  --sidebar-border: rgba(40, 30, 60, 0.12);
-  --sidebar-ring: #4F46E5;
+  --sidebar-accent: #BFB7A8;
+  --sidebar-accent-foreground: #1A1F2E;
+  --sidebar-border: rgba(60, 50, 30, 0.14);
+  --sidebar-ring: #00A565;
 }
 
 @layer base {
@@ -150,98 +150,99 @@
     width: 100%;
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   }
+  /* Prevent any element from causing horizontal scroll on mobile */
   main, section, header, footer, nav, aside {
     max-width: 100vw;
     overflow-x: hidden;
   }
 }
 
-/* ============ PRIMARY GRADIENT (indigo → violet) ============ */
+/* ============ EMERALD GRADIENT (primary action / modern accent) ============ */
 .text-emerald-gradient {
-  background: linear-gradient(135deg, #818CF8 0%, #6366F1 50%, #A78BFA 100%);
+  background: linear-gradient(135deg, #5EE9B0 0%, #00E08F 50%, #00B96B 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
 .bg-emerald-gradient {
-  background: linear-gradient(135deg, #818CF8 0%, #6366F1 50%, #A78BFA 100%);
+  background: linear-gradient(135deg, #5EE9B0 0%, #00E08F 50%, #00B96B 100%);
 }
 .light .text-emerald-gradient {
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #7C3AED 100%);
+  background: linear-gradient(135deg, #00C773 0%, #00A565 50%, #00824A 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
 .light .bg-emerald-gradient {
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #7C3AED 100%);
+  background: linear-gradient(135deg, #00C773 0%, #00A565 50%, #00824A 100%);
 }
 
-/* ============ GOLD GRADIENT (brand) ============ */
+/* ============ GOLD GRADIENT (brand only — brighter, less amber) ============ */
 .text-gold-gradient {
-  background: linear-gradient(135deg, #FDE68A 0%, #FBBF24 50%, #F59E0B 100%);
+  background: linear-gradient(135deg, #FFE082 0%, #FFC83D 50%, #F0A800 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
 .bg-gold-gradient {
-  background: linear-gradient(135deg, #FDE68A 0%, #FBBF24 50%, #F59E0B 100%);
+  background: linear-gradient(135deg, #FFE082 0%, #FFC83D 50%, #F0A800 100%);
 }
 .bg-gold-glow {
-  background: radial-gradient(circle at 50% 50%, rgba(251, 191, 36, 0.2), transparent 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(255, 200, 61, 0.22), transparent 70%);
 }
 .bg-emerald-glow {
-  background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.16), transparent 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(0, 224, 143, 0.18), transparent 70%);
 }
 .light .bg-emerald-glow {
-  background: radial-gradient(circle at 50% 50%, rgba(79, 70, 229, 0.12), transparent 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(0, 165, 101, 0.15), transparent 70%);
 }
 
-/* Light-mode gold */
+/* Light-mode gold: deeper, richer */
 .light .text-gold-gradient {
-  background: linear-gradient(135deg, #D97706 0%, #B45309 50%, #92400E 100%);
+  background: linear-gradient(135deg, #D9A82C 0%, #B8860B 50%, #8B6508 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
 .light .bg-gold-gradient {
-  background: linear-gradient(135deg, #D97706 0%, #B45309 50%, #92400E 100%);
+  background: linear-gradient(135deg, #D9A82C 0%, #B8860B 50%, #8B6508 100%);
 }
 .light .bg-gold-glow {
-  background: radial-gradient(circle at 50% 50%, rgba(217, 119, 6, 0.12), transparent 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(184, 134, 11, 0.15), transparent 70%);
 }
 
-/* ============ GLASSMORPHISM — heavier blur, more depth ============ */
+/* ============ PREMIUM GLASSMORPHISM ============ */
 .glass-card {
-  background: color-mix(in srgb, var(--card) 75%, transparent);
-  backdrop-filter: blur(24px) saturate(1.4);
-  -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  border: 1px solid color-mix(in srgb, var(--border) 120%, transparent);
+  background: color-mix(in srgb, var(--card) 80%, transparent);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  border: 1px solid color-mix(in srgb, var(--border) 100%, transparent);
 }
 .glass-strong {
-  background: color-mix(in srgb, var(--card) 88%, transparent);
-  backdrop-filter: blur(28px) saturate(1.6);
-  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
 }
 
-/* ============ SHADOWS — colored glows for depth ============ */
+/* ============ PREMIUM SHADOWS — soft depth, not harsh ============ */
 .shadow-gold {
-  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.16), 0 1px 3px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 24px rgba(0, 224, 143, 0.14), 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 .shadow-gold-lg {
-  box-shadow: 0 8px 48px rgba(99, 102, 241, 0.24), 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 48px rgba(0, 224, 143, 0.2), 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 .shadow-premium {
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 2px 10px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.32), 0 2px 8px rgba(0, 0, 0, 0.14);
 }
 .light .shadow-premium {
-  box-shadow: 0 10px 40px rgba(40, 30, 60, 0.12), 0 2px 10px rgba(40, 30, 60, 0.08);
+  box-shadow: 0 8px 32px rgba(60, 50, 30, 0.1), 0 2px 8px rgba(60, 50, 30, 0.06);
 }
 
-/* ============ ANIMATED MESH BACKGROUND — nebula aurora ============ */
+/* ============ ANIMATED GRADIENT MESH BACKGROUND — cool aurora ============ */
 .mesh-bg {
   position: fixed;
   inset: 0;
@@ -252,42 +253,42 @@
 .mesh-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(90px);
+  filter: blur(80px);
   opacity: 0.15;
-  animation: orb-float 22s ease-in-out infinite;
+  animation: orb-float 20s ease-in-out infinite;
 }
 .mesh-orb-1 {
-  width: 560px; height: 560px;
-  background: radial-gradient(circle, #6366F1, transparent 70%);
-  top: -12%; left: -8%;
+  width: 520px; height: 520px;
+  background: radial-gradient(circle, #00E08F, transparent 70%);
+  top: -10%; left: -5%;
   animation-delay: 0s;
-  opacity: 0.12;
-}
-.mesh-orb-2 {
-  width: 440px; height: 440px;
-  background: radial-gradient(circle, #38BDF8, transparent 70%);
-  bottom: -8%; right: 8%;
-  animation-delay: -8s;
   opacity: 0.1;
 }
-.mesh-orb-3 {
-  width: 400px; height: 400px;
-  background: radial-gradient(circle, #A78BFA, transparent 70%);
-  top: 38%; right: -6%;
-  animation-delay: -15s;
+.mesh-orb-2 {
+  width: 420px; height: 420px;
+  background: radial-gradient(circle, #22D3EE, transparent 70%);
+  bottom: -5%; right: 10%;
+  animation-delay: -7s;
   opacity: 0.08;
 }
-.light .mesh-orb-1 { background: radial-gradient(circle, #6366F1, transparent 70%) !important; opacity: 0.14 !important; }
-.light .mesh-orb-2 { background: radial-gradient(circle, #0284C7, transparent 70%) !important; opacity: 0.12 !important; }
-.light .mesh-orb-3 { background: radial-gradient(circle, #D97706, transparent 70%) !important; opacity: 0.1 !important; }
+.mesh-orb-3 {
+  width: 380px; height: 380px;
+  background: radial-gradient(circle, #B47AFF, transparent 70%);
+  top: 40%; right: -5%;
+  animation-delay: -14s;
+  opacity: 0.06;
+}
+.light .mesh-orb-1 { background: radial-gradient(circle, #00A565, transparent 70%) !important; opacity: 0.12 !important; }
+.light .mesh-orb-2 { background: radial-gradient(circle, #0891B2, transparent 70%) !important; opacity: 0.1 !important; }
+.light .mesh-orb-3 { background: radial-gradient(circle, #B8860B, transparent 70%) !important; opacity: 0.08 !important; }
 
 @keyframes orb-float {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(40px, -50px) scale(1.12); }
-  66% { transform: translate(-25px, 35px) scale(0.92); }
+  33% { transform: translate(30px, -40px) scale(1.1); }
+  66% { transform: translate(-20px, 30px) scale(0.95); }
 }
 
-/* ============ GRADIENT BORDER — indigo → cyan → violet ============ */
+/* ============ GRADIENT BORDER CARD — emerald → cyan → violet ============ */
 .gradient-border {
   position: relative;
   background: var(--card);
@@ -299,14 +300,15 @@
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.35), rgba(56, 189, 248, 0.15) 50%, rgba(167, 139, 250, 0.18));
+  background: linear-gradient(135deg, rgba(0, 224, 143, 0.3), rgba(34, 211, 238, 0.12) 50%, rgba(180, 122, 255, 0.14));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
 }
+/* Light-mode gradient border — warmer, more visible on sand background */
 .light .gradient-border::before {
-  background: linear-gradient(135deg, rgba(79, 70, 229, 0.45), rgba(2, 132, 199, 0.22) 50%, rgba(217, 119, 6, 0.28));
+  background: linear-gradient(135deg, rgba(0, 165, 101, 0.4), rgba(8, 145, 178, 0.2) 50%, rgba(184, 134, 11, 0.25));
 }
 
 /* ============ SHIMMER BUTTON ============ */
@@ -319,14 +321,14 @@
   position: absolute;
   top: 0; left: -100%;
   width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
   transition: left 0.6s ease;
 }
 .shimmer-btn:hover::after {
   left: 100%;
 }
 
-/* ============ SCROLLBAR ============ */
+/* ============ SCROLLBAR — cool neutral, not gold ============ */
 .custom-scroll::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -335,24 +337,24 @@
   background: transparent;
 }
 .custom-scroll::-webkit-scrollbar-thumb {
-  background: rgba(139, 143, 168, 0.3);
+  background: rgba(124, 135, 148, 0.28);
   border-radius: 999px;
 }
 .custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(139, 143, 168, 0.5);
+  background: rgba(124, 135, 148, 0.5);
 }
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(139, 143, 168, 0.3) transparent;
+  scrollbar-color: rgba(124, 135, 148, 0.28) transparent;
 }
 .light .custom-scroll::-webkit-scrollbar-thumb {
-  background: rgba(90, 87, 114, 0.35);
+  background: rgba(107, 99, 86, 0.35);
 }
 .light .custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(90, 87, 114, 0.55);
+  background: rgba(107, 99, 86, 0.55);
 }
 .light * {
-  scrollbar-color: rgba(90, 87, 114, 0.35) transparent;
+  scrollbar-color: rgba(107, 99, 86, 0.35) transparent;
 }
 
 /* ============ ANIMATIONS ============ */
@@ -361,7 +363,7 @@
   100% { background-position: 200% 0; }
 }
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(0, 224, 143, 0.18), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
@@ -373,8 +375,8 @@
 .animate-float { animation: float 6s ease-in-out infinite; }
 
 @keyframes pulse-gold {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.5); }
-  50% { box-shadow: 0 0 0 14px rgba(99, 102, 241, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 224, 143, 0.5); }
+  50% { box-shadow: 0 0 0 14px rgba(0, 224, 143, 0); }
 }
 .animate-pulse-gold { animation: pulse-gold 2.4s ease-out infinite; }
 
@@ -408,8 +410,8 @@
 
 /* utility */
 .glass-card {
-  background: color-mix(in oklch, var(--card) 75%, transparent);
-  backdrop-filter: blur(16px);
+  background: color-mix(in oklch, var(--card) 80%, transparent);
+  backdrop-filter: blur(12px);
 }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

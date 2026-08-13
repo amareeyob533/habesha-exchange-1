@@ -41,18 +41,17 @@ export function OverviewView() {
             <div className="mt-1 flex items-center gap-1.5 text-xs text-up">
               <TrendingUp className="h-3.5 w-3.5" /> Ready to trade
             </div>
-            {/* CTA hierarchy: Deposit = solid cyan, others = ghost outline */}
             <div className="mt-5 flex flex-wrap gap-2">
-              <Button className="bg-emerald-gradient font-bold text-primary-foreground shadow-gold" onClick={() => openDeposit('USDT')}>
+              <Button className="bg-gold-gradient font-semibold text-primary-foreground" onClick={() => openDeposit('USDT')}>
                 <ArrowDownToLine className="mr-1 h-4 w-4" /> Deposit
               </Button>
-              <Button variant="ghost" className="border border-border/40 text-muted-foreground hover:text-foreground hover:bg-secondary/40" onClick={() => openWithdraw('USDT')}>
+              <Button variant="outline" className="border-gold/30 text-gold hover:bg-gold/10" onClick={() => openWithdraw('USDT')}>
                 <ArrowUpFromLine className="mr-1 h-4 w-4" /> Withdraw
               </Button>
-              <Button variant="ghost" className="border border-border/40 text-muted-foreground hover:text-foreground hover:bg-secondary/40" onClick={() => openBuy()}>
-                <ShoppingCart className="mr-1 h-4 w-4" /> Buy
+              <Button variant="outline" onClick={() => openBuy()}>
+                <ShoppingCart className="mr-1 h-4 w-4" /> Buy USDT
               </Button>
-              <Button variant="ghost" className="border border-border/40 text-muted-foreground hover:text-foreground hover:bg-secondary/40" onClick={() => openWithdraw('USDT')}>
+              <Button variant="outline" onClick={() => openWithdraw('USDT')}>
                 <Send className="mr-1 h-4 w-4" /> Transfer
               </Button>
             </div>
@@ -210,40 +209,46 @@ function LiveRateDisplay() {
         </span>
       </div>
 
-      {/* Mini sparkline — interactive price history chart */}
+      {/* Mini sparkline */}
       {rates.length > 1 && (
-        <div className="mt-3 rounded-xl border border-border/30 bg-secondary/20 p-3">
-          <div className="mb-1 flex items-center justify-between text-[10px] text-muted-foreground">
-            <span>USDT/ETB Price History</span>
-            <span className={cn('font-bold', isUp ? 'text-up' : isDown ? 'text-down' : 'text-muted-foreground')}>
-              {isUp ? '▲' : isDown ? '▼' : '—'} {prevRate > 0 ? Math.abs(((change / prevRate) * 100)).toFixed(3) : '0.000'}%
-            </span>
-          </div>
-          <div className="flex justify-center">
-            <svg width={w} height={h + 8} className="overflow-visible">
-              <defs>
-                <linearGradient id="rate-spark-cyan" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={isUp ? '#00E08F' : isDown ? '#FF4D6D' : '#00D4FF'} stopOpacity={0.25} />
-                  <stop offset="100%" stopColor={isUp ? '#00E08F' : isDown ? '#FF4D6D' : '#00D4FF'} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <path d={areaD} fill="url(#rate-spark-cyan)" />
-              <path d={pathD} fill="none" stroke={isUp ? '#00E08F' : isDown ? '#FF4D6D' : '#00D4FF'} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-              {/* Last point dot with glow */}
-              <circle cx={(rates.length - 1) * stepX} cy={h - ((rates[rates.length - 1] - min) / range) * h} r={3} fill={isUp ? '#00E08F' : isDown ? '#FF4D6D' : '#00D4FF'} />
-              <circle cx={(rates.length - 1) * stepX} cy={h - ((rates[rates.length - 1] - min) / range) * h} r={6} fill={isUp ? '#00E08F' : isDown ? '#FF4D6D' : '#00D4FF'} opacity={0.2} />
-            </svg>
-          </div>
-          {/* Range labels */}
-          <div className="mt-1 flex justify-between text-[9px] text-muted-foreground">
-            <span>Low: {min.toFixed(3)}</span>
-            <span>High: {max.toFixed(3)}</span>
-          </div>
+        <div className="mt-3 flex justify-center">
+          <svg width={w} height={h} className="overflow-visible">
+            <defs>
+              <linearGradient id="rate-spark" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#F0B90B" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="#F0B90B" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <path d={areaD} fill="url(#rate-spark)" />
+            <path d={pathD} fill="none" stroke="#F0B90B" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+            {/* Last point dot */}
+            <circle cx={(rates.length - 1) * stepX} cy={h - ((rates[rates.length - 1] - min) / range) * h} r={2.5} fill="#F0B90B" />
+          </svg>
         </div>
       )}
 
       {/* Bank options */}
       <div className="mt-2 text-center text-[11px] text-muted-foreground">Pay via CBE · Telebirr · Abay · M-PESA</div>
+
+      {/* Cinematic bank image */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3, duration: 0.6 }}
+        className="relative mt-4 overflow-hidden rounded-xl"
+      >
+        <div className="bg-gold-glow pointer-events-none absolute inset-0 opacity-20" />
+        <img
+          src="/national-bank.jpg"
+          alt="National Bank of Ethiopia"
+          className="w-full object-cover"
+          style={{ maxHeight: '120px', objectPosition: 'center' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
+        <div className="absolute bottom-2 left-3 text-[10px] font-semibold text-foreground/80">
+          Regulated financial ecosystem
+        </div>
+      </motion.div>
     </div>
   )
 }

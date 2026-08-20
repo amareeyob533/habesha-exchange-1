@@ -29,13 +29,36 @@ export async function POST(req: NextRequest) {
     if (!/^[a-z0-9_.]+$/.test(uname)) {
       return NextResponse.json({ error: 'Username can only contain letters, numbers, underscores and dots' }, { status: 400 })
     }
-    const existingUsername = await db.user.findUnique({ where: { username: uname }, select: { id: true } })
+    // Check username — retry once on transient DB errors (Vercel serverless)
+    let existingUsername = null
+    try {
+      existingUsername = await db.user.findUnique({ where: { username: uname }, select: { id: true } })
+    } catch (firstErr) {
+      // Connection pool error — retry once after a short delay
+      try {
+        await new Promise((r) => setTimeout(r, 500))
+        existingUsername = await db.user.findUnique({ where: { username: uname }, select: { id: true } })
+      } catch {
+        // If retry also fails, proceed anyway — the unique constraint will catch duplicates
+      }
+    }
     if (existingUsername) {
       return NextResponse.json({ error: `Username "@${uname}" is already taken. Please choose another.` }, { status: 409 })
     }
 
     const normalizedEmail = email.toLowerCase().trim()
-    const existing = await db.user.findUnique({ where: { email: normalizedEmail } })
+    // Check email — same retry pattern
+    let existing = null
+    try {
+      existing = await db.user.findUnique({ where: { email: normalizedEmail } })
+    } catch {
+      try {
+        await new Promise((r) => setTimeout(r, 500))
+        existing = await db.user.findUnique({ where: { email: normalizedEmail } })
+      } catch {
+        // proceed anyway
+      }
+    }
     if (existing) {
       return NextResponse.json({ error: 'An account with this email already exists' }, { status: 409 })
     }

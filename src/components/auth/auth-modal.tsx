@@ -76,8 +76,20 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
       toast({ variant: 'destructive', title: 'Weak password', description: 'Use at least 6 characters.' })
       return
     }
-    if (usernameStatus !== 'available') {
-      toast({ variant: 'destructive', title: 'Username required', description: 'Choose an available username (3+ chars, letters/numbers/_/.)' })
+    const rawUsername = susername.toLowerCase().trim()
+    if (!rawUsername || rawUsername.length < 3) {
+      toast({ variant: 'destructive', title: 'Username required', description: 'Choose a username (3+ chars)' })
+      return
+    }
+    // Only block if the username is confirmed TAKEN. If the check failed
+    // (network error on Vercel etc.), allow the signup — the backend will
+    // reject if it's actually taken.
+    if (usernameStatus === 'taken') {
+      toast({ variant: 'destructive', title: 'Username taken', description: 'This username is already taken. Try another.' })
+      return
+    }
+    if (usernameStatus === 'invalid') {
+      toast({ variant: 'destructive', title: 'Invalid username', description: 'Min 3 chars, letters/numbers/underscore/dot only.' })
       return
     }
     try {

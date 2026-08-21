@@ -3,26 +3,28 @@
 import { useAuth } from '@/hooks/use-auth'
 import { useUI } from '@/hooks/use-ui'
 import { motion } from 'framer-motion'
-import { CreditCard, ShieldCheck, Copy, Check, Lock, ArrowLeftRight, ShoppingCart, Download } from 'lucide-react'
+import { CreditCard, ShieldCheck, Copy, Check, Lock, ArrowLeftRight, Eye, EyeOff, Wifi } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 
 export function CardView() {
   const { user } = useAuth()
   const { setView } = useUI()
-  const [copied, setCopied] = useState(false)
+  const [copiedField, setCopiedField] = useState<string | null>(null)
   const [flipped, setFlipped] = useState(false)
+  const [showCvv, setShowCvv] = useState(false)
 
   const isVerified = user?.kycStatus === 'approved'
-  const cardHolder = user?.kycFullName || user?.name || 'CARDHOLDER NAME'
-  // Same card number for everyone (not unique per user)
+  const cardHolder = (user?.kycFullName || user?.name || 'CARDHOLDER NAME').toUpperCase()
   const cardNumber = '5318 4753 2906 1847'
+  const cardNumberRaw = '5318475329061847'
   const expiry = '10/28'
+  const cvv = '531'
 
-  function copyNumber() {
-    navigator.clipboard.writeText(cardNumber.replace(/\s/g, ''))
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  function copyField(field: string, value: string) {
+    navigator.clipboard.writeText(value)
+    setCopiedField(field)
+    setTimeout(() => setCopiedField(null), 2000)
   }
 
   // If not KYC verified, show the locked state
@@ -33,7 +35,6 @@ export function CardView() {
           <h2 className="text-2xl font-extrabold tracking-tight">Habesha Card</h2>
           <p className="text-sm text-muted-foreground">Your virtual Mastercard for spending crypto</p>
         </div>
-
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-secondary/60 text-muted-foreground">
             <Lock className="h-8 w-8" />
@@ -52,134 +53,161 @@ export function CardView() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-2xl font-extrabold tracking-tight">Habesha Card</h2>
-        <p className="text-sm text-muted-foreground">Your virtual Mastercard — spend crypto anywhere</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-extrabold tracking-tight">Habesha Card</h2>
+          <p className="text-sm text-muted-foreground">Your virtual Mastercard — spend crypto anywhere</p>
+        </div>
+        <span className="inline-flex items-center gap-1 rounded-full bg-up/15 px-2.5 py-1 text-[10px] font-bold text-up">
+          <ShieldCheck className="h-3 w-3" /> Active
+        </span>
       </div>
 
-      {/* The Card — matching the design from the screenshot */}
+      {/* The Card */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex justify-center"
       >
         <div
-          className="relative h-[220px] w-[350px] max-w-full cursor-pointer perspective-1000"
+          className="relative h-[230px] w-[360px] max-w-full cursor-pointer"
           onClick={() => setFlipped(!flipped)}
-          style={{ perspective: '1000px' }}
+          style={{ perspective: '1200px' }}
         >
           <motion.div
             animate={{ rotateY: flipped ? 180 : 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.6, ease: 'easeInOut' }}
             className="relative h-full w-full"
             style={{ transformStyle: 'preserve-3d' }}
           >
-            {/* FRONT of card */}
+            {/* ============ FRONT ============ */}
             <div
               className="absolute inset-0 rounded-2xl overflow-hidden"
               style={{
-                background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%)',
+                background: 'linear-gradient(145deg, #0a0a0a 0%, #1c1c1c 40%, #0f0f0f 100%)',
                 backfaceVisibility: 'hidden',
-                border: '1px solid rgba(240, 185, 11, 0.15)',
+                border: '1px solid rgba(240, 185, 11, 0.2)',
+                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.5), 0 0 1px rgba(240, 185, 11, 0.3)',
               }}
             >
-              {/* Subtle geometric pattern */}
+              {/* Geometric pattern overlay */}
               <div
-                className="absolute inset-0 opacity-[0.03]"
+                className="absolute inset-0 opacity-[0.04]"
                 style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0L60 30L30 60L0 30Z' fill='%23F0B90B'/%3E%3C/svg%3E")`,
-                  backgroundSize: '30px 30px',
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0L80 40L40 80L0 40Z' fill='none' stroke='%23F0B90B' stroke-width='1'/%3E%3Cpath d='M40 20L60 40L40 60L20 40Z' fill='none' stroke='%23F0B90B' stroke-width='0.5'/%3E%3C/svg%3E")`,
+                  backgroundSize: '40px 40px',
                 }}
               />
 
-              {/* Top row: logo + World Elite */}
+              {/* Gold glow top-right */}
+              <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #F0B90B, transparent 70%)' }} />
+
+              {/* Top row: real logo + World Elite */}
               <div className="flex items-start justify-between p-4">
                 <div className="flex items-center gap-2">
-                  {/* Habesha logo mark */}
-                  <div className="flex h-7 w-7 items-center justify-center">
-                    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="#F0B90B">
-                      <path d="M4 4L12 2L20 4L22 12L20 20L12 22L4 20L2 12Z" opacity="0.9" />
-                      <path d="M8 8L12 6L16 8L18 12L16 16L12 18L8 16L6 12Z" fill="#0a0a0a" />
-                      <path d="M10 10L12 9L14 10L15 12L14 14L12 15L10 14L9 12Z" fill="#F0B90B" />
-                    </svg>
-                  </div>
-                  <span className="text-[10px] font-bold tracking-wider text-gold">HABESHA EXCHANGE</span>
+                  <img src="/habesha-mark.jpg" alt="Habesha Exchange" className="h-7 w-7 rounded object-cover" />
+                  <span className="text-[10px] font-bold tracking-[0.15em] text-gold">HABESHA EXCHANGE</span>
                 </div>
-                <span className="text-[9px] font-bold tracking-widest text-gold">WORLD ELITE</span>
+                <span className="text-[8px] font-bold tracking-[0.2em] text-gold/70">WORLD ELITE</span>
               </div>
 
-              {/* Chip */}
-              <div className="ml-4 mt-1">
-                <div className="h-8 w-11 rounded-md" style={{
-                  background: 'linear-gradient(135deg, #D4AF37, #F0B90B, #D4AF37)',
-                  boxShadow: '0 0 8px rgba(240, 185, 11, 0.3)',
-                }} />
+              {/* Contactless icon + Chip */}
+              <div className="flex items-center justify-between px-4 mt-1">
+                <div className="h-8 w-11 rounded-md relative overflow-hidden" style={{
+                  background: 'linear-gradient(135deg, #C8A032 0%, #F0D040 25%, #C8A032 50%, #F0D040 75%, #C8A032 100%)',
+                  boxShadow: '0 0 6px rgba(240, 185, 11, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.3)',
+                }}>
+                  {/* Chip inner lines */}
+                  <div className="absolute inset-1 border border-black/20 rounded-sm" />
+                  <div className="absolute top-1/2 left-1 right-1 h-px bg-black/15" />
+                  <div className="absolute left-1/2 top-1 bottom-1 w-px bg-black/15" />
+                </div>
+                <Wifi className="h-5 w-5 text-gold/40 rotate-90" />
               </div>
 
               {/* Card number */}
               <div className="mt-3 px-4">
-                <p className="font-mono text-[15px] font-bold tracking-widest text-gold">
+                <p className="font-mono text-[16px] font-bold tracking-[0.15em] text-gold" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
                   {cardNumber}
                 </p>
               </div>
 
-              {/* Valid thru */}
-              <div className="mt-1 px-4">
-                <p className="text-[9px] text-gold/60">VALID THRU</p>
-                <p className="text-[11px] font-bold text-gold">{expiry}</p>
-              </div>
-
-              {/* Cardholder name */}
-              <div className="absolute bottom-3 left-4">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gold">
-                  {cardHolder}
-                </p>
+              {/* Valid thru + Cardholder */}
+              <div className="mt-2 px-4 flex items-end justify-between">
+                <div>
+                  <p className="text-[8px] text-gold/50 tracking-wider">VALID THRU</p>
+                  <p className="text-[12px] font-bold text-gold">{expiry}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[7px] text-gold/50 tracking-wider">CARD HOLDER</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gold max-w-[180px] truncate">
+                    {cardHolder}
+                  </p>
+                </div>
               </div>
 
               {/* Mastercard logo */}
               <div className="absolute bottom-3 right-4 flex items-center gap-1">
-                <span className="text-[8px] text-gold/60">DEBIT</span>
+                <span className="text-[7px] text-gold/50 mr-1">DEBIT</span>
                 <div className="flex items-center">
                   <div className="h-5 w-5 rounded-full" style={{ background: '#EB001B' }} />
-                  <div className="h-5 w-5 -ml-2 rounded-full" style={{ background: '#F79E1B', mixBlendMode: 'screen' }} />
+                  <div className="h-5 w-5 -ml-2.5 rounded-full" style={{ background: '#F79E1B', mixBlendMode: 'screen' }} />
                 </div>
-                <span className="text-[7px] text-gold/80">mastercard.</span>
+                <span className="text-[7px] text-gold/70 ml-0.5">mastercard.</span>
               </div>
             </div>
 
-            {/* BACK of card */}
+            {/* ============ BACK ============ */}
             <div
               className="absolute inset-0 rounded-2xl overflow-hidden"
               style={{
-                background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%)',
+                background: 'linear-gradient(145deg, #0a0a0a 0%, #1c1c1c 40%, #0f0f0f 100%)',
                 backfaceVisibility: 'hidden',
                 transform: 'rotateY(180deg)',
-                border: '1px solid rgba(240, 185, 11, 0.15)',
+                border: '1px solid rgba(240, 185, 11, 0.2)',
+                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.5)',
               }}
             >
               {/* Magnetic stripe */}
-              <div className="mt-4 h-10 w-full" style={{ background: '#000' }} />
+              <div className="mt-5 h-10 w-full" style={{ background: '#000' }} />
 
               {/* Signature strip */}
-              <div className="mx-4 mt-4 flex items-center justify-between rounded bg-white/90 px-3 py-2">
-                <span className="text-[9px] text-black/40">AUTHORIZED SIGNATURE</span>
-                <span className="font-mono text-[9px] text-black/50">531</span>
+              <div className="mx-4 mt-4 flex items-center justify-between rounded bg-white/85 px-3 py-2">
+                <span className="text-[9px] text-black/40 tracking-wider">AUTHORIZED SIGNATURE</span>
+                <span className="font-mono text-[10px] text-black/40">NOT TRANSFERABLE</span>
               </div>
 
               {/* CVV */}
               <div className="mx-4 mt-3">
-                <div className="flex items-center justify-between rounded bg-white/20 px-3 py-2">
-                  <span className="text-[9px] text-gold/60">CVV</span>
-                  <span className="font-mono text-sm font-bold text-gold">•••</span>
+                <div className="flex items-center justify-between rounded bg-white/15 px-3 py-2 border border-white/5">
+                  <span className="text-[9px] text-gold/60 tracking-wider">CVV / SECURITY CODE</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm font-bold text-gold">
+                      {showCvv ? cvv : '•••'}
+                    </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowCvv(!showCvv) }}
+                      className="text-gold/50 hover:text-gold"
+                    >
+                      {showCvv ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Footer */}
+              {/* Customer service info */}
+              <div className="mx-4 mt-3">
+                <p className="text-[8px] text-gold/30 leading-relaxed">
+                  For customer service, visit habesha-exchange.com or contact support. This card remains the property of Habesha Exchange. If found, please return to nearest branch.
+                </p>
+              </div>
+
+              {/* Footer logos */}
               <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between">
-                <span className="text-[8px] text-gold/40">This card is property of Habesha Exchange</span>
+                <img src="/habesha-mark.jpg" alt="Habesha Exchange" className="h-5 w-5 rounded object-cover" />
                 <div className="flex items-center">
                   <div className="h-4 w-4 rounded-full" style={{ background: '#EB001B' }} />
-                  <div className="h-4 w-4 -ml-1.5 rounded-full" style={{ background: '#F79E1B', mixBlendMode: 'screen' }} />
+                  <div className="h-4 w-4 -ml-2 rounded-full" style={{ background: '#F79E1B', mixBlendMode: 'screen' }} />
                 </div>
               </div>
             </div>
@@ -188,38 +216,73 @@ export function CardView() {
       </motion.div>
 
       {/* Tap to flip hint */}
-      <p className="text-center text-[11px] text-muted-foreground">Tap card to flip • See CVV on back</p>
+      <p className="text-center text-[11px] text-muted-foreground">Tap card to flip • Tap eye icon to reveal CVV</p>
 
-      {/* Card details */}
-      <div className="glass-card rounded-2xl p-5 space-y-3">
-        <h3 className="text-sm font-bold">Card Details</h3>
+      {/* Card details — all copyable */}
+      <div className="glass-card rounded-2xl p-5 space-y-1">
+        <h3 className="text-sm font-bold mb-3">Card Details</h3>
 
-        <div className="flex items-center justify-between border-b border-border/50 py-2">
+        {/* Card Number */}
+        <div className="flex items-center justify-between border-b border-border/50 py-2.5">
           <span className="text-xs text-muted-foreground">Card Number</span>
           <div className="flex items-center gap-2">
             <span className="font-mono text-sm font-bold">{cardNumber}</span>
-            <button onClick={copyNumber} className="text-muted-foreground hover:text-gold">
-              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+            <button onClick={() => copyField('number', cardNumberRaw)} className="text-muted-foreground hover:text-gold transition-colors">
+              {copiedField === 'number' ? <Check className="h-3.5 w-3.5 text-up" /> : <Copy className="h-3.5 w-3.5" />}
             </button>
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-b border-border/50 py-2">
+        {/* Card Holder */}
+        <div className="flex items-center justify-between border-b border-border/50 py-2.5">
           <span className="text-xs text-muted-foreground">Card Holder</span>
-          <span className="text-sm font-bold uppercase">{cardHolder}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold uppercase">{cardHolder}</span>
+            <button onClick={() => copyField('holder', cardHolder)} className="text-muted-foreground hover:text-gold transition-colors">
+              {copiedField === 'holder' ? <Check className="h-3.5 w-3.5 text-up" /> : <Copy className="h-3.5 w-3.5" />}
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between border-b border-border/50 py-2">
+        {/* Expiry Date */}
+        <div className="flex items-center justify-between border-b border-border/50 py-2.5">
           <span className="text-xs text-muted-foreground">Expiry Date</span>
-          <span className="font-mono text-sm font-bold">{expiry}</span>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-sm font-bold">{expiry}</span>
+            <button onClick={() => copyField('expiry', expiry)} className="text-muted-foreground hover:text-gold transition-colors">
+              {copiedField === 'expiry' ? <Check className="h-3.5 w-3.5 text-up" /> : <Copy className="h-3.5 w-3.5" />}
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between border-b border-border/50 py-2">
+        {/* CVV */}
+        <div className="flex items-center justify-between border-b border-border/50 py-2.5">
+          <span className="text-xs text-muted-foreground">CVV</span>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-sm font-bold">{showCvv ? cvv : '•••'}</span>
+            <button onClick={() => setShowCvv(!showCvv)} className="text-muted-foreground hover:text-gold transition-colors">
+              {showCvv ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+            </button>
+            <button onClick={() => copyField('cvv', cvv)} className="text-muted-foreground hover:text-gold transition-colors">
+              {copiedField === 'cvv' ? <Check className="h-3.5 w-3.5 text-up" /> : <Copy className="h-3.5 w-3.5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Card Type */}
+        <div className="flex items-center justify-between border-b border-border/50 py-2.5">
           <span className="text-xs text-muted-foreground">Card Type</span>
           <span className="text-sm font-bold">World Elite Debit</span>
         </div>
 
-        <div className="flex items-center justify-between py-2">
+        {/* Network */}
+        <div className="flex items-center justify-between border-b border-border/50 py-2.5">
+          <span className="text-xs text-muted-foreground">Network</span>
+          <span className="text-sm font-bold">Mastercard</span>
+        </div>
+
+        {/* Status */}
+        <div className="flex items-center justify-between py-2.5">
           <span className="text-xs text-muted-foreground">Status</span>
           <span className="inline-flex items-center gap-1 rounded-full bg-up/15 px-2 py-0.5 text-[10px] font-bold text-up">
             <ShieldCheck className="h-3 w-3" /> Active
@@ -228,14 +291,18 @@ export function CardView() {
       </div>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-2 gap-3">
-        <Button variant="outline" className="h-12 flex-col gap-1" onClick={() => setView('exchange')}>
+      <div className="grid grid-cols-3 gap-3">
+        <Button variant="outline" className="h-14 flex-col gap-1" onClick={() => setView('exchange')}>
           <ArrowLeftRight className="h-4 w-4" />
-          <span className="text-[10px]">Exchange</span>
+          <span className="text-[9px]">Exchange</span>
         </Button>
-        <Button variant="outline" className="h-12 flex-col gap-1" onClick={() => setView('wallet')}>
+        <Button variant="outline" className="h-14 flex-col gap-1" onClick={() => setView('wallet')}>
           <CreditCard className="h-4 w-4" />
-          <span className="text-[10px]">Wallet</span>
+          <span className="text-[9px]">Wallet</span>
+        </Button>
+        <Button variant="outline" className="h-14 flex-col gap-1" onClick={() => setView('transactions')}>
+          <ShieldCheck className="h-4 w-4" />
+          <span className="text-[9px]">History</span>
         </Button>
       </div>
 

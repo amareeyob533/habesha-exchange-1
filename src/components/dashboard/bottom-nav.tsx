@@ -2,12 +2,12 @@
 
 import { useUI, type ViewKey } from '@/hooks/use-ui'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, LineChart, ArrowLeftRight, Wallet } from 'lucide-react'
+import { LayoutDashboard, LineChart, ArrowLeftRight, Wallet, CreditCard } from 'lucide-react'
 
 const ITEMS: { key: ViewKey; icon: any; label: string; color: string }[] = [
   { key: 'overview', icon: LayoutDashboard, label: 'Home', color: '#F0B90B' },
   { key: 'markets', icon: LineChart, label: 'Markets', color: '#F0B90B' },
-  { key: 'exchange', icon: ArrowLeftRight, label: 'Trade', color: '#F0B90B' },
+  { key: 'card', icon: CreditCard, label: 'Card', color: '#F0B90B' },
   { key: 'wallet', icon: Wallet, label: 'Wallet', color: '#F0B90B' },
 ]
 

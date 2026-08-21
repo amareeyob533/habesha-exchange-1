@@ -35,7 +35,9 @@ export function KycModal() {
   const { fetchMe, user } = useAuth()
   const { toast } = useToast()
   const [step, setStep] = useState<Step>('info')
-  const [fullName, setFullName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [fatherName, setFatherName] = useState('')
+  const [grandfatherName, setGrandfatherName] = useState('')
   const [city, setCity] = useState('')
   const [idType, setIdType] = useState('')
   const [frontDoc, setFrontDoc] = useState<DocState>(EMPTY_DOC)
@@ -53,17 +55,20 @@ export function KycModal() {
   useEffect(() => {
     if (!open) {
       const t = setTimeout(() => {
-        setStep('info'); setFullName(''); setCity(''); setIdType('')
+        setStep('info'); setFirstName(''); setFatherName(''); setGrandfatherName(''); setCity(''); setIdType('')
         setFrontDoc(EMPTY_DOC); setBackDoc(EMPTY_DOC)
       }, 300)
       return () => clearTimeout(t)
     }
   }, [open])
 
-  // Pre-fill name from user profile
+  // Pre-fill first name from user profile
   useEffect(() => {
-    if (open && user?.name && !fullName) setFullName(user.name)
-  }, [open, user, fullName])
+    if (open && user?.name && !firstName) setFirstName(user.name.split(' ')[0])
+  }, [open, user, firstName])
+
+  // Combine the 3 name fields into a full name for submission
+  const fullName = `${firstName.trim()} ${fatherName.trim()} ${grandfatherName.trim()}`.trim()
 
   const status = user?.kycStatus || 'none'
 
@@ -233,8 +238,16 @@ export function KycModal() {
               </div>
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground"><User className="mr-1 inline h-3 w-3" />Full Name (as written on your ID)</Label>
-                  <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="e.g. Amare Yalew" className="bg-secondary/40" />
+                  <Label className="text-xs text-muted-foreground"><User className="mr-1 inline h-3 w-3" />First Name</Label>
+                  <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="e.g. Eyob" className="bg-secondary/40" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground"><User className="mr-1 inline h-3 w-3" />Father's Name</Label>
+                  <Input value={fatherName} onChange={(e) => setFatherName(e.target.value)} placeholder="e.g. Amare" className="bg-secondary/40" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground"><User className="mr-1 inline h-3 w-3" />Grandfather's Name</Label>
+                  <Input value={grandfatherName} onChange={(e) => setGrandfatherName(e.target.value)} placeholder="e.g. Yalew" className="bg-secondary/40" />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground"><MapPin className="mr-1 inline h-3 w-3" />City where you live</Label>
@@ -243,7 +256,7 @@ export function KycModal() {
               </div>
               <Button
                 className="w-full bg-primary font-semibold text-primary-foreground"
-                disabled={fullName.trim().length < 2 || city.trim().length < 2}
+                disabled={firstName.trim().length < 2 || fatherName.trim().length < 2 || grandfatherName.trim().length < 2 || city.trim().length < 2}
                 onClick={() => setStep('id')}
               >
                 Next <ChevronRight className="ml-1 h-4 w-4" />

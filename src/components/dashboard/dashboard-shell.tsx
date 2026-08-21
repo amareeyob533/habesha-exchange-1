@@ -12,6 +12,7 @@ import { SupportView } from '@/components/dashboard/views/support-view'
 import { ProfileView } from '@/components/dashboard/views/profile'
 import { SettingsView } from '@/components/dashboard/views/settings'
 import { AdminView } from '@/components/dashboard/views/admin'
+import { CardView } from '@/components/dashboard/views/card'
 import { DepositModal } from '@/components/modals/deposit-modal'
 import { WithdrawModal } from '@/components/modals/withdraw-modal'
 import { BuyModal } from '@/components/modals/buy-modal'
@@ -73,6 +74,7 @@ export function DashboardShell() {
               {view === 'profile' && <ProfileView />}
               {view === 'settings' && <SettingsView />}
               {view === 'admin' && <AdminView />}
+              {view === 'card' && <CardView />}
             </motion.div>
           </AnimatePresence>
         </main>

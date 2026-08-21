@@ -40,6 +40,7 @@ export interface AuthUser {
   kycCity?: string | null
   kycIdType?: string | null
   kycRejectReason?: string | null
+  cardBalance?: number | null
 }
 
 interface AuthState {

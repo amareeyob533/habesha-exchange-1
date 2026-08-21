@@ -30,6 +30,7 @@ model User {
   kycCity         String?  // step 1: city where the user lives
   kycIdType       String?  // step 2: driver_license | national_id | passport
   kycRejectReason String?  // filled when admin rejects
+  cardBalance       Float    @default(0) // Habesha Mastercard balance (separate from wallet)
   country         String?
   phone           String?
   createdAt       DateTime @default(now())

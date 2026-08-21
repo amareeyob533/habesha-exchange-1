@@ -19,6 +19,7 @@ export function CardView() {
   const [activating, setActivating] = useState(false)
 
   const isVerified = user?.kycStatus === 'approved'
+  const cardBalance = user?.cardBalance || 0
   const cardHolder = (user?.kycFullName || user?.name || 'CARDHOLDER NAME').toUpperCase()
   const cardNumber = '5318 4753 2906 1847'
   const cardNumberRaw = '5318475329061847'
@@ -189,9 +190,10 @@ export function CardView() {
           <h2 className="text-2xl font-extrabold tracking-tight">Habesha Card</h2>
           <p className="text-sm text-muted-foreground">Your virtual Mastercard — spend crypto anywhere</p>
         </div>
-        <span className="inline-flex items-center gap-1 rounded-full bg-up/15 px-2.5 py-1 text-[10px] font-bold text-up">
-          <ShieldCheck className="h-3 w-3" /> Active
-        </span>
+        <div className="text-right">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Card Balance</div>
+          <div className="text-xl font-extrabold tabular-nums text-gold">${cardBalance.toFixed(2)}</div>
+        </div>
       </div>
 
       {/* The Card */}

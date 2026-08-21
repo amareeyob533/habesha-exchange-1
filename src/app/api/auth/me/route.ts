@@ -20,6 +20,7 @@ export async function GET() {
         // banner and display the correct status in Settings.
         kycStatus: true, kycSubmittedAt: true, kycApprovedAt: true,
         kycFullName: true, kycCity: true, kycIdType: true, kycRejectReason: true,
+        cardBalance: true,
         balances: { select: { token: true, amount: true } },
         notifications: { orderBy: { createdAt: 'desc' }, take: 10, select: { id: true, title: true, message: true, type: true, read: true, createdAt: true } },
       },
@@ -75,6 +76,7 @@ export async function GET() {
         kycCity: user.kycCity,
         kycIdType: user.kycIdType,
         kycRejectReason: user.kycRejectReason,
+        cardBalance: user.cardBalance,
       },
       balances,
       totalUsd,

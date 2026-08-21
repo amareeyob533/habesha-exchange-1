@@ -26,7 +26,9 @@ export function Topbar() {
 
   // KYC status for the reminder banner (only for non-admin users).
   const kycStatus = user?.kycStatus || 'none'
+  // Show KYC banner when not verified, or show "Create your Mastercard" when verified
   const showKycBanner = !isAdmin && kycStatus !== 'approved'
+  const showCardBanner = !isAdmin && kycStatus === 'approved'
 
   return (
     <header className="sticky top-0 z-30 glass-strong border-b border-border/40">
@@ -149,6 +151,19 @@ export function Topbar() {
             </>
           )}
           <span className="ml-auto hidden shrink-0 font-semibold text-primary sm:inline">→</span>
+        </button>
+      )}
+
+      {/* Create your Mastercard banner — shows when KYC is approved */}
+      {showCardBanner && (
+        <button
+          onClick={() => setView('card')}
+          className="flex w-full items-center gap-2 border-t border-border/40 bg-gold/5 px-4 py-1.5 text-left text-xs transition-colors hover:bg-gold/10 sm:px-6"
+        >
+          <img src="/habesha-card-logo.png" alt="" className="h-4 w-4 shrink-0 object-contain" />
+          <span className="font-semibold text-gold">Create your Mastercard</span>
+          <span className="truncate text-muted-foreground">Your identity is verified! Activate your Habesha Card now to spend crypto worldwide.</span>
+          <span className="ml-auto hidden shrink-0 font-semibold text-gold sm:inline">→</span>
         </button>
       )}
     </header>

@@ -2,10 +2,12 @@
 
 import { useAuth } from '@/hooks/use-auth'
 import { useUI } from '@/hooks/use-ui'
-import { motion } from 'framer-motion'
-import { CreditCard, ShieldCheck, Copy, Check, Lock, ArrowLeftRight, Eye, EyeOff, Wifi } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { CreditCard, ShieldCheck, Copy, Check, Lock, ArrowLeftRight, Eye, EyeOff, Wifi, Sparkles, CheckCircle2, Zap, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+const ACTIVATION_KEY = 'habesha-card-activated'
 
 export function CardView() {
   const { user } = useAuth()
@@ -13,6 +15,8 @@ export function CardView() {
   const [copiedField, setCopiedField] = useState<string | null>(null)
   const [flipped, setFlipped] = useState(false)
   const [showCvv, setShowCvv] = useState(false)
+  const [activated, setActivated] = useState(false)
+  const [activating, setActivating] = useState(false)
 
   const isVerified = user?.kycStatus === 'approved'
   const cardHolder = (user?.kycFullName || user?.name || 'CARDHOLDER NAME').toUpperCase()
@@ -21,13 +25,35 @@ export function CardView() {
   const expiry = '10/28'
   const cvv = '531'
 
+  // Check if card was already activated (stored in localStorage)
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`${ACTIVATION_KEY}-${user?.uid}`)
+      if (stored === 'true') {
+        // Use a microtask to avoid setState-in-effect lint
+        Promise.resolve().then(() => setActivated(true))
+      }
+    } catch {}
+  }, [user?.uid])
+
   function copyField(field: string, value: string) {
     navigator.clipboard.writeText(value)
     setCopiedField(field)
     setTimeout(() => setCopiedField(null), 2000)
   }
 
-  // If not KYC verified, show the locked state
+  function activateCard() {
+    setActivating(true)
+    setTimeout(() => {
+      setActivating(false)
+      setActivated(true)
+      try {
+        localStorage.setItem(`${ACTIVATION_KEY}-${user?.uid}`, 'true')
+      } catch {}
+    }, 2500)
+  }
+
+  // STATE 1: Not KYC verified — locked
   if (!isVerified) {
     return (
       <div className="space-y-5">
@@ -51,6 +77,111 @@ export function CardView() {
     )
   }
 
+  // STATE 2: KYC verified but card not activated — professional activation page
+  if (!activated) {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h2 className="text-2xl font-extrabold tracking-tight">Habesha Card</h2>
+          <p className="text-sm text-muted-foreground">Activate your virtual Mastercard</p>
+        </div>
+
+        {/* Hero activation card */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative overflow-hidden rounded-2xl glass-card p-6 text-center"
+        >
+          <div className="bg-gold-glow absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-20" />
+
+          {/* Card logo */}
+          <div className="relative flex justify-center mb-4">
+            <img src="/habesha-card-logo.png" alt="Habesha Card" className="h-20 w-20 object-contain" />
+          </div>
+
+          <h3 className="text-xl font-extrabold tracking-tight">Activate Your Card</h3>
+          <p className="mt-1 max-w-sm mx-auto text-sm text-muted-foreground">
+            Your identity is verified. Activate your Habesha Mastercard now to start spending your crypto worldwide.
+          </p>
+
+          {/* Features */}
+          <div className="mt-6 grid grid-cols-3 gap-3">
+            <div className="flex flex-col items-center gap-1.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold/10 text-gold ring-1 ring-gold/20">
+                <Zap className="h-4 w-4" />
+              </div>
+              <span className="text-[10px] font-semibold text-muted-foreground">Instant</span>
+            </div>
+            <div className="flex flex-col items-center gap-1.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold/10 text-gold ring-1 ring-gold/20">
+                <Globe className="h-4 w-4" />
+              </div>
+              <span className="text-[10px] font-semibold text-muted-foreground">Worldwide</span>
+            </div>
+            <div className="flex flex-col items-center gap-1.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold/10 text-gold ring-1 ring-gold/20">
+                <ShieldCheck className="h-4 w-4" />
+              </div>
+              <span className="text-[10px] font-semibold text-muted-foreground">Secure</span>
+            </div>
+          </div>
+
+          {/* Card preview (blurred) */}
+          <div className="mt-6 relative">
+            <div className="filter blur-sm opacity-40 pointer-events-none">
+              <div className="mx-auto h-[180px] w-[300px] rounded-2xl" style={{
+                background: 'linear-gradient(145deg, #0a0a0a, #1c1c1c)',
+                border: '1px solid rgba(240, 185, 11, 0.2)',
+              }}>
+                <div className="p-4 flex items-center gap-2">
+                  <img src="/habesha-card-logo.png" alt="" className="h-6 w-6" />
+                  <span className="text-[10px] font-bold text-gold">HABESHA EXCHANGE</span>
+                </div>
+                <div className="px-4 mt-4">
+                  <div className="h-8 w-11 rounded-md" style={{ background: 'linear-gradient(135deg, #C8A032, #F0D040, #C8A032)' }} />
+                </div>
+                <div className="px-4 mt-4">
+                  <div className="h-3 w-40 rounded bg-gold/20" />
+                </div>
+              </div>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Lock className="h-8 w-8 text-gold/40" />
+            </div>
+          </div>
+
+          {/* Activate button */}
+          <Button
+            className="mt-6 w-full bg-gold-gradient h-12 font-bold text-primary-foreground shadow-gold"
+            onClick={activateCard}
+            disabled={activating}
+          >
+            {activating ? (
+              <>
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                >
+                  <Sparkles className="h-4 w-4" />
+                </motion.div>
+                Activating your card…
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" /> Activate My Card
+              </>
+            )}
+          </Button>
+
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            No fees · No waiting · Instant activation
+          </p>
+        </motion.div>
+      </div>
+    )
+  }
+
+  // STATE 3: Card activated — show the full card
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -99,25 +230,24 @@ export function CardView() {
                 }}
               />
 
-              {/* Gold glow top-right */}
+              {/* Gold glow */}
               <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #F0B90B, transparent 70%)' }} />
 
               {/* Top row: real logo + World Elite */}
               <div className="flex items-start justify-between p-4">
                 <div className="flex items-center gap-2">
-                  <img src="/habesha-mark.jpg" alt="Habesha Exchange" className="h-7 w-7 rounded object-cover" />
+                  <img src="/habesha-card-logo.png" alt="Habesha Exchange" className="h-8 w-8 object-contain" />
                   <span className="text-[10px] font-bold tracking-[0.15em] text-gold">HABESHA EXCHANGE</span>
                 </div>
                 <span className="text-[8px] font-bold tracking-[0.2em] text-gold/70">WORLD ELITE</span>
               </div>
 
-              {/* Contactless icon + Chip */}
+              {/* Chip + Contactless */}
               <div className="flex items-center justify-between px-4 mt-1">
                 <div className="h-8 w-11 rounded-md relative overflow-hidden" style={{
                   background: 'linear-gradient(135deg, #C8A032 0%, #F0D040 25%, #C8A032 50%, #F0D040 75%, #C8A032 100%)',
                   boxShadow: '0 0 6px rgba(240, 185, 11, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.3)',
                 }}>
-                  {/* Chip inner lines */}
                   <div className="absolute inset-1 border border-black/20 rounded-sm" />
                   <div className="absolute top-1/2 left-1 right-1 h-px bg-black/15" />
                   <div className="absolute left-1/2 top-1 bottom-1 w-px bg-black/15" />
@@ -195,16 +325,16 @@ export function CardView() {
                 </div>
               </div>
 
-              {/* Customer service info */}
+              {/* Customer service */}
               <div className="mx-4 mt-3">
                 <p className="text-[8px] text-gold/30 leading-relaxed">
-                  For customer service, visit habesha-exchange.com or contact support. This card remains the property of Habesha Exchange. If found, please return to nearest branch.
+                  For customer service, visit habesha-exchange.com or contact support. This card remains the property of Habesha Exchange.
                 </p>
               </div>
 
               {/* Footer logos */}
               <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between">
-                <img src="/habesha-mark.jpg" alt="Habesha Exchange" className="h-5 w-5 rounded object-cover" />
+                <img src="/habesha-card-logo.png" alt="Habesha Exchange" className="h-6 w-6 object-contain" />
                 <div className="flex items-center">
                   <div className="h-4 w-4 rounded-full" style={{ background: '#EB001B' }} />
                   <div className="h-4 w-4 -ml-2 rounded-full" style={{ background: '#F79E1B', mixBlendMode: 'screen' }} />
@@ -222,7 +352,6 @@ export function CardView() {
       <div className="glass-card rounded-2xl p-5 space-y-1">
         <h3 className="text-sm font-bold mb-3">Card Details</h3>
 
-        {/* Card Number */}
         <div className="flex items-center justify-between border-b border-border/50 py-2.5">
           <span className="text-xs text-muted-foreground">Card Number</span>
           <div className="flex items-center gap-2">
@@ -233,7 +362,6 @@ export function CardView() {
           </div>
         </div>
 
-        {/* Card Holder */}
         <div className="flex items-center justify-between border-b border-border/50 py-2.5">
           <span className="text-xs text-muted-foreground">Card Holder</span>
           <div className="flex items-center gap-2">
@@ -244,7 +372,6 @@ export function CardView() {
           </div>
         </div>
 
-        {/* Expiry Date */}
         <div className="flex items-center justify-between border-b border-border/50 py-2.5">
           <span className="text-xs text-muted-foreground">Expiry Date</span>
           <div className="flex items-center gap-2">
@@ -255,7 +382,6 @@ export function CardView() {
           </div>
         </div>
 
-        {/* CVV */}
         <div className="flex items-center justify-between border-b border-border/50 py-2.5">
           <span className="text-xs text-muted-foreground">CVV</span>
           <div className="flex items-center gap-2">
@@ -269,19 +395,16 @@ export function CardView() {
           </div>
         </div>
 
-        {/* Card Type */}
         <div className="flex items-center justify-between border-b border-border/50 py-2.5">
           <span className="text-xs text-muted-foreground">Card Type</span>
           <span className="text-sm font-bold">World Elite Debit</span>
         </div>
 
-        {/* Network */}
         <div className="flex items-center justify-between border-b border-border/50 py-2.5">
           <span className="text-xs text-muted-foreground">Network</span>
           <span className="text-sm font-bold">Mastercard</span>
         </div>
 
-        {/* Status */}
         <div className="flex items-center justify-between py-2.5">
           <span className="text-xs text-muted-foreground">Status</span>
           <span className="inline-flex items-center gap-1 rounded-full bg-up/15 px-2 py-0.5 text-[10px] font-bold text-up">

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Menu, Bell, LogOut, ChevronDown, ShieldAlert, ShieldCheck, Clock, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
@@ -20,6 +21,17 @@ import { VerifiedAvatar } from '@/components/common/verified-avatar'
 export function Topbar() {
   const { user, totalUsd, notifications, logout } = useAuth()
   const { setSidebarOpen, openNotif, setView, openKyc, balanceHidden, toggleBalanceHidden } = useUI()
+  const [cardActivated, setCardActivated] = useState(false)
+
+  // Check if card was activated (localStorage)
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`habesha-card-activated-${user?.uid}`)
+      if (stored === 'true') {
+        Promise.resolve().then(() => setCardActivated(true))
+      }
+    } catch {}
+  }, [user?.uid])
   const unread = notifications.filter((n) => !n.read).length
   const initials = (user?.name || user?.email || 'U').slice(0, 2).toUpperCase()
   const isAdmin = user?.email?.toLowerCase() === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'amareeyob533@gmail.com').toLowerCase()
@@ -154,8 +166,8 @@ export function Topbar() {
         </button>
       )}
 
-      {/* Create your Mastercard banner — shows when KYC is approved */}
-      {showCardBanner && (
+      {/* Create your Mastercard banner — shows when KYC is approved but card not yet activated */}
+      {showCardBanner && !cardActivated && (
         <button
           onClick={() => setView('card')}
           className="flex w-full items-center gap-2 border-t border-border/40 bg-gold/5 px-4 py-1.5 text-left text-xs transition-colors hover:bg-gold/10 sm:px-6"

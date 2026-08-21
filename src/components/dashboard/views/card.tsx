@@ -3,20 +3,26 @@
 import { useAuth } from '@/hooks/use-auth'
 import { useUI } from '@/hooks/use-ui'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CreditCard, ShieldCheck, Copy, Check, Lock, ArrowLeftRight, Eye, EyeOff, Wifi, Sparkles, CheckCircle2, Zap, Globe } from 'lucide-react'
+import { CreditCard, ShieldCheck, Copy, Check, Lock, ArrowLeftRight, Eye, EyeOff, Wifi, Sparkles, CheckCircle2, Zap, Globe, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { useState, useEffect } from 'react'
+import { apiFetch } from '@/lib/api-client'
+import { useToast } from '@/hooks/use-toast'
 
 const ACTIVATION_KEY = 'habesha-card-activated'
 
 export function CardView() {
-  const { user } = useAuth()
+  const { user, fetchMe } = useAuth()
   const { setView } = useUI()
+  const { toast } = useToast()
   const [copiedField, setCopiedField] = useState<string | null>(null)
   const [flipped, setFlipped] = useState(false)
   const [showCvv, setShowCvv] = useState(false)
   const [activated, setActivated] = useState(false)
   const [activating, setActivating] = useState(false)
+  const [transferToWalletAmount, setTransferToWalletAmount] = useState('')
+  const [transferringWallet, setTransferringWallet] = useState(false)
 
   const isVerified = user?.kycStatus === 'approved'
   const cardBalance = user?.cardBalance || 0
@@ -52,6 +58,28 @@ export function CardView() {
         localStorage.setItem(`${ACTIVATION_KEY}-${user?.uid}`, 'true')
       } catch {}
     }, 2500)
+  }
+
+  async function transferCardToWallet() {
+    const amt = Number(transferToWalletAmount)
+    if (!amt || amt <= 0 || amt > cardBalance) {
+      toast({ variant: 'destructive', title: 'Invalid amount', description: `Max: $${cardBalance.toFixed(2)}` })
+      return
+    }
+    setTransferringWallet(true)
+    try {
+      await apiFetch('/api/card/transfer/wallet', {
+        method: 'POST',
+        body: JSON.stringify({ amount: amt }),
+      })
+      await fetchMe()
+      toast({ title: 'Transfer complete ✓', description: `$${amt.toFixed(2)} moved from card to wallet` })
+      setTransferToWalletAmount('')
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Transfer failed', description: err.message })
+    } finally {
+      setTransferringWallet(false)
+    }
   }
 
   // STATE 1: Not KYC verified — locked
@@ -414,6 +442,37 @@ export function CardView() {
           </span>
         </div>
       </div>
+
+      {/* Transfer to Wallet */}
+      {cardBalance > 0 && (
+        <div className="glass-card rounded-2xl p-5 ring-1 ring-gold/15">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold">Transfer to Wallet</h3>
+            <span className="text-xs text-muted-foreground">Card: <b className="text-gold">${cardBalance.toFixed(2)}</b></span>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              min="0"
+              step="any"
+              max={cardBalance}
+              value={transferToWalletAmount}
+              onChange={(e) => setTransferToWalletAmount(e.target.value)}
+              placeholder="Amount (USDT)"
+              className="bg-secondary/40"
+            />
+            <Button
+              className="bg-gold-gradient font-semibold text-primary-foreground shrink-0"
+              disabled={!transferToWalletAmount || Number(transferToWalletAmount) <= 0 || Number(transferToWalletAmount) > cardBalance || transferringWallet}
+              onClick={transferCardToWallet}
+            >
+              {transferringWallet ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowLeftRight className="h-4 w-4" />}
+              {transferringWallet ? '…' : 'Transfer'}
+            </Button>
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">Move funds from your card back to your USDT wallet.</p>
+        </div>
+      )}
 
       {/* Quick actions */}
       <div className="grid grid-cols-3 gap-3">

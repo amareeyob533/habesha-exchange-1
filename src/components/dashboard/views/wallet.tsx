@@ -101,7 +101,7 @@ export function WalletView() {
                   step="any"
                   value={transferAmount}
                   onChange={(e) => setTransferAmount(e.target.value)}
-                  placeholder="e.g. 50"
+                  placeholder=""
                   className="bg-secondary/40"
                 />
               </div>

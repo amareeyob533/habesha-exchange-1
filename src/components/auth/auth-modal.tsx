@@ -201,7 +201,7 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
                         required
                         value={susername}
                         onChange={(e) => setSusername(e.target.value.toLowerCase())}
-                        placeholder="e.g. amarey2026"
+                        placeholder=""
                         className={`border-border bg-secondary/40 pl-10 pr-10 ${
                           usernameStatus === 'available' ? 'border-up/50' : usernameStatus === 'taken' || usernameStatus === 'invalid' ? 'border-down/50' : ''
                         }`}

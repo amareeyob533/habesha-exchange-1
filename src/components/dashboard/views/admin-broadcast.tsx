@@ -241,7 +241,7 @@ export function BroadcastAdmin({ refreshKey }: { refreshKey: number }) {
               id="bc-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. New Listing: BTC Trading Now Live"
+              placeholder=""
               className="bg-secondary/40"
               maxLength={120}
             />

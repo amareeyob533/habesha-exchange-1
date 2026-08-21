@@ -239,19 +239,19 @@ export function KycModal() {
               <div className="space-y-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground"><User className="mr-1 inline h-3 w-3" />First Name</Label>
-                  <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="e.g. Eyob" className="bg-secondary/40" />
+                  <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First Name" className="bg-secondary/40" />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground"><User className="mr-1 inline h-3 w-3" />Father's Name</Label>
-                  <Input value={fatherName} onChange={(e) => setFatherName(e.target.value)} placeholder="e.g. Amare" className="bg-secondary/40" />
+                  <Input value={fatherName} onChange={(e) => setFatherName(e.target.value)} placeholder="Father's Name" className="bg-secondary/40" />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground"><User className="mr-1 inline h-3 w-3" />Grandfather's Name</Label>
-                  <Input value={grandfatherName} onChange={(e) => setGrandfatherName(e.target.value)} placeholder="e.g. Yalew" className="bg-secondary/40" />
+                  <Input value={grandfatherName} onChange={(e) => setGrandfatherName(e.target.value)} placeholder="Grandfather's Name" className="bg-secondary/40" />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground"><MapPin className="mr-1 inline h-3 w-3" />City where you live</Label>
-                  <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Addis Ababa" className="bg-secondary/40" />
+                  <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" className="bg-secondary/40" />
                 </div>
               </div>
               <Button

@@ -165,7 +165,7 @@ export function ProfileView() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Country</Label>
-              <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="e.g. Ethiopia" className="bg-secondary/40" />
+              <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="" className="bg-secondary/40" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Phone</Label>

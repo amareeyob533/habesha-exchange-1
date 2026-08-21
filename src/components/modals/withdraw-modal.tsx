@@ -247,7 +247,7 @@ function WithdrawForm({ initialSymbol, onClose }: { initialSymbol: string; onClo
               <Input
                 value={targetUid}
                 onChange={(e) => setTargetUid(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="e.g. 482917"
+                placeholder=""
                 className="bg-secondary/40 font-mono tracking-widest"
                 inputMode="numeric"
               />

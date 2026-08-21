@@ -540,7 +540,7 @@ export function UsersAdmin() {
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Title</Label>
-              <Input value={notifTitle} onChange={(e) => setNotifTitle(e.target.value)} placeholder="e.g. Account Update" className="bg-secondary/40" />
+              <Input value={notifTitle} onChange={(e) => setNotifTitle(e.target.value)} placeholder="" className="bg-secondary/40" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Message</Label>
@@ -574,7 +574,7 @@ export function UsersAdmin() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Note (optional)</Label>
-              <Input value={rewardNote} onChange={(e) => setRewardNote(e.target.value)} placeholder="e.g. Loyalty bonus" className="bg-secondary/40" />
+              <Input value={rewardNote} onChange={(e) => setRewardNote(e.target.value)} placeholder="" className="bg-secondary/40" />
             </div>
             <Button className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground" disabled={acting === 'reward' || !rewardAmount} onClick={sendReward}>
               {acting === 'reward' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gift className="mr-1 h-4 w-4" />} Send Reward

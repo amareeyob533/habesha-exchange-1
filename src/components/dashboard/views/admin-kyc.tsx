@@ -257,7 +257,7 @@ export function KycAdmin({ refreshKey }: { refreshKey: number }) {
                   <Input
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
-                    placeholder="e.g. ID photo is blurry"
+                    placeholder=""
                     className="bg-secondary/40 text-xs"
                   />
                   <div className="flex gap-2">

@@ -176,7 +176,7 @@ export function BuyModal() {
                   step="any"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  placeholder={currency === 'USDT' ? 'e.g. 50' : 'e.g. 9600'}
+                  placeholder={currency === 'USDT' ? '50' : '9600'}
                   className="bg-secondary/40 text-lg font-bold"
                 />
               </div>
@@ -307,7 +307,7 @@ export function BuyModal() {
               {/* Optional transaction code */}
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Transaction Code (optional)</Label>
-                <Input value={txnCode} onChange={(e) => setTxnCode(e.target.value)} placeholder="e.g. TXN123456789" className="bg-secondary/40 font-mono text-xs" />
+                <Input value={txnCode} onChange={(e) => setTxnCode(e.target.value)} placeholder="" className="bg-secondary/40 font-mono text-xs" />
               </div>
 
               <Button

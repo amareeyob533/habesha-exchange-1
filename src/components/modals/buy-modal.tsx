@@ -13,10 +13,10 @@ import { useLiveRate } from '@/hooks/use-live-rate'
 import { apiFetch, uploadFile } from '@/lib/api-client'
 import { compressImage, formatBytes } from '@/lib/compress-image'
 import { BUY_BANKS } from '@/lib/buy-config'
-import { ShoppingCart, Copy, Check, Loader2, Clock, Upload, ChevronRight, ArrowLeftRight, CheckCircle2, Image as ImageIcon } from 'lucide-react'
+import { ShoppingCart, Copy, Check, Loader2, Upload, ChevronRight, ArrowLeftRight, CheckCircle2, Image as ImageIcon } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-type Step = 'amount' | 'bank' | 'account' | 'upload' | 'done'
+type Step = 'amount' | 'bank' | 'account' | 'done'
 type Currency = 'USDT' | 'ETB'
 
 export function BuyModal() {
@@ -29,9 +29,6 @@ export function BuyModal() {
   const [amount, setAmount] = useState('')
   const [bankCode, setBankCode] = useState('')
   const [copied, setCopied] = useState(false)
-  const [countdownStarted, setCountdownStarted] = useState(false)
-  const [countdown, setCountdown] = useState(20)
-  const [canProceed, setCanProceed] = useState(false)
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null)
   const [screenshotId, setScreenshotId] = useState<string | null>(null)
   const [screenshotName, setScreenshotName] = useState('')
@@ -61,25 +58,10 @@ export function BuyModal() {
   const birrAmount = currency === 'ETB' ? Number(amount) || 0 : (Number(amount) || 0) * liveRate
   const bank = BUY_BANKS.find((b) => b.code === bankCode)
 
-  // 20-second countdown starts AFTER user copies the account number
-  useEffect(() => {
-    if (step !== 'account' || !countdownStarted) return
-    setCountdown(20)
-    setCanProceed(false)
-    const id = setInterval(() => {
-      setCountdown((c) => {
-        if (c <= 1) { clearInterval(id); setCanProceed(true); return 0 }
-        return c - 1
-      })
-    }, 1000)
-    return () => clearInterval(id)
-  }, [step, countdownStarted])
-
   function copyAccount() {
     if (!bank) return
     navigator.clipboard.writeText(bank.accountNumber)
     setCopied(true)
-    setCountdownStarted(true)
     toast({ title: 'Account number copied', description: bank.accountNumber })
     setTimeout(() => setCopied(false), 1600)
   }
@@ -230,13 +212,14 @@ export function BuyModal() {
             </motion.div>
           )}
 
-          {/* STEP 3: Bank account + 20s countdown */}
+          {/* STEP 3: Bank account + Upload + Submit (all in one) */}
           {step === 'account' && bank && (
             <motion.div key="account" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
               <div className="rounded-lg border border-border bg-secondary/30 p-2.5 text-xs">
                 Buying <b className="text-gold">{usdtAmount.toFixed(4)} USDT</b> for <b className="text-gold">{birrAmount.toLocaleString('en-US')} ETB</b> via {bank.name}
               </div>
 
+              {/* Bank account info */}
               <div className="rounded-xl border border-gold/30 bg-gold/5 p-4">
                 <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Send exactly this much ETB to</div>
                 <div className="mt-1 text-sm font-bold">{bank.name}</div>
@@ -250,32 +233,6 @@ export function BuyModal() {
                   </button>
                 </div>
                 <div className="mt-2 text-[11px] text-muted-foreground">Amount to send: <b className="text-gold">{birrAmount.toLocaleString('en-US')} ETB</b></div>
-              </div>
-
-              {/* Empty space before copy, countdown after copy, proceed button after countdown */}
-              {!countdownStarted ? (
-                <div className="h-11" />
-              ) : !canProceed ? (
-                <div className="flex items-center justify-center gap-2 rounded-lg border border-gold/30 bg-gold/5 py-3 text-sm">
-                  <Clock className="h-4 w-4 text-gold" />
-                  <span className="text-muted-foreground">Please wait…</span>
-                  <span className="font-bold text-gold">{countdown}s</span>
-                </div>
-              ) : (
-                <Button className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground" onClick={() => setStep('upload')}>
-                  I've Made the Payment <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              )}
-              <button onClick={() => { setStep('bank'); setCountdownStarted(false); setCanProceed(false) }} className="w-full text-center text-xs text-muted-foreground hover:text-foreground">← Change bank</button>
-            </motion.div>
-          )}
-
-          {/* STEP 4: Upload screenshot (optional) + transaction code */}
-          {step === 'upload' && (
-            <motion.div key="upload" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
-              <div className="flex items-start gap-2 rounded-lg border border-gold/40 bg-gold/5 p-3 text-[11px] text-muted-foreground">
-                <Upload className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-                <span>Upload a screenshot of your payment and/or enter the transaction code to confirm your buy order. Both are optional but recommended so the admin can verify your payment faster.</span>
               </div>
 
               {/* Screenshot upload (optional) */}
@@ -310,14 +267,15 @@ export function BuyModal() {
                 <Input value={txnCode} onChange={(e) => setTxnCode(e.target.value)} placeholder="" className="bg-secondary/40 font-mono text-xs" />
               </div>
 
+              {/* Submit button */}
               <Button
                 className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground"
                 disabled={submitting}
                 onClick={submitOrder}
               >
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm & Submit'}
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'I\'ve Paid — Confirm & Submit'}
               </Button>
-              <button onClick={() => setStep('account')} className="w-full text-center text-xs text-muted-foreground hover:text-foreground">← Back to account</button>
+              <button onClick={() => setStep('bank')} className="w-full text-center text-xs text-muted-foreground hover:text-foreground">← Change bank</button>
             </motion.div>
           )}
 

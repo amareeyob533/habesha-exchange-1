@@ -106,6 +106,10 @@ export function BuyModal() {
   }
 
   async function submitOrder() {
+    if (!screenshotUrl) {
+      toast({ variant: 'destructive', title: 'Screenshot required', description: 'Please upload a payment screenshot to confirm your order.' })
+      return
+    }
     setSubmitting(true)
     try {
       await apiFetch('/api/buy', {
@@ -237,7 +241,7 @@ export function BuyModal() {
 
               {/* Screenshot upload (optional) */}
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Payment Screenshot (optional)</Label>
+                <Label className="text-xs text-muted-foreground">Payment Screenshot <span className="text-down">*</span></Label>
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
@@ -270,7 +274,7 @@ export function BuyModal() {
               {/* Submit button */}
               <Button
                 className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground"
-                disabled={submitting}
+                disabled={submitting || !screenshotUrl}
                 onClick={submitOrder}
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'I\'ve Paid — Confirm & Submit'}

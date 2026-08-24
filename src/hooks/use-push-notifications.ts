@@ -46,8 +46,11 @@ export function usePushNotifications() {
       await navigator.serviceWorker.ready
 
       // 3. Get the VAPID public key from the server
-      const { publicKey } = await apiFetch<{ publicKey: string }>('/api/push/vapid')
-      if (!publicKey) return false
+      const vapidRes = await apiFetch<{ publicKey: string; error?: string }>('/api/push/vapid')
+      if (!vapidRes.publicKey || vapidRes.error) {
+        console.error('Push not configured:', vapidRes.error || 'no public key')
+        return false
+      }
 
       // 4. Subscribe to push
       const sub = await reg.pushManager.subscribe({

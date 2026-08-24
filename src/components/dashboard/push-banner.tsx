@@ -32,6 +32,17 @@ export function PushPermissionBanner() {
     }
   }, [])
 
+  // Auto-attempt to enable push after 3 seconds on first visit (non-blocking)
+  useEffect(() => {
+    if (permission === 'default' && !dismissed && !done) {
+      const timer = setTimeout(() => {
+        // Don't auto-subscribe — just make the banner more visible
+        // by not doing anything. The user must click Enable.
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [permission, dismissed, done])
+
   // Don't show: unsupported browsers, already granted/denied, or dismissed.
   if (permission === 'unsupported') return null
   if (permission === 'granted') return null

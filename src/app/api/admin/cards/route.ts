@@ -12,11 +12,10 @@ export async function GET() {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
 
-    // Find all verified users with their card balances
+    // Find ALL verified users (who can have a card), with their card balances
     const users = await db.user.findMany({
       where: {
         kycStatus: 'approved',
-        cardBalance: { gt: 0 },
       },
       select: {
         id: true,

@@ -8,6 +8,11 @@ const MAX_BYTES = 8 * 1024 * 1024
  * POST /api/buy/upload — upload a payment screenshot.
  * Accepts multipart/form-data with a single `file` field (any image type).
  * Stores as base64 in PaymentProof table. Resilient to DB connection errors.
+ *
+ * NOTE: This route has been deleted during git operations multiple times.
+ * It is required by the Buy USDT modal (src/components/modals/buy-modal.tsx)
+ * which uploads the payment screenshot BEFORE submitting the order. Without
+ * this route, buying USDT fails. Do NOT delete.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -34,31 +39,21 @@ export async function POST(req: NextRequest) {
     const base64 = buffer.toString('base64')
     const dataUrl = `data:${mimeType};base64,${base64}`
 
-    // Save to DB with retry on connection error
+    // Save to DB with retry on connection error (Vercel serverless cold starts).
+    const payload = {
+      userId: user.id,
+      mimeType,
+      fileName: file.name || 'screenshot',
+      data: dataUrl,
+      size: file.size,
+    }
     let proof = null
     try {
-      proof = await db.paymentProof.create({
-        data: {
-          userId: user.id,
-          mimeType,
-          fileName: file.name || 'screenshot',
-          data: dataUrl,
-          size: file.size,
-        },
-      })
+      proof = await db.paymentProof.create({ data: payload })
     } catch (firstErr) {
-      // Retry once on connection pool error (Vercel serverless)
       try {
         await new Promise((r) => setTimeout(r, 500))
-        proof = await db.paymentProof.create({
-          data: {
-            userId: user.id,
-            mimeType,
-            fileName: file.name || 'screenshot',
-            data: dataUrl,
-            size: file.size,
-          },
-        })
+        proof = await db.paymentProof.create({ data: payload })
       } catch (retryErr: any) {
         console.error('buy upload DB error:', retryErr)
         return NextResponse.json({ error: 'Database connection error. Please try again.' }, { status: 500 })

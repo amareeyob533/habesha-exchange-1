@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { Topbar } from '@/components/dashboard/topbar'
 import { OverviewView } from '@/components/dashboard/views/overview'
@@ -21,14 +21,17 @@ import { KycModal } from '@/components/modals/kyc-modal'
 import { NotificationPanel } from '@/components/dashboard/notification-panel'
 import { BottomNav } from '@/components/dashboard/bottom-nav'
 import { PushPermissionBanner } from '@/components/dashboard/push-banner'
+import { GiftBoxPopup, pickUnseenGiftBroadcast, type GiftBroadcast } from '@/components/effects/gift-box-popup'
 import { useUI } from '@/hooks/use-ui'
 import { useAuth } from '@/hooks/use-auth'
+import { apiFetch, getStoredToken } from '@/lib/api-client'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LogoMark } from '@/components/common/logo'
 
 export function DashboardShell() {
   const { view, setView } = useUI()
   const { fetchMe, user } = useAuth()
+  const [giftBroadcast, setGiftBroadcast] = useState<GiftBroadcast | null>(null)
 
   const isAdmin = user?.email?.toLowerCase() === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'amareeyob533@gmail.com').toLowerCase()
 
@@ -50,6 +53,38 @@ export function DashboardShell() {
     document.addEventListener('visibilitychange', onVis)
     return () => { stop(); document.removeEventListener('visibilitychange', onVis) }
   }, [fetchMe])
+
+  // Check for unseen gift broadcasts (only for non-admin users, since admins
+  // don't want to receive their own gift popups).
+  const checkGiftBroadcasts = useCallback(async () => {
+    if (isAdmin) return
+    if (!getStoredToken()) return
+    // Don't re-check if a popup is already showing.
+    if (giftBroadcast) return
+    try {
+      const data = await apiFetch<{ broadcasts: GiftBroadcast[] }>('/api/broadcasts')
+      const unseen = pickUnseenGiftBroadcast(data.broadcasts || [])
+      if (unseen) {
+        setGiftBroadcast(unseen)
+      }
+    } catch {
+      // soft fail
+    }
+  }, [isAdmin, giftBroadcast])
+
+  // Check on mount + every 15s for new gift broadcasts.
+  // Initial check is deferred to a microtask so we don't trigger a cascading
+  // render in the effect body (react-hooks/set-state-in-effect).
+  useEffect(() => {
+    const t = setTimeout(() => { checkGiftBroadcasts() }, 0)
+    let id: ReturnType<typeof setInterval> | null = null
+    const start = () => { if (!id) id = setInterval(() => checkGiftBroadcasts(), 15000) }
+    const stop = () => { if (id) { clearInterval(id); id = null } }
+    const onVis = () => { document.hidden ? stop() : start() }
+    start()
+    document.addEventListener('visibilitychange', onVis)
+    return () => { clearTimeout(t); stop(); document.removeEventListener('visibilitychange', onVis) }
+  }, [checkGiftBroadcasts])
 
   return (
     <div className="min-h-screen bg-background">
@@ -106,6 +141,9 @@ export function DashboardShell() {
       <KycModal />
       <NotificationPanel />
       <PushPermissionBanner />
+
+      {/* Gift box popup — shows when an unseen gift broadcast is available */}
+      <GiftBoxPopup broadcast={giftBroadcast} onClose={() => setGiftBroadcast(null)} />
     </div>
   )
 }

@@ -281,6 +281,8 @@ model Broadcast {
   videoData   String?  // base64 data URL (compressed short video, max ~5MB)
   videoMime   String?  // video/mp4, video/webm, etc.
   videoSize   Int      @default(0)
+  expiresAt   DateTime? // null = never expires; set by admin for time-limited broadcasts
+  isGift      Boolean  @default(false) // true = shows gift box popup animation
   createdAt   DateTime @default(now())
   reactions   BroadcastReaction[]
   seenBy      BroadcastSeen[]

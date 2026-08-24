@@ -24,6 +24,14 @@ export async function GET() {
     if (!user) return response!
 
     const broadcasts = await db.broadcast.findMany({
+      where: {
+        // Only show broadcasts that haven't expired.
+        // null expiresAt means it never expires.
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: new Date() } },
+        ],
+      },
       orderBy: { createdAt: 'desc' },
       take: 20,
       include: {
@@ -56,6 +64,8 @@ export async function GET() {
         videoMime: b.videoMime,
         videoSize: b.videoSize,
         createdAt: b.createdAt,
+        expiresAt: b.expiresAt,
+        isGift: b.isGift,
         seen,
         reaction,
         reactionCount: b._count.reactions,

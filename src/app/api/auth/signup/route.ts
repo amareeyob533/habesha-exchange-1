@@ -95,9 +95,16 @@ export async function POST(req: NextRequest) {
 
     // Send all existing broadcasts to the new user as notifications + push.
     // This ensures new users immediately see any pending announcements.
+    // ONLY non-expired broadcasts are sent (null expiresAt = never expires).
     const broadcasts = await db.broadcast.findMany({
+      where: {
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: new Date() } },
+        ],
+      },
       orderBy: { createdAt: 'desc' },
-      take: 10, // most recent 10 broadcasts
+      take: 10, // most recent 10 non-expired broadcasts
     })
     for (const bc of broadcasts) {
       await db.notification.create({

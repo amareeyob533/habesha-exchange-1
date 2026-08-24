@@ -5,7 +5,7 @@ import { useUI, type ViewKey } from '@/hooks/use-ui'
 import { useAuth } from '@/hooks/use-auth'
 import { apiFetch, getStoredToken } from '@/lib/api-client'
 import { timeAgo } from '@/lib/format'
-import { Bell, CheckCircle2, Info, AlertTriangle, ArrowRight, Megaphone, Heart, Loader2, Video } from 'lucide-react'
+import { Bell, CheckCircle2, Info, AlertTriangle, ArrowRight, Megaphone, Heart, Loader2, Video, Gift } from 'lucide-react'
 import { useEffect, useState, useCallback, useRef } from 'react'
 
 const ICON: Record<string, any> = { success: CheckCircle2, info: Info, warning: AlertTriangle }
@@ -19,6 +19,8 @@ interface Broadcast {
   videoMime: string | null
   videoSize: number
   createdAt: string
+  expiresAt: string | null
+  isGift: boolean
   seen: boolean
   reaction: string | null
   reactionCount: number
@@ -180,6 +182,16 @@ export function NotificationPanel() {
   const unseenBroadcasts = broadcasts.filter((b) => !b.seen).length
   const unreadNotifications = notifications.filter((n) => !n.read).length
 
+  // Sort broadcasts so that unseen gift broadcasts appear at the top.
+  // Order: 1) unseen gift, 2) seen gift, 3) unseen regular, 4) seen regular.
+  // Within each group, preserve the API's createdAt desc order.
+  const sortedBroadcasts = [...broadcasts].sort((a, b) => {
+    const aRank = (a.isGift ? 2 : 0) + (a.seen ? 0 : 1)
+    const bRank = (b.isGift ? 2 : 0) + (b.seen ? 0 : 1)
+    if (aRank !== bRank) return bRank - aRank
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  })
+
   return (
     <Sheet open={notifOpen} onOpenChange={(v) => !v && close()}>
       <SheetContent className="w-full border-border bg-card sm:max-w-md">
@@ -264,18 +276,29 @@ export function NotificationPanel() {
               No broadcasts yet
             </div>
           ) : (
-            broadcasts.map((b) => (
+            sortedBroadcasts.map((b) => (
               <div
                 key={b.id}
                 className={`rounded-xl border p-3 transition-all ${
-                  b.seen ? 'border-border bg-secondary/20' : 'border-gold/30 bg-gold/5'
+                  b.isGift
+                    ? 'border-gold/50 bg-gradient-to-br from-gold/10 to-gold/5 shadow-[0_0_20px_-8px_rgba(240,185,11,0.45)]'
+                    : b.seen ? 'border-border bg-secondary/20' : 'border-gold/30 bg-gold/5'
                 }`}
               >
                 {/* Header: title + date */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-1.5">
+                    {b.isGift && (
+                      <span className="flex h-5 w-5 items-center justify-center rounded-md bg-gold/20 text-gold" title="Gift broadcast">
+                        <Gift className="h-3.5 w-3.5 fill-gold" />
+                      </span>
+                    )}
                     {b.hasVideo && <Video className="h-3.5 w-3.5 shrink-0 text-gold" />}
-                    <span className="text-sm font-bold">{b.title}</span>
+                    {b.isGift ? (
+                      <span className="truncate text-sm font-extrabold text-gold-gradient">{b.title}</span>
+                    ) : (
+                      <span className="truncate text-sm font-bold">{b.title}</span>
+                    )}
                   </div>
                   <span className="shrink-0 text-[10px] text-muted-foreground">{timeAgo(b.createdAt)}</span>
                 </div>
@@ -321,7 +344,11 @@ export function NotificationPanel() {
                     )}
                     {b.reactionCount > 0 ? b.reactionCount : 'Like'}
                   </button>
-                  {!b.seen && <span className="text-[10px] font-bold text-gold">NEW</span>}
+                  {!b.seen && (
+                    <span className={`text-[10px] font-bold ${b.isGift ? 'text-gold' : 'text-gold'}`}>
+                      {b.isGift ? '🎁 NEW GIFT' : 'NEW'}
+                    </span>
+                  )}
                 </div>
               </div>
             ))

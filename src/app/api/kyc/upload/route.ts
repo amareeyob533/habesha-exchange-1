@@ -8,6 +8,11 @@ const MAX_BYTES = 8 * 1024 * 1024
  * POST /api/kyc/upload — upload an ID photo for KYC (front or back).
  * Accepts multipart/form-data with `file` and `side` (front|back) fields.
  * Stores as base64 in KycDocument table. Resilient to DB connection errors.
+ *
+ * NOTE: This route has been deleted during git operations multiple times.
+ * It is required by the KYC modal (src/components/modals/kyc-modal.tsx)
+ * which uploads the user's ID photos BEFORE submitting the application.
+ * Without this route, KYC verification fails. Do NOT delete.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -47,28 +52,18 @@ export async function POST(req: NextRequest) {
     })
 
     if (!draftApp) {
+      const draftPayload = {
+        userId: user.id,
+        fullName: '(draft)',
+        city: '(draft)',
+        idType: 'national_id',
+        status: 'draft',
+      }
       try {
-        draftApp = await db.kycApplication.create({
-          data: {
-            userId: user.id,
-            fullName: '(draft)',
-            city: '(draft)',
-            idType: 'national_id',
-            status: 'draft',
-          },
-        })
+        draftApp = await db.kycApplication.create({ data: draftPayload })
       } catch (firstErr) {
-        // Retry on connection error
         await new Promise((r) => setTimeout(r, 500))
-        draftApp = await db.kycApplication.create({
-          data: {
-            userId: user.id,
-            fullName: '(draft)',
-            city: '(draft)',
-            idType: 'national_id',
-            status: 'draft',
-          },
-        })
+        draftApp = await db.kycApplication.create({ data: draftPayload })
       }
     }
 
@@ -82,32 +77,21 @@ export async function POST(req: NextRequest) {
     }
 
     // Create the document with retry
+    const docPayload = {
+      applicationId: draftApp.id,
+      userId: user.id,
+      side,
+      mimeType,
+      fileName: file.name || 'id-document',
+      data: dataUrl,
+      size: file.size,
+    }
     let doc = null
     try {
-      doc = await db.kycDocument.create({
-        data: {
-          applicationId: draftApp.id,
-          userId: user.id,
-          side,
-          mimeType,
-          fileName: file.name || 'id-document',
-          data: dataUrl,
-          size: file.size,
-        },
-      })
+      doc = await db.kycDocument.create({ data: docPayload })
     } catch (firstErr) {
       await new Promise((r) => setTimeout(r, 500))
-      doc = await db.kycDocument.create({
-        data: {
-          applicationId: draftApp.id,
-          userId: user.id,
-          side,
-          mimeType,
-          fileName: file.name || 'id-document',
-          data: dataUrl,
-          size: file.size,
-        },
-      })
+      doc = await db.kycDocument.create({ data: docPayload })
     }
 
     return NextResponse.json({ id: doc.id, url: dataUrl, side, fileName: doc.fileName, size: doc.size })

@@ -10,8 +10,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { motion } from 'framer-motion'
-import { Megaphone, Send, Loader2, Inbox, Video, Heart, Film, X, Upload, ImageIcon } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Megaphone, Send, Loader2, Inbox, Video, Heart, Film, X, Upload, ImageIcon, Gift, Clock, Pencil, Check } from 'lucide-react'
 
 interface AdminBroadcast {
   id: string
@@ -21,16 +21,49 @@ interface AdminBroadcast {
   videoMime: string | null
   videoSize: number
   createdAt: string
+  expiresAt: string | null
+  isGift: boolean
   reactionCount: number
   seenCount: number
 }
 
 const MAX_MEDIA_BYTES = 25 * 1024 * 1024 // 25 MB
 
+/** Expiry options for the dropdown. */
+type ExpiryKey = '1h' | '1d' | '3d' | '1w' | 'never'
+const EXPIRY_OPTIONS: { key: ExpiryKey; label: string; ms: number | null }[] = [
+  { key: '1h', label: '1 hour', ms: 60 * 60 * 1000 },
+  { key: '1d', label: '1 day', ms: 24 * 60 * 60 * 1000 },
+  { key: '3d', label: '3 days', ms: 3 * 24 * 60 * 60 * 1000 },
+  { key: '1w', label: '1 week', ms: 7 * 24 * 60 * 60 * 1000 },
+  { key: 'never', label: 'Never', ms: null },
+]
+
+/** Compute an ISO date string for the given expiry option (or null for never). */
+function expiryToISO(key: ExpiryKey): string | null {
+  const opt = EXPIRY_OPTIONS.find((o) => o.key === key)
+  if (!opt || opt.ms === null) return null
+  return new Date(Date.now() + opt.ms).toISOString()
+}
+
 function formatBytes(n: number): string {
   if (n < 1024) return `${n} B`
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
   return `${(n / (1024 * 1024)).toFixed(1)} MB`
+}
+
+/** Human-readable remaining/expired label for a broadcast's expiry. */
+function describeExpiry(expiresAt: string | null): { text: string; tone: 'expired' | 'soon' | 'later' | 'never' } {
+  if (!expiresAt) return { text: 'Never expires', tone: 'never' }
+  const d = new Date(expiresAt)
+  const ms = d.getTime() - Date.now()
+  if (ms <= 0) return { text: 'Expired', tone: 'expired' }
+  const mins = Math.floor(ms / 60000)
+  if (mins < 60) return { text: `Expires in ${mins}m`, tone: 'soon' }
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return { text: `Expires in ${hrs}h`, tone: 'soon' }
+  const days = Math.floor(hrs / 24)
+  return { text: `Expires in ${days}d`, tone: 'later' }
 }
 
 export function BroadcastAdmin({ refreshKey }: { refreshKey: number }) {
@@ -47,7 +80,15 @@ export function BroadcastAdmin({ refreshKey }: { refreshKey: number }) {
   const [mediaType, setMediaType] = useState<'video' | 'image' | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [expiryKey, setExpiryKey] = useState<ExpiryKey>('never')
+  const [isGift, setIsGift] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // Edit-expiry state for past broadcasts
+  const [editingExpiry, setEditingExpiry] = useState<string | null>(null) // broadcast id
+  const [editExpiryKey, setEditExpiryKey] = useState<ExpiryKey>('never')
+  const [editIsGift, setEditIsGift] = useState(false)
+  const [savingExpiry, setSavingExpiry] = useState<string | null>(null) // broadcast id currently saving
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!getStoredToken()) return
@@ -175,6 +216,9 @@ export function BroadcastAdmin({ refreshKey }: { refreshKey: number }) {
         }
       }
 
+      // Convert expiry option → ISO string (or "never")
+      const expiresAtISO = expiryToISO(expiryKey)
+
       // Build the request: if we have a Blob URL, send JSON; otherwise FormData
       const token = getStoredToken()
       let res: Response
@@ -186,13 +230,16 @@ export function BroadcastAdmin({ refreshKey }: { refreshKey: number }) {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          body: JSON.stringify({ title: t, message: m, mediaUrl }),
+          body: JSON.stringify({ title: t, message: m, mediaUrl, expiresAt: expiresAtISO, isGift }),
         })
       } else {
         // FormData (small file or no file)
         const form = new FormData()
         form.append('title', t)
         form.append('message', m)
+        if (expiresAtISO) form.append('expiresAt', expiresAtISO)
+        else form.append('expiresAt', 'never')
+        form.append('isGift', isGift ? 'true' : 'false')
         if (mediaFile) form.append('file', mediaFile)
         res = await fetch('/api/admin/broadcast', {
           method: 'POST',
@@ -204,11 +251,18 @@ export function BroadcastAdmin({ refreshKey }: { refreshKey: number }) {
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error((data as any)?.error || `Request failed (${res.status})`)
 
-      toast({ title: 'Broadcast sent', description: 'Push notifications are being delivered to all users.' })
+      toast({
+        title: isGift ? 'Gift broadcast sent' : 'Broadcast sent',
+        description: expiryKey === 'never'
+          ? 'Push notifications are being delivered to all users.'
+          : `Expires in ${EXPIRY_OPTIONS.find((o) => o.key === expiryKey)?.label}. Pushing to all users.`,
+      })
       // Reset form
       setTitle('')
       setMessage('')
       clearMedia()
+      setExpiryKey('never')
+      setIsGift(false)
       setUploadProgress(0)
       await load({ silent: true })
     } catch (err: any) {
@@ -216,6 +270,41 @@ export function BroadcastAdmin({ refreshKey }: { refreshKey: number }) {
     } finally {
       setSending(false)
       setUploading(false)
+    }
+  }
+
+  function startEditExpiry(b: AdminBroadcast) {
+    setEditingExpiry(b.id)
+    // Determine current expiryKey from the broadcast's expiresAt
+    if (!b.expiresAt) {
+      setEditExpiryKey('never')
+    } else {
+      const ms = new Date(b.expiresAt).getTime() - Date.now()
+      if (ms <= 0) setEditExpiryKey('1h') // already expired → default to 1h for new value
+      else if (ms < 2 * 60 * 60 * 1000) setEditExpiryKey('1h')
+      else if (ms < 2 * 24 * 60 * 60 * 1000) setEditExpiryKey('1d')
+      else if (ms < 4 * 24 * 60 * 60 * 1000) setEditExpiryKey('3d')
+      else if (ms < 8 * 24 * 60 * 60 * 1000) setEditExpiryKey('1w')
+      else setEditExpiryKey('never')
+    }
+    setEditIsGift(!!b.isGift)
+  }
+
+  async function saveEditExpiry(b: AdminBroadcast) {
+    setSavingExpiry(b.id)
+    try {
+      const expiresAtISO = expiryToISO(editExpiryKey)
+      await apiFetch('/api/admin/broadcast/expiry', {
+        method: 'PATCH',
+        body: JSON.stringify({ id: b.id, expiresAt: expiresAtISO, isGift: editIsGift }),
+      })
+      toast({ title: 'Broadcast updated', description: editExpiryKey === 'never' ? 'Expires: never' : `Expires in ${EXPIRY_OPTIONS.find((o) => o.key === editExpiryKey)?.label}` })
+      setEditingExpiry(null)
+      await load({ silent: true })
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Failed to update', description: err.message })
+    } finally {
+      setSavingExpiry(null)
     }
   }
 
@@ -256,6 +345,51 @@ export function BroadcastAdmin({ refreshKey }: { refreshKey: number }) {
               className="bg-secondary/40 min-h-[100px]"
               maxLength={1000}
             />
+          </div>
+
+          {/* Expiry + Gift controls */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" /> Expiry
+              </Label>
+              <div className="relative">
+                <select
+                  value={expiryKey}
+                  onChange={(e) => setExpiryKey(e.target.value as ExpiryKey)}
+                  className="w-full appearance-none rounded-lg border border-border bg-secondary/40 px-3 py-2 text-sm font-medium outline-none transition-colors hover:border-gold/40 focus:border-gold/60 focus:ring-1 focus:ring-gold/30"
+                >
+                  {EXPIRY_OPTIONS.map((o) => (
+                    <option key={o.key} value={o.key} className="bg-background">{o.label}</option>
+                  ))}
+                </select>
+                <svg className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Gift className="h-3.5 w-3.5" /> Gift Broadcast
+              </Label>
+              <button
+                type="button"
+                onClick={() => setIsGift((v) => !v)}
+                className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-sm font-medium transition-all ${
+                  isGift
+                    ? 'border-gold/60 bg-gold/10 text-gold'
+                    : 'border-border bg-secondary/40 text-muted-foreground hover:border-gold/30 hover:text-foreground'
+                }`}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Gift className={`h-4 w-4 ${isGift ? 'fill-current' : ''}`} />
+                  {isGift ? 'Gift — shows popup' : 'Regular broadcast'}
+                </span>
+                <span className={`relative h-5 w-9 rounded-full transition-colors ${isGift ? 'bg-gold' : 'bg-secondary'}`}>
+                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${isGift ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                </span>
+              </button>
+            </div>
           </div>
 
           {/* Media upload + preview (video or image) */}
@@ -318,8 +452,8 @@ export function BroadcastAdmin({ refreshKey }: { refreshKey: number }) {
               disabled={sending || uploading || !title.trim() || !message.trim()}
               className="bg-gold text-black hover:bg-gold/90"
             >
-              {sending || uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {uploading ? `Uploading… ${uploadProgress}%` : sending ? 'Sending…' : 'Send to All Users'}
+              {sending || uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : isGift ? <Gift className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+              {uploading ? `Uploading… ${uploadProgress}%` : sending ? 'Sending…' : isGift ? 'Send Gift to All Users' : 'Send to All Users'}
             </Button>
           </div>
         </div>
@@ -346,39 +480,124 @@ export function BroadcastAdmin({ refreshKey }: { refreshKey: number }) {
           </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
-            {broadcasts.map((b, i) => (
-              <motion.div
-                key={b.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
-                className="overflow-hidden glass-card rounded-2xl shadow-premium"
-              >
-                <div className="flex items-start justify-between gap-2 border-b border-border bg-secondary/30 px-4 py-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      {b.hasVideo && <Video className="h-3.5 w-3.5 shrink-0 text-gold" />}
-                      <span className="truncate text-sm font-bold">{b.title}</span>
+            {broadcasts.map((b, i) => {
+              const exp = describeExpiry(b.expiresAt)
+              const expColor =
+                exp.tone === 'expired' ? 'bg-down/15 text-down'
+                : exp.tone === 'soon' ? 'bg-gold/15 text-gold'
+                : exp.tone === 'never' ? 'bg-secondary/40 text-muted-foreground'
+                : 'bg-up/15 text-up'
+              const isEditing = editingExpiry === b.id
+              return (
+                <motion.div
+                  key={b.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                  className="overflow-hidden glass-card rounded-2xl shadow-premium"
+                >
+                  <div className="flex items-start justify-between gap-2 border-b border-border bg-secondary/30 px-4 py-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        {b.hasVideo && <Video className="h-3.5 w-3.5 shrink-0 text-gold" />}
+                        {b.isGift && (
+                          <span className="flex items-center gap-0.5 rounded bg-gold/20 px-1 py-0.5 text-[10px] font-bold text-gold">
+                            <Gift className="h-3 w-3 fill-current" /> GIFT
+                          </span>
+                        )}
+                        <span className="truncate text-sm font-bold">{b.title}</span>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">{timeAgo(b.createdAt)}</div>
                     </div>
-                    <div className="text-[11px] text-muted-foreground">{timeAgo(b.createdAt)}</div>
+                    {b.hasVideo && (
+                      <span className="shrink-0 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] font-bold text-gold">
+                        VIDEO · {formatBytes(b.videoSize)}
+                      </span>
+                    )}
                   </div>
-                  {b.hasVideo && (
-                    <span className="shrink-0 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] font-bold text-gold">
-                      VIDEO · {formatBytes(b.videoSize)}
-                    </span>
-                  )}
-                </div>
-                <div className="space-y-2 p-4">
-                  <p className="line-clamp-3 text-xs text-muted-foreground">{b.message}</p>
-                  <div className="flex items-center gap-4 border-t border-border pt-2 text-[11px] text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Heart className="h-3.5 w-3.5 text-down" /> {b.reactionCount} reactions
-                    </span>
-                    <span>{b.seenCount} seen</span>
+                  <div className="space-y-2 p-4">
+                    <p className="line-clamp-3 text-xs text-muted-foreground">{b.message}</p>
+
+                    {/* Expiry + edit panel */}
+                    <div className="border-t border-border pt-2">
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="relative">
+                              <select
+                                value={editExpiryKey}
+                                onChange={(e) => setEditExpiryKey(e.target.value as ExpiryKey)}
+                                className="appearance-none rounded-lg border border-border bg-secondary/40 px-2.5 py-1.5 text-xs font-medium outline-none hover:border-gold/40 focus:border-gold/60"
+                              >
+                                {EXPIRY_OPTIONS.map((o) => (
+                                  <option key={o.key} value={o.key} className="bg-background">{o.label}</option>
+                                ))}
+                              </select>
+                              <svg className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="6 9 12 15 18 9" />
+                              </svg>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setEditIsGift((v) => !v)}
+                              className={`flex items-center gap-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors ${
+                                editIsGift ? 'border-gold/60 bg-gold/10 text-gold' : 'border-border bg-secondary/40 text-muted-foreground hover:text-foreground'
+                              }`}
+                            >
+                              <Gift className={`h-3 w-3 ${editIsGift ? 'fill-current' : ''}`} />
+                              {editIsGift ? 'Gift' : 'Regular'}
+                            </button>
+                            <div className="ml-auto flex items-center gap-1">
+                              <Button
+                                size="sm"
+                                className="h-7 bg-gold px-2 text-xs text-black hover:bg-gold/90"
+                                disabled={savingExpiry === b.id}
+                                onClick={() => saveEditExpiry(b)}
+                              >
+                                {savingExpiry === b.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                                Save
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 px-2 text-xs"
+                                onClick={() => setEditingExpiry(null)}
+                                disabled={savingExpiry === b.id}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${expColor}`}>
+                            <Clock className="h-3 w-3" />
+                            {exp.text}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => startEditExpiry(b)}
+                            disabled={!!savingExpiry}
+                            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-gold"
+                          >
+                            <Pencil className="h-3 w-3" />
+                            Edit expiry
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-4 border-t border-border pt-2 text-[11px] text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Heart className="h-3.5 w-3.5 text-down" /> {b.reactionCount} reactions
+                      </span>
+                      <span>{b.seenCount} seen</span>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              )
+            })}
           </div>
         )}
       </div>

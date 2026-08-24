@@ -35,6 +35,8 @@ export async function GET() {
       videoMime: b.videoMime,
       videoSize: b.videoSize,
       createdAt: b.createdAt,
+      expiresAt: b.expiresAt,
+      isGift: b.isGift,
       reactionCount: b._count.reactions,
       seenCount: b._count.seenBy,
     }))
@@ -71,6 +73,18 @@ export async function POST(req: NextRequest) {
     let videoData: string | null = null
     let videoMime: string | null = null
     let videoSize = 0
+    let isGift = false
+    let expiresAt: Date | null = null
+
+    // Parse an expiry value: ISO string, "never", "" or null → Date | null
+    const parseExpiry = (raw: any): Date | null => {
+      if (raw === null || raw === undefined) return null
+      const s = String(raw).trim()
+      if (!s || s.toLowerCase() === 'never') return null
+      const d = new Date(s)
+      if (isNaN(d.getTime())) return null
+      return d
+    }
 
     if (contentType.includes('application/json')) {
       // JSON body with Blob URL
@@ -78,6 +92,8 @@ export async function POST(req: NextRequest) {
       title = (body.title || '').trim()
       message = (body.message || '').trim()
       const mediaUrl = body.mediaUrl || null
+      isGift = !!(body.isGift)
+      expiresAt = parseExpiry(body.expiresAt)
       if (!title || !message) {
         return NextResponse.json({ error: 'Title and message are required' }, { status: 400 })
       }
@@ -97,6 +113,8 @@ export async function POST(req: NextRequest) {
       title = (form.get('title') as string | null)?.trim() || ''
       message = (form.get('message') as string | null)?.trim() || ''
       const file = form.get('file')
+      isGift = form.get('isGift') === 'true' || form.get('isGift') === 'on'
+      expiresAt = parseExpiry(form.get('expiresAt'))
 
       if (!title || !message) {
         return NextResponse.json({ error: 'Title and message are required' }, { status: 400 })
@@ -127,6 +145,8 @@ export async function POST(req: NextRequest) {
         videoData,
         videoMime,
         videoSize,
+        isGift,
+        expiresAt,
       },
     })
 

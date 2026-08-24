@@ -29,6 +29,7 @@ import {
   Search, Loader2, ShieldCheck, Ban, Trash2, Send, Gift,
   Lock, Unlock, AlertTriangle, Mail, AtSign, Hash,
   Download, ExternalLink, KeyRound, IdCard, MapPin, User as UserIcon, Clock,
+  ArrowDownToLine,
 } from 'lucide-react'
 
 interface SearchUser {
@@ -102,14 +103,18 @@ export function UsersAdmin() {
   const [detail, setDetail] = useState<UserDetail | null>(null)
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [acting, setActing] = useState<string | null>(null)
-  // notify + reward dialogs
+  // notify + reward + deduct dialogs
   const [notifyOpen, setNotifyOpen] = useState(false)
   const [rewardOpen, setRewardOpen] = useState(false)
+  const [deductOpen, setDeductOpen] = useState(false)
   const [notifTitle, setNotifTitle] = useState('')
   const [notifMsg, setNotifMsg] = useState('')
   const [rewardToken, setRewardToken] = useState('USDT')
   const [rewardAmount, setRewardAmount] = useState('')
   const [rewardNote, setRewardNote] = useState('')
+  const [deductToken, setDeductToken] = useState('USDT')
+  const [deductAmount, setDeductAmount] = useState('')
+  const [deductNote, setDeductNote] = useState('')
 
   const search = useCallback(async (q: string) => {
     if (!q.trim()) { setResults([]); return }
@@ -201,6 +206,24 @@ export function UsersAdmin() {
       })
       toast({ title: 'Reward sent 🎁', description: res.message })
       setRewardOpen(false); setRewardAmount(''); setRewardNote('')
+      await loadDetail(detail.user.id)
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Failed', description: err.message })
+    } finally {
+      setActing(null)
+    }
+  }
+
+  async function sendDeduct() {
+    if (!detail) return
+    setActing('deduct')
+    try {
+      const res = await apiFetch<{ ok: boolean; message: string }>(`/api/admin/users/deduct`, {
+        method: 'POST',
+        body: JSON.stringify({ userId: detail.user.id, token: deductToken, amount: Number(deductAmount), note: deductNote }),
+      })
+      toast({ title: 'Funds deducted', description: res.message })
+      setDeductOpen(false); setDeductAmount(''); setDeductNote('')
       await loadDetail(detail.user.id)
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Failed', description: err.message })
@@ -504,6 +527,9 @@ export function UsersAdmin() {
                     <Button variant="outline" className="h-10 border-gold/30 text-gold hover:bg-gold/10" onClick={() => setRewardOpen(true)}>
                       <Gift className="mr-1 h-4 w-4" /> Reward
                     </Button>
+                    <Button variant="outline" className="h-10 border-down/30 text-down hover:bg-down/10" onClick={() => setDeductOpen(true)}>
+                      <ArrowDownToLine className="mr-1 h-4 w-4" /> Deduct
+                    </Button>
                     <Button variant="outline" className="h-10 border-border hover:bg-secondary" onClick={() => setNotifyOpen(true)}>
                       <Send className="mr-1 h-4 w-4" /> Notify
                     </Button>
@@ -578,6 +604,36 @@ export function UsersAdmin() {
             </div>
             <Button className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground" disabled={acting === 'reward' || !rewardAmount} onClick={sendReward}>
               {acting === 'reward' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gift className="mr-1 h-4 w-4" />} Send Reward
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Deduct dialog */}
+      <Dialog open={deductOpen} onOpenChange={setDeductOpen}>
+        <DialogContent className="max-w-[420px] border-border bg-card">
+          <DialogTitle className="text-lg font-bold">Deduct Funds ⚠️</DialogTitle>
+          <DialogDescription className="text-xs">Remove any token from @{detail?.user.username}</DialogDescription>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Token</Label>
+              <Select value={deductToken} onValueChange={setDeductToken}>
+                <SelectTrigger className="bg-secondary/40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {TOKENS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Amount to deduct</Label>
+              <Input type="number" min="0" step="any" value={deductAmount} onChange={(e) => setDeductAmount(e.target.value)} placeholder="0.00" className="bg-secondary/40" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Reason (optional)</Label>
+              <Input value={deductNote} onChange={(e) => setDeductNote(e.target.value)} placeholder="" className="bg-secondary/40" />
+            </div>
+            <Button className="h-11 w-full font-semibold bg-down text-white hover:bg-down/90" disabled={acting === 'deduct' || !deductAmount} onClick={sendDeduct}>
+              {acting === 'deduct' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowDownToLine className="mr-1 h-4 w-4" />} Deduct Funds
             </Button>
           </div>
         </DialogContent>

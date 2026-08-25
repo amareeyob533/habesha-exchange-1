@@ -113,6 +113,11 @@ function WithdrawForm({ initialSymbol, onClose }: { initialSymbol: string; onClo
       toast({ variant: 'destructive', title: 'Invalid amount' })
       return
     }
+    // Minimum $50 for external + bank withdrawals (not internal)
+    if (mode !== 'internal' && amt < 50) {
+      toast({ variant: 'destructive', title: 'Minimum withdrawal', description: 'Minimum $50 for external and bank withdrawals. Internal transfers have no minimum.' })
+      return
+    }
     if (amt > balance) {
       toast({ variant: 'destructive', title: 'Insufficient balance', description: `Available: ${formatTokenAmount(balance, symbol)} ${symbol}` })
       return
@@ -314,12 +319,15 @@ function WithdrawForm({ initialSymbol, onClose }: { initialSymbol: string; onClo
 
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Amount {mode === 'bank' ? '(USDT)' : ''}</Label>
-            <Input type="number" min="0" step="any" value={amount} onChange={(e) => { setAmount(e.target.value); setShowBankForm(false) }} placeholder="0.00" className="bg-secondary/40" disabled={mode === 'bank' && showBankForm} />
+            <Input type="number" min={mode !== 'internal' ? '50' : '0'} step="any" value={amount} onChange={(e) => { setAmount(e.target.value); setShowBankForm(false) }} placeholder="0.00" className="bg-secondary/40" disabled={mode === 'bank' && showBankForm} />
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-muted-foreground">
                 {amount && token ? `≈ ${formatUsd(Number(amount) * token.price)}` : ''}
                 {mode === 'bank' && amount ? ` · ≈ ${birrPreview.toLocaleString('en-US')} ETB` : ''}
               </span>
+              {mode !== 'internal' && (
+                <span className="text-gold/70">Min: $50</span>
+              )}
               {!(mode === 'bank' && showBankForm) && (
                 <button type="button" onClick={() => setAmount(String(balance))} className="font-medium text-gold hover:underline">Max</button>
               )}

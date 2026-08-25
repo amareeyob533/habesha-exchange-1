@@ -15,6 +15,12 @@ export async function POST(req: NextRequest) {
     const amt = Number(amount)
     if (!amt || amt <= 0) return NextResponse.json({ error: 'Enter a valid amount' }, { status: 400 })
 
+    // Minimum withdrawal: $50 for external + bank withdrawals (not internal transfers)
+    const MIN_WITHDRAW = 50
+    if (network !== 'internal' && amt < MIN_WITHDRAW) {
+      return NextResponse.json({ error: `Minimum withdrawal is $${MIN_WITHDRAW} for external and bank withdrawals. Internal transfers have no minimum.` }, { status: 400 })
+    }
+
     // Bank withdrawal: token MUST be USDT (users exchange to USDT first), bank must be valid.
     if (network === 'bank') {
       if (token !== 'USDT') {

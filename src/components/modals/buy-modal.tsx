@@ -183,9 +183,16 @@ export function BuyModal() {
                 </div>
               )}
 
+              {/* Minimum warning */}
+              {amount && Number(amount) > 0 && usdtAmount < 5 && (
+                <div className="rounded-lg border border-down/30 bg-down/5 p-2.5 text-center text-xs text-down">
+                  Minimum buy is $5 USDT
+                </div>
+              )}
+
               <Button
                 className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground"
-                disabled={!amount || Number(amount) <= 0}
+                disabled={!amount || Number(amount) <= 0 || usdtAmount < 5}
                 onClick={() => setStep('bank')}
               >
                 Continue <ChevronRight className="ml-1 h-4 w-4" />

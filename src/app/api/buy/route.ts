@@ -36,6 +36,9 @@ export async function POST(req: NextRequest) {
     if (!usdt || usdt <= 0) {
       return NextResponse.json({ error: 'Enter a valid USDT amount' }, { status: 400 })
     }
+    if (usdt < 5) {
+      return NextResponse.json({ error: 'Minimum buy amount is $5 USDT' }, { status: 400 })
+    }
     if (!birr || birr <= 0) {
       return NextResponse.json({ error: 'Enter a valid ETB amount' }, { status: 400 })
     }

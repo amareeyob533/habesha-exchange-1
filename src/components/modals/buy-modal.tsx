@@ -106,6 +106,10 @@ export function BuyModal() {
   }
 
   async function submitOrder() {
+    if (usdtAmount < 5) {
+      toast({ variant: 'destructive', title: 'Minimum buy', description: 'Minimum buy amount is $5 USDT.' })
+      return
+    }
     if (!screenshotUrl) {
       toast({ variant: 'destructive', title: 'Screenshot required', description: 'Please upload a payment screenshot to confirm your order.' })
       return

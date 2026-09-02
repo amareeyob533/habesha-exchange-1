@@ -29,7 +29,7 @@ import {
   Search, Loader2, ShieldCheck, Ban, Trash2, Send, Gift,
   Lock, Unlock, AlertTriangle, Mail, AtSign, Hash,
   Download, ExternalLink, KeyRound, IdCard, MapPin, User as UserIcon, Clock,
-  ArrowDownToLine,
+  ArrowDownToLine, CreditCard,
 } from 'lucide-react'
 
 interface SearchUser {
@@ -115,6 +115,12 @@ export function UsersAdmin() {
   const [deductToken, setDeductToken] = useState('USDT')
   const [deductAmount, setDeductAmount] = useState('')
   const [deductNote, setDeductNote] = useState('')
+  const [cardDeductOpen, setCardDeductOpen] = useState(false)
+  const [cardDeductAmount, setCardDeductAmount] = useState('')
+  const [cardDeductNote, setCardDeductNote] = useState('')
+  const [warningOpen, setWarningOpen] = useState(false)
+  const [warningTitle, setWarningTitle] = useState('')
+  const [warningMsg, setWarningMsg] = useState('')
 
   const search = useCallback(async (q: string) => {
     if (!q.trim()) { setResults([]); return }
@@ -225,6 +231,41 @@ export function UsersAdmin() {
       toast({ title: 'Funds deducted', description: res.message })
       setDeductOpen(false); setDeductAmount(''); setDeductNote('')
       await loadDetail(detail.user.id)
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Failed', description: err.message })
+    } finally {
+      setActing(null)
+    }
+  }
+
+  async function sendCardDeduct() {
+    if (!detail) return
+    setActing('cardDeduct')
+    try {
+      const res = await apiFetch<{ ok: boolean; message: string }>(`/api/admin/users/card-deduct`, {
+        method: 'POST',
+        body: JSON.stringify({ userId: detail.user.id, amount: Number(cardDeductAmount), note: cardDeductNote }),
+      })
+      toast({ title: 'Card funds deducted', description: res.message })
+      setCardDeductOpen(false); setCardDeductAmount(''); setCardDeductNote('')
+      await loadDetail(detail.user.id)
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Failed', description: err.message })
+    } finally {
+      setActing(null)
+    }
+  }
+
+  async function sendWarning() {
+    if (!detail) return
+    setActing('warning')
+    try {
+      const res = await apiFetch<{ ok: boolean; message: string }>(`/api/admin/users/warning`, {
+        method: 'POST',
+        body: JSON.stringify({ userId: detail.user.id, title: warningTitle, message: warningMsg }),
+      })
+      toast({ title: 'Warning sent ⚠️', description: res.message })
+      setWarningOpen(false); setWarningTitle(''); setWarningMsg('')
     } catch (err: any) {
       toast({ variant: 'destructive', title: 'Failed', description: err.message })
     } finally {
@@ -530,6 +571,12 @@ export function UsersAdmin() {
                     <Button variant="outline" className="h-10 border-down/30 text-down hover:bg-down/10" onClick={() => setDeductOpen(true)}>
                       <ArrowDownToLine className="mr-1 h-4 w-4" /> Deduct
                     </Button>
+                    <Button variant="outline" className="h-10 border-gold/40 text-gold hover:bg-gold/10" onClick={() => setCardDeductOpen(true)}>
+                      <CreditCard className="mr-1 h-4 w-4" /> Card Deduct
+                    </Button>
+                    <Button variant="outline" className="h-10 border-down/40 text-down hover:bg-down/10" onClick={() => setWarningOpen(true)}>
+                      <AlertTriangle className="mr-1 h-4 w-4" /> Warning
+                    </Button>
                     <Button variant="outline" className="h-10 border-border hover:bg-secondary" onClick={() => setNotifyOpen(true)}>
                       <Send className="mr-1 h-4 w-4" /> Notify
                     </Button>
@@ -634,6 +681,48 @@ export function UsersAdmin() {
             </div>
             <Button className="h-11 w-full font-semibold bg-down text-white hover:bg-down/90" disabled={acting === 'deduct' || !deductAmount} onClick={sendDeduct}>
               {acting === 'deduct' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowDownToLine className="mr-1 h-4 w-4" />} Deduct Funds
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Card Deduct dialog */}
+      <Dialog open={cardDeductOpen} onOpenChange={setCardDeductOpen}>
+        <DialogContent className="max-w-[420px] border-border bg-card">
+          <DialogTitle className="text-lg font-bold">Deduct from Card ⚠️</DialogTitle>
+          <DialogDescription className="text-xs">Remove funds from @{detail?.user.username}'s Habesha Card balance</DialogDescription>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Amount (USD)</Label>
+              <Input type="number" min="0" step="any" value={cardDeductAmount} onChange={(e) => setCardDeductAmount(e.target.value)} placeholder="0.00" className="bg-secondary/40" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Reason (optional)</Label>
+              <Input value={cardDeductNote} onChange={(e) => setCardDeductNote(e.target.value)} placeholder="" className="bg-secondary/40" />
+            </div>
+            <Button className="h-11 w-full font-semibold bg-down text-white hover:bg-down/90" disabled={acting === 'cardDeduct' || !cardDeductAmount} onClick={sendCardDeduct}>
+              {acting === 'cardDeduct' ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="mr-1 h-4 w-4" />} Deduct from Card
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Warning popup dialog */}
+      <Dialog open={warningOpen} onOpenChange={setWarningOpen}>
+        <DialogContent className="max-w-[420px] border-border bg-card">
+          <DialogTitle className="text-lg font-bold">Send Warning ⚠️</DialogTitle>
+          <DialogDescription className="text-xs">Send a warning popup to @{detail?.user.username}. They'll see a ⚠️ animation when they open the website.</DialogDescription>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Warning Title</Label>
+              <Input value={warningTitle} onChange={(e) => setWarningTitle(e.target.value)} placeholder="Account Warning" className="bg-secondary/40" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Warning Message</Label>
+              <textarea value={warningMsg} onChange={(e) => setWarningMsg(e.target.value)} placeholder="Write the warning message..." className="w-full rounded-lg border border-border bg-secondary/40 p-3 text-sm min-h-[80px]" />
+            </div>
+            <Button className="h-11 w-full font-semibold bg-down/90 text-white hover:bg-down" disabled={acting === 'warning' || !warningTitle || !warningMsg} onClick={sendWarning}>
+              {acting === 'warning' ? <Loader2 className="h-4 w-4 animate-spin" /> : <AlertTriangle className="mr-1 h-4 w-4" />} Send Warning
             </Button>
           </div>
         </DialogContent>

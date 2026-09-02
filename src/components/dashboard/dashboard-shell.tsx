@@ -22,6 +22,7 @@ import { NotificationPanel } from '@/components/dashboard/notification-panel'
 import { BottomNav } from '@/components/dashboard/bottom-nav'
 import { PushPermissionBanner } from '@/components/dashboard/push-banner'
 import { GiftBoxPopup, pickUnseenGiftBroadcast, type GiftBroadcast } from '@/components/effects/gift-box-popup'
+import { WarningPopup } from '@/components/effects/warning-popup'
 import { useUI } from '@/hooks/use-ui'
 import { useAuth } from '@/hooks/use-auth'
 import { apiFetch, getStoredToken } from '@/lib/api-client'
@@ -144,6 +145,7 @@ export function DashboardShell() {
 
       {/* Gift box popup — shows when an unseen gift broadcast is available */}
       <GiftBoxPopup broadcast={giftBroadcast} onClose={() => setGiftBroadcast(null)} />
+      <WarningPopup />
     </div>
   )
 }

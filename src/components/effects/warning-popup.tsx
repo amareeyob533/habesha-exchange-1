@@ -15,32 +15,42 @@ const SEEN_KEY = 'habesha-warning-seen'
 
 /**
  * Warning popup — shows when admin sends a per-user warning.
- * Full-screen ⚠️ popup with bounce animation, similar to the gift box but
- * with a warning emoji instead. Shows once per warning (tracked in localStorage).
+ * Full-screen ⚠️ popup with bounce animation. The title appears below
+ * the warning emoji. When clicked, shows the full message in a panel.
+ * Shows once per warning (tracked in localStorage).
  */
 export function WarningPopup() {
   const [warning, setWarning] = useState<WarningData | null>(null)
   const [showMessage, setShowMessage] = useState(false)
 
   useEffect(() => {
-    // Check for unread warning_popup notifications
     const checkWarnings = async () => {
       try {
-        // Fetch notifications and look for warning_popup type
+        // Fetch user data which includes notifications
         const data = await apiFetch<{ notifications: any[] }>('/api/notifications')
-        const warningNotif = data.notifications?.find((n: any) => n.type === 'warning_popup' && !n.read)
+        const notifs = data.notifications || []
+        // Find unread warning_popup notifications
+        const warningNotif = notifs.find((n: any) => n.type === 'warning_popup' && !n.read)
         if (warningNotif) {
           // Check if already seen this session
-          const seenIds: string[] = JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')
+          let seenIds: string[] = []
+          try {
+            seenIds = JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')
+          } catch {}
           if (!seenIds.includes(warningNotif.id)) {
-            setWarning({
-              id: warningNotif.id,
-              title: warningNotif.title.replace(/^⚠️\s*/, ''),
-              message: warningNotif.message,
-            })
+            // Use setTimeout to avoid setState-in-effect lint
+            setTimeout(() => {
+              setWarning({
+                id: warningNotif.id,
+                title: warningNotif.title.replace(/^⚠️\s*/, ''),
+                message: warningNotif.message,
+              })
+            }, 0)
           }
         }
-      } catch {}
+      } catch {
+        // ignore fetch errors
+      }
     }
 
     // Check on mount
@@ -52,9 +62,14 @@ export function WarningPopup() {
 
   function dismiss() {
     if (warning) {
-      const seenIds: string[] = JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')
+      let seenIds: string[] = []
+      try {
+        seenIds = JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')
+      } catch {}
       seenIds.push(warning.id)
-      localStorage.setItem(SEEN_KEY, JSON.stringify(seenIds))
+      try {
+        localStorage.setItem(SEEN_KEY, JSON.stringify(seenIds))
+      } catch {}
     }
     setWarning(null)
     setShowMessage(false)
@@ -64,75 +79,90 @@ export function WarningPopup() {
     <AnimatePresence>
       {warning && (
         <motion.div
-          className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm"
+          className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black/85 backdrop-blur-md"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={showMessage ? dismiss : undefined}
+          transition={{ duration: 0.3 }}
         >
-          {/* Background glow */}
+          {/* Pulsing red glow */}
           <motion.div
             className="absolute rounded-full"
             style={{
-              width: 300,
-              height: 300,
-              background: 'radial-gradient(circle, rgba(255, 77, 109, 0.3), transparent 70%)',
+              width: 350,
+              height: 350,
+              background: 'radial-gradient(circle, rgba(255, 77, 109, 0.35), transparent 70%)',
             }}
-            animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0.8, 0.5] }}
+            animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.8, 0.4] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           />
 
           {!showMessage ? (
             <>
-              {/* Warning emoji */}
+              {/* Warning emoji with bounce + rotate */}
               <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', stiffness: 200, damping: 12 }}
-                className="relative"
+                initial={{ scale: 0, rotate: -180, y: -100 }}
+                animate={{ scale: 1, rotate: 0, y: 0 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 12, delay: 0.1 }}
+                className="relative cursor-pointer"
+                onClick={() => setShowMessage(true)}
               >
                 <motion.div
                   animate={{ y: [0, -15, 0], rotate: [-5, 5, -5] }}
                   transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                  className="text-7xl"
+                  className="text-8xl drop-shadow-[0_0_30px_rgba(255,77,109,0.5)]"
                 >
                   ⚠️
                 </motion.div>
               </motion.div>
 
-              {/* Title */}
+              {/* Warning title */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="mt-6 text-center"
+                transition={{ delay: 0.4 }}
+                className="mt-6 max-w-xs text-center"
               >
                 <div className="text-xl font-extrabold text-down">{warning.title}</div>
-                <div className="mt-2 text-sm text-muted-foreground">Tap to read</div>
               </motion.div>
 
-              {/* Tap to open */}
-              <Button
-                variant="outline"
-                className="mt-5 border-down/40 text-down hover:bg-down/10"
-                onClick={() => setShowMessage(true)}
+              {/* Tap to read */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
               >
-                Read Message
-              </Button>
+                <Button
+                  variant="outline"
+                  className="mt-5 border-down/40 text-down hover:bg-down/10"
+                  onClick={() => setShowMessage(true)}
+                >
+                  Read Message
+                </Button>
+              </motion.div>
             </>
           ) : (
-            /* Message panel */
+            /* Full message panel — like the gift box */
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 20 }}
               className="relative mx-4 max-w-md rounded-2xl border border-down/30 bg-card p-6 shadow-premium"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="mb-3 flex items-center gap-2">
-                <span className="text-3xl">⚠️</span>
-                <h3 className="text-lg font-bold text-down">{warning.title}</h3>
+              {/* Header */}
+              <div className="mb-4 flex items-center gap-3 border-b border-border pb-3">
+                <span className="text-4xl">⚠️</span>
+                <div>
+                  <h3 className="text-lg font-bold text-down">{warning.title}</h3>
+                  <p className="text-[11px] text-muted-foreground">Warning from Admin</p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">{warning.message}</p>
+
+              {/* Full message text */}
+              <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{warning.message}</p>
+
+              {/* Dismiss button */}
               <Button className="mt-5 w-full bg-down/90 text-white hover:bg-down" onClick={dismiss}>
                 I Understand
               </Button>

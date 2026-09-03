@@ -101,19 +101,11 @@ export function AdminView() {
   }, [section, load])
 
   async function actDeposit(id: string, action: 'approve' | 'reject') {
-    // Ask if admin wants to customize the notification message
-    const defaultMsg = action === 'approve'
-      ? 'Your deposit has been approved and credited to your account.'
-      : 'Your deposit could not be confirmed and has been rejected. Please contact support if you believe this is an error.'
-    const customMsg = prompt(`Edit the notification message (leave empty for default):\n\nDefault:\n${defaultMsg}`, defaultMsg)
-    // If admin clicks Cancel, abort
-    if (customMsg === null) return
-
     setActing(id)
     try {
       const res = await apiFetch<{ ok: boolean; message: string }>(`/api/admin/deposits/${action}`, {
         method: 'POST',
-        body: JSON.stringify({ depositId: id, customMessage: customMsg || undefined }),
+        body: JSON.stringify({ depositId: id }),
       })
       toast({ title: action === 'approve' ? 'Deposit Approved' : 'Deposit Rejected', description: res.message })
       await load({ silent: true })
@@ -125,17 +117,11 @@ export function AdminView() {
   }
 
   async function actWithdrawal(id: string, action: 'approve' | 'reject') {
-    const defaultMsg = action === 'approve'
-      ? 'Your withdrawal has been approved and sent.'
-      : 'Your withdrawal was rejected. Funds have been returned to your account.'
-    const customMsg = prompt(`Edit the notification message (leave empty for default):\n\nDefault:\n${defaultMsg}`, defaultMsg)
-    if (customMsg === null) return
-
     setActing(id)
     try {
       const res = await apiFetch<{ ok: boolean; message: string }>(`/api/admin/withdrawals/${action}`, {
         method: 'POST',
-        body: JSON.stringify({ id, customMessage: customMsg || undefined }),
+        body: JSON.stringify({ id }),
       })
       toast({ title: action === 'approve' ? 'Withdrawal Approved' : 'Withdrawal Rejected', description: res.message })
       await load({ silent: true })

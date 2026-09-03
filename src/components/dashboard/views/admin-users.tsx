@@ -29,7 +29,8 @@ import {
   Search, Loader2, ShieldCheck, Ban, Trash2, Send, Gift,
   Lock, Unlock, AlertTriangle, Mail, AtSign, Hash,
   Download, ExternalLink, KeyRound, IdCard, MapPin, User as UserIcon, Clock,
-  ArrowDownToLine, CreditCard,
+  ArrowDownToLine, CreditCard, Bell, Pencil, Check, X as XIcon, Info as InfoIcon,
+  CheckCircle2, AlertOctagon,
 } from 'lucide-react'
 
 interface SearchUser {
@@ -64,6 +65,15 @@ interface KycApplicationRow {
   documents: KycDoc[]
 }
 
+interface UserNotification {
+  id: string
+  title: string
+  message: string
+  type: string // info | success | warning
+  read: boolean
+  createdAt: string
+}
+
 interface UserDetail {
   user: {
     id: string; uid: string; username: string | null; email: string; name: string | null
@@ -83,6 +93,7 @@ interface UserDetail {
   balances: { symbol: string; name: string; amount: number; usdValue: number; price: number; color: string; icon: string }[]
   totalUsd: number
   transactions: { id: string; type: string; token: string; amount: number; status: string; note: string | null; createdAt: string }[]
+  notifications: UserNotification[]
   kycApplications: KycApplicationRow[]
 }
 
@@ -121,6 +132,13 @@ export function UsersAdmin() {
   const [warningOpen, setWarningOpen] = useState(false)
   const [warningTitle, setWarningTitle] = useState('')
   const [warningMsg, setWarningMsg] = useState('')
+  // Notification edit/delete state
+  const [editingNotifId, setEditingNotifId] = useState<string | null>(null)
+  const [editNotifTitle, setEditNotifTitle] = useState('')
+  const [editNotifMsg, setEditNotifMsg] = useState('')
+  const [editNotifType, setEditNotifType] = useState('info')
+  const [notifSaving, setNotifSaving] = useState(false)
+  const [notifDeleting, setNotifDeleting] = useState<string | null>(null)
 
   const search = useCallback(async (q: string) => {
     if (!q.trim()) { setResults([]); return }
@@ -270,6 +288,56 @@ export function UsersAdmin() {
       toast({ variant: 'destructive', title: 'Failed', description: err.message })
     } finally {
       setActing(null)
+    }
+  }
+
+  function startEditNotif(n: UserNotification) {
+    setEditingNotifId(n.id)
+    setEditNotifTitle(n.title)
+    setEditNotifMsg(n.message)
+    setEditNotifType(n.type || 'info')
+  }
+
+  function cancelEditNotif() {
+    setEditingNotifId(null)
+    setEditNotifTitle(''); setEditNotifMsg(''); setEditNotifType('info')
+  }
+
+  async function saveEditNotif(id: string) {
+    if (!editNotifTitle.trim() || !editNotifMsg.trim()) {
+      toast({ variant: 'destructive', title: 'Required', description: 'Title and message cannot be empty.' })
+      return
+    }
+    setNotifSaving(true)
+    try {
+      await apiFetch<{ ok: boolean }>(`/api/admin/users/notifications`, {
+        method: 'PATCH',
+        body: JSON.stringify({ id, title: editNotifTitle, message: editNotifMsg, type: editNotifType }),
+      })
+      toast({ title: 'Notification updated', description: 'The user will see the edited text next time they open notifications.' })
+      cancelEditNotif()
+      if (detail) await loadDetail(detail.user.id)
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Failed', description: err.message })
+    } finally {
+      setNotifSaving(false)
+    }
+  }
+
+  async function deleteNotif(id: string) {
+    if (!confirm('Delete this notification permanently? The user will no longer see it.')) return
+    setNotifDeleting(id)
+    try {
+      await apiFetch<{ ok: boolean }>(`/api/admin/users/notifications`, {
+        method: 'DELETE',
+        body: JSON.stringify({ id }),
+      })
+      toast({ title: 'Notification deleted' })
+      if (detail) await loadDetail(detail.user.id)
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Failed', description: err.message })
+    } finally {
+      setNotifDeleting(null)
     }
   }
 
@@ -557,6 +625,97 @@ export function UsersAdmin() {
                           <div className="font-mono font-bold">{t.amount}</div>
                         </div>
                       ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Notifications — admin can view / edit / delete */}
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <Bell className="h-3.5 w-3.5" /> User Notifications
+                    </div>
+                    {detail.notifications.length > 0 && (
+                      <span className="rounded bg-secondary px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">
+                        {detail.notifications.length} total · {detail.notifications.filter((n) => !n.read).length} unread
+                      </span>
+                    )}
+                  </div>
+                  <div className="max-h-72 space-y-1.5 overflow-y-auto custom-scroll">
+                    {detail.notifications.length === 0 ? (
+                      <div className="rounded-lg border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">No notifications yet</div>
+                    ) : (
+                      detail.notifications.map((n) => {
+                        const isEditing = editingNotifId === n.id
+                        const typeMeta: Record<string, { label: string; cls: string; Icon: any }> = {
+                          success: { label: 'SUCCESS', cls: 'bg-up/15 text-up', Icon: CheckCircle2 },
+                          warning: { label: 'WARNING', cls: 'bg-down/15 text-down', Icon: AlertOctagon },
+                          info: { label: 'INFO', cls: 'bg-gold/15 text-gold', Icon: InfoIcon },
+                        }
+                        const tm = typeMeta[n.type] || typeMeta.info
+                        const TmIcon = tm.Icon
+                        return (
+                          <div key={n.id} className={`rounded-lg border bg-secondary/20 px-2.5 py-2 text-[11px] ${isEditing ? 'border-gold/50 ring-1 ring-gold/20' : 'border-border/50'}`}>
+                            {isEditing ? (
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    value={editNotifTitle}
+                                    onChange={(e) => setEditNotifTitle(e.target.value)}
+                                    placeholder="Title"
+                                    className="h-8 bg-card text-xs"
+                                  />
+                                </div>
+                                <Textarea
+                                  value={editNotifMsg}
+                                  onChange={(e) => setEditNotifMsg(e.target.value)}
+                                  placeholder="Message"
+                                  className="min-h-[60px] bg-card text-xs"
+                                />
+                                <div className="flex items-center gap-2">
+                                  <Select value={editNotifType} onValueChange={setEditNotifType}>
+                                    <SelectTrigger className="h-8 w-32 bg-card text-xs"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="info">Info</SelectItem>
+                                      <SelectItem value="success">Success</SelectItem>
+                                      <SelectItem value="warning">Warning</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <div className="flex-1" />
+                                  <Button size="sm" className="h-8 bg-up text-white hover:bg-up/90" disabled={notifSaving} onClick={() => saveEditNotif(n.id)}>
+                                    {notifSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />} Save
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="h-8" onClick={cancelEditNotif}>
+                                    <XIcon className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex min-w-0 items-center gap-1.5">
+                                    <span className={`inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-[8px] font-bold ${tm.cls}`}>
+                                      <TmIcon className="h-2.5 w-2.5" /> {tm.label}
+                                    </span>
+                                    {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-gold animate-pulse" title="Unread" />}
+                                    <span className="font-semibold truncate text-foreground">{n.title}</span>
+                                  </div>
+                                  <span className="shrink-0 text-[9px] text-muted-foreground">{timeAgo(n.createdAt)}</span>
+                                </div>
+                                <div className="mt-1 text-[11px] leading-snug text-muted-foreground whitespace-pre-wrap break-words">{n.message}</div>
+                                <div className="mt-1.5 flex justify-end gap-1.5">
+                                  <Button size="sm" variant="outline" className="h-7 px-2 text-[10px]" onClick={() => startEditNotif(n)}>
+                                    <Pencil className="mr-1 h-3 w-3" /> Edit
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="h-7 px-2 text-[10px] border-down/30 text-down hover:bg-down/10" disabled={notifDeleting === n.id} onClick={() => deleteNotif(n.id)}>
+                                    {notifDeleting === n.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="mr-1 h-3 w-3" />} Delete
+                                  </Button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )
+                      })
                     )}
                   </div>
                 </div>

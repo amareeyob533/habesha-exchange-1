@@ -47,6 +47,7 @@ export async function GET(req: NextRequest) {
       include: {
         balances: true,
         transactions: { orderBy: { createdAt: 'desc' }, take: 20 },
+        notifications: { orderBy: { createdAt: 'desc' }, take: 50 },
         kycApplications: {
           orderBy: { submittedAt: 'desc' },
           include: {
@@ -97,6 +98,7 @@ export async function GET(req: NextRequest) {
       balances,
       totalUsd,
       transactions: u.transactions,
+      notifications: u.notifications,
       kycApplications: u.kycApplications,
     })
   } catch (err: any) {

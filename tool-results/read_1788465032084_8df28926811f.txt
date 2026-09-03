@@ -1,0 +1,757 @@
+     1→     1→'use client'
+     2→     2→
+     3→     3→import { useEffect, useState, useCallback } from 'react'
+     4→     4→import { apiFetch, getStoredToken } from '@/lib/api-client'
+     5→     5→import { useToast } from '@/hooks/use-toast'
+     6→     6→import { formatTokenAmount, formatUsd, timeAgo } from '@/lib/format'
+     7→     7→import { Button } from '@/components/ui/button'
+     8→     8→import { Input } from '@/components/ui/input'
+     9→     9→import { Label } from '@/components/ui/label'
+    10→    10→import { Textarea } from '@/components/ui/textarea'
+    11→    11→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+    12→    12→import {
+    13→    13→  Sheet,
+    14→    14→  SheetContent,
+    15→    15→  SheetHeader,
+    16→    16→  SheetTitle,
+    17→    17→  SheetDescription,
+    18→    18→} from '@/components/ui/sheet'
+    19→    19→import {
+    20→    20→  Dialog,
+    21→    21→  DialogContent,
+    22→    22→  DialogTitle,
+    23→    23→  DialogDescription,
+    24→    24→} from '@/components/ui/dialog'
+    25→    25→import { motion } from 'framer-motion'
+    26→    26→import { TokenIcon } from '@/components/common/token-icon'
+    27→    27→import { VerifiedAvatar } from '@/components/common/verified-avatar'
+    28→    28→import {
+    29→    29→  Search, Loader2, ShieldCheck, Ban, Trash2, Send, Gift,
+    30→    30→  Lock, Unlock, AlertTriangle, Mail, AtSign, Hash,
+    31→    31→  Download, ExternalLink, KeyRound, IdCard, MapPin, User as UserIcon, Clock,
+    32→    32→  ArrowDownToLine, CreditCard,
+    33→    33→} from 'lucide-react'
+    34→    34→
+    35→    35→interface SearchUser {
+    36→    36→  id: string
+    37→    37→  uid: string
+    38→    38→  username: string | null
+    39→    39→  email: string
+    40→    40→  name: string | null
+    41→    41→  avatarUrl: string | null
+    42→    42→  isBlocked: boolean
+    43→    43→  createdAt: string
+    44→    44→  totalUsd: number
+    45→    45→}
+    46→    46→
+    47→    47→interface KycDoc {
+    48→    48→  id: string
+    49→    49→  side: string
+    50→    50→  fileName: string
+    51→    51→  mimeType: string
+    52→    52→  size: number
+    53→    53→  deleteAfter: string | null
+    54→    54→}
+    55→    55→interface KycApplicationRow {
+    56→    56→  id: string
+    57→    57→  fullName: string
+    58→    58→  city: string
+    59→    59→  idType: string
+    60→    60→  status: string
+    61→    61→  rejectReason: string | null
+    62→    62→  submittedAt: string
+    63→    63→  reviewedAt: string | null
+    64→    64→  documents: KycDoc[]
+    65→    65→}
+    66→    66→
+    67→    67→interface UserDetail {
+    68→    68→  user: {
+    69→    69→    id: string; uid: string; username: string | null; email: string; name: string | null
+    70→    70→    avatarUrl: string | null; isBlocked: boolean; blockedReason: string | null
+    71→    71→    provider: string; country: string | null; phone: string | null; createdAt: string
+    72→    72→    // KYC summary (denormalized onto User)
+    73→    73→    kycStatus: string | null
+    74→    74→    kycSubmittedAt: string | null
+    75→    75→    kycApprovedAt: string | null
+    76→    76→    kycFullName: string | null
+    77→    77→    kycCity: string | null
+    78→    78→    kycIdType: string | null
+    79→    79→    kycRejectReason: string | null
+    80→    80→    // Whether a bcrypt password hash is set (Google-only users have none)
+    81→    81→    hasPassword: boolean
+    82→    82→  }
+    83→    83→  balances: { symbol: string; name: string; amount: number; usdValue: number; price: number; color: string; icon: string }[]
+    84→    84→  totalUsd: number
+    85→    85→  transactions: { id: string; type: string; token: string; amount: number; status: string; note: string | null; createdAt: string }[]
+    86→    86→  kycApplications: KycApplicationRow[]
+    87→    87→}
+    88→    88→
+    89→    89→const TOKENS = ['USDT', 'USDC', 'BTC', 'ETH', 'SOL', 'TRX', 'TON']
+    90→    90→
+    91→    91→const ID_LABELS: Record<string, string> = {
+    92→    92→  driver_license: "Driver's License",
+    93→    93→  national_id: 'National ID',
+    94→    94→  passport: 'Passport',
+    95→    95→}
+    96→    96→
+    97→    97→export function UsersAdmin() {
+    98→    98→  const { toast } = useToast()
+    99→    99→  const [query, setQuery] = useState('')
+   100→   100→  const [results, setResults] = useState<SearchUser[]>([])
+   101→   101→  const [searching, setSearching] = useState(false)
+   102→   102→  const [selectedId, setSelectedId] = useState<string | null>(null)
+   103→   103→  const [detail, setDetail] = useState<UserDetail | null>(null)
+   104→   104→  const [loadingDetail, setLoadingDetail] = useState(false)
+   105→   105→  const [acting, setActing] = useState<string | null>(null)
+   106→   106→  // notify + reward + deduct dialogs
+   107→   107→  const [notifyOpen, setNotifyOpen] = useState(false)
+   108→   108→  const [rewardOpen, setRewardOpen] = useState(false)
+   109→   109→  const [deductOpen, setDeductOpen] = useState(false)
+   110→   110→  const [notifTitle, setNotifTitle] = useState('')
+   111→   111→  const [notifMsg, setNotifMsg] = useState('')
+   112→   112→  const [rewardToken, setRewardToken] = useState('USDT')
+   113→   113→  const [rewardAmount, setRewardAmount] = useState('')
+   114→   114→  const [rewardNote, setRewardNote] = useState('')
+   115→   115→  const [deductToken, setDeductToken] = useState('USDT')
+   116→   116→  const [deductAmount, setDeductAmount] = useState('')
+   117→   117→  const [deductNote, setDeductNote] = useState('')
+   118→   118→  const [cardDeductOpen, setCardDeductOpen] = useState(false)
+   119→   119→  const [cardDeductAmount, setCardDeductAmount] = useState('')
+   120→   120→  const [cardDeductNote, setCardDeductNote] = useState('')
+   121→   121→  const [warningOpen, setWarningOpen] = useState(false)
+   122→   122→  const [warningTitle, setWarningTitle] = useState('')
+   123→   123→  const [warningMsg, setWarningMsg] = useState('')
+   124→   124→
+   125→   125→  const search = useCallback(async (q: string) => {
+   126→   126→    if (!q.trim()) { setResults([]); return }
+   127→   127→    setSearching(true)
+   128→   128→    try {
+   129→   129→      const data = await apiFetch<{ users: SearchUser[] }>(`/api/admin/users/search?q=${encodeURIComponent(q.trim())}`)
+   130→   130→      setResults(data.users)
+   131→   131→    } catch (err: any) {
+   132→   132→      toast({ variant: 'destructive', title: 'Search failed', description: err.message })
+   133→   133→    } finally {
+   134→   134→      setSearching(false)
+   135→   135→    }
+   136→   136→  }, [toast])
+   137→   137→
+   138→   138→  useEffect(() => {
+   139→   139→    const id = setTimeout(() => search(query), 350)
+   140→   140→    return () => clearTimeout(id)
+   141→   141→  }, [query, search])
+   142→   142→
+   143→   143→  const loadDetail = useCallback(async (userId: string) => {
+   144→   144→    if (!getStoredToken()) return
+   145→   145→    setLoadingDetail(true)
+   146→   146→    try {
+   147→   147→      const data = await apiFetch<UserDetail>(`/api/admin/users/detail?userId=${userId}`)
+   148→   148→      setDetail(data)
+   149→   149→    } catch (err: any) {
+   150→   150→      // Silently skip auth errors (happens during logout)
+   151→   151→      const msg = String(err?.message || '')
+   152→   152→      if (msg.includes('401') || msg.toLowerCase().includes('unauthorized')) return
+   153→   153→      toast({ variant: 'destructive', title: 'Failed to load', description: err.message })
+   154→   154→    } finally {
+   155→   155→      setLoadingDetail(false)
+   156→   156→    }
+   157→   157→  }, [toast])
+   158→   158→
+   159→   159→  useEffect(() => {
+   160→   160→    if (selectedId) loadDetail(selectedId)
+   161→   161→  }, [selectedId, loadDetail])
+   162→   162→
+   163→   163→  async function act(kind: 'block' | 'unblock' | 'delete', extra?: { reason?: string }) {
+   164→   164→    if (!detail) return
+   165→   165→    setActing(kind)
+   166→   166→    try {
+   167→   167→      const body = kind === 'block' ? { userId: detail.user.id, reason: extra?.reason } : { userId: detail.user.id }
+   168→   168→      const res = await apiFetch<{ ok: boolean; message: string }>(`/api/admin/users/${kind}`, {
+   169→   169→        method: 'POST',
+   170→   170→        body: JSON.stringify(body),
+   171→   171→      })
+   172→   172→      toast({ title: kind === 'block' ? 'User Blocked' : kind === 'unblock' ? 'User Unblocked' : 'User Deleted', description: res.message })
+   173→   173→      if (kind === 'delete') {
+   174→   174→        setDetail(null)
+   175→   175→        setSelectedId(null)
+   176→   176→        setQuery('')
+   177→   177→        setResults([])
+   178→   178→      } else {
+   179→   179→        await loadDetail(detail.user.id)
+   180→   180→      }
+   181→   181→    } catch (err: any) {
+   182→   182→      toast({ variant: 'destructive', title: 'Action failed', description: err.message })
+   183→   183→    } finally {
+   184→   184→      setActing(null)
+   185→   185→    }
+   186→   186→  }
+   187→   187→
+   188→   188→  async function sendNotify() {
+   189→   189→    if (!detail) return
+   190→   190→    setActing('notify')
+   191→   191→    try {
+   192→   192→      const res = await apiFetch<{ ok: boolean; message: string }>(`/api/admin/users/notify`, {
+   193→   193→        method: 'POST',
+   194→   194→        body: JSON.stringify({ userId: detail.user.id, title: notifTitle, message: notifMsg }),
+   195→   195→      })
+   196→   196→      toast({ title: 'Notification sent', description: res.message })
+   197→   197→      setNotifyOpen(false); setNotifTitle(''); setNotifMsg('')
+   198→   198→    } catch (err: any) {
+   199→   199→      toast({ variant: 'destructive', title: 'Failed', description: err.message })
+   200→   200→    } finally {
+   201→   201→      setActing(null)
+   202→   202→    }
+   203→   203→  }
+   204→   204→
+   205→   205→  async function sendReward() {
+   206→   206→    if (!detail) return
+   207→   207→    setActing('reward')
+   208→   208→    try {
+   209→   209→      const res = await apiFetch<{ ok: boolean; message: string }>(`/api/admin/users/reward`, {
+   210→   210→        method: 'POST',
+   211→   211→        body: JSON.stringify({ userId: detail.user.id, token: rewardToken, amount: Number(rewardAmount), note: rewardNote }),
+   212→   212→      })
+   213→   213→      toast({ title: 'Reward sent 🎁', description: res.message })
+   214→   214→      setRewardOpen(false); setRewardAmount(''); setRewardNote('')
+   215→   215→      await loadDetail(detail.user.id)
+   216→   216→    } catch (err: any) {
+   217→   217→      toast({ variant: 'destructive', title: 'Failed', description: err.message })
+   218→   218→    } finally {
+   219→   219→      setActing(null)
+   220→   220→    }
+   221→   221→  }
+   222→   222→
+   223→   223→  async function sendDeduct() {
+   224→   224→    if (!detail) return
+   225→   225→    setActing('deduct')
+   226→   226→    try {
+   227→   227→      const res = await apiFetch<{ ok: boolean; message: string }>(`/api/admin/users/deduct`, {
+   228→   228→        method: 'POST',
+   229→   229→        body: JSON.stringify({ userId: detail.user.id, token: deductToken, amount: Number(deductAmount), note: deductNote }),
+   230→   230→      })
+   231→   231→      toast({ title: 'Funds deducted', description: res.message })
+   232→   232→      setDeductOpen(false); setDeductAmount(''); setDeductNote('')
+   233→   233→      await loadDetail(detail.user.id)
+   234→   234→    } catch (err: any) {
+   235→   235→      toast({ variant: 'destructive', title: 'Failed', description: err.message })
+   236→   236→    } finally {
+   237→   237→      setActing(null)
+   238→   238→    }
+   239→   239→  }
+   240→   240→
+   241→   241→  async function sendCardDeduct() {
+   242→   242→    if (!detail) return
+   243→   243→    setActing('cardDeduct')
+   244→   244→    try {
+   245→   245→      const res = await apiFetch<{ ok: boolean; message: string }>(`/api/admin/users/card-deduct`, {
+   246→   246→        method: 'POST',
+   247→   247→        body: JSON.stringify({ userId: detail.user.id, amount: Number(cardDeductAmount), note: cardDeductNote }),
+   248→   248→      })
+   249→   249→      toast({ title: 'Card funds deducted', description: res.message })
+   250→   250→      setCardDeductOpen(false); setCardDeductAmount(''); setCardDeductNote('')
+   251→   251→      await loadDetail(detail.user.id)
+   252→   252→    } catch (err: any) {
+   253→   253→      toast({ variant: 'destructive', title: 'Failed', description: err.message })
+   254→   254→    } finally {
+   255→   255→      setActing(null)
+   256→   256→    }
+   257→   257→  }
+   258→   258→
+   259→   259→  async function sendWarning() {
+   260→   260→    if (!detail) return
+   261→   261→    setActing('warning')
+   262→   262→    try {
+   263→   263→      const res = await apiFetch<{ ok: boolean; message: string }>(`/api/admin/users/warning`, {
+   264→   264→        method: 'POST',
+   265→   265→        body: JSON.stringify({ userId: detail.user.id, title: warningTitle, message: warningMsg }),
+   266→   266→      })
+   267→   267→      toast({ title: 'Warning sent ⚠️', description: res.message })
+   268→   268→      setWarningOpen(false); setWarningTitle(''); setWarningMsg('')
+   269→   269→    } catch (err: any) {
+   270→   270→      toast({ variant: 'destructive', title: 'Failed', description: err.message })
+   271→   271→    } finally {
+   272→   272→      setActing(null)
+   273→   273→    }
+   274→   274→  }
+   275→   275→
+   276→   276→  return (
+   277→   277→    <div className="space-y-5">
+   278→   278→      <div>
+   279→   279→        <h2 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
+   280→   280→          <ShieldCheck className="h-6 w-6 text-gold" /> User Management
+   281→   281→        </h2>
+   282→   282→        <p className="text-sm text-muted-foreground">Search by username, UID, email, or name — then view balances, block, delete, notify, or reward.</p>
+   283→   283→      </div>
+   284→   284→
+   285→   285→      {/* Search bar */}
+   286→   286→      <div className="relative">
+   287→   287→        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+   288→   288→        <Input
+   289→   289→          value={query}
+   290→   290→          onChange={(e) => setQuery(e.target.value)}
+   291→   291→          placeholder="Search username, UID, email, or name…"
+   292→   292→          className="border-border bg-card pl-10"
+   293→   293→        />
+   294→   294→        {searching && <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />}
+   295→   295→      </div>
+   296→   296→
+   297→   297→      {/* Search results */}
+   298→   298→      {query.trim() && (
+   299→   299→        <div className="overflow-hidden glass-card rounded-2xl shadow-premium">
+   300→   300→          {results.length === 0 ? (
+   301→   301→            <div className="flex flex-col items-center justify-center py-12 text-center text-sm text-muted-foreground">
+   302→   302→              <Search className="mb-2 h-7 w-7 opacity-30" />
+   303→   303→              No users found
+   304→   304→            </div>
+   305→   305→          ) : (
+   306→   306→            results.map((u) => (
+   307→   307→              <button
+   308→   308→                key={u.id}
+   309→   309→                onClick={() => setSelectedId(u.id)}
+   310→   310→                className="flex w-full items-center gap-3 border-b border-border/50 px-4 py-3 text-left last:border-0 transition-colors hover:bg-secondary/40"
+   311→   311→              >
+   312→   312→                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold/15 text-sm font-bold text-gold">
+   313→   313→                  {(u.username || u.email)[0].toUpperCase()}
+   314→   314→                </div>
+   315→   315→                <div className="flex-1 min-w-0">
+   316→   316→                  <div className="flex items-center gap-2">
+   317→   317→                    <span className="font-bold truncate">@{u.username || '—'}</span>
+   318→   318→                    {u.isBlocked && <span className="rounded bg-down/15 px-1.5 py-0.5 text-[9px] font-bold text-down">BLOCKED</span>}
+   319→   319→                  </div>
+   320→   320→                  <div className="truncate text-[11px] text-muted-foreground">{u.email} · UID {u.uid}</div>
+   321→   321→                </div>
+   322→   322→                <div className="text-right">
+   323→   323→                  <div className="font-mono text-sm font-semibold">{formatUsd(u.totalUsd)}</div>
+   324→   324→                  <div className="text-[10px] text-muted-foreground">{timeAgo(u.createdAt)}</div>
+   325→   325→                </div>
+   326→   326→              </button>
+   327→   327→            ))
+   328→   328→          )}
+   329→   329→        </div>
+   330→   330→      )}
+   331→   331→
+   332→   332→      {/* User detail drawer */}
+   333→   333→      <Sheet open={!!selectedId} onOpenChange={(v) => !v && (setSelectedId(null), setDetail(null))}>
+   334→   334→        <SheetContent className="w-full overflow-y-auto border-border bg-card sm:max-w-lg">
+   335→   335→          {loadingDetail || !detail ? (
+   336→   336→            <div className="flex h-full items-center justify-center">
+   337→   337→              <Loader2 className="h-8 w-8 animate-spin text-gold" />
+   338→   338→            </div>
+   339→   339→          ) : (
+   340→   340→            <>
+   341→   341→              <SheetHeader>
+   342→   342→                <SheetTitle className="flex items-center gap-2">
+   343→   343→                  User @{detail.user.username || '—'}
+   344→   344→                  {detail.user.isBlocked && <span className="rounded bg-down/15 px-1.5 py-0.5 text-[10px] font-bold text-down">BLOCKED</span>}
+   345→   345→                </SheetTitle>
+   346→   346→                <SheetDescription>UID {detail.user.uid} · joined {timeAgo(detail.user.createdAt)}</SheetDescription>
+   347→   347→              </SheetHeader>
+   348→   348→
+   349→   349→              <div className="mt-4 space-y-5">
+   350→   350→                {/* Profile picture + identity summary */}
+   351→   351→                <div className="flex flex-col items-center gap-2 rounded-xl border border-border bg-secondary/30 p-4 text-center">
+   352→   352→                  <VerifiedAvatar
+   353→   353→                    src={detail.user.avatarUrl}
+   354→   354→                    fallback={(detail.user.username || detail.user.email)[0].toUpperCase()}
+   355→   355→                    size="lg"
+   356→   356→                    verified={detail.user.kycStatus === 'approved'}
+   357→   357→                  />
+   358→   358→                  <div className="mt-1 text-base font-bold leading-tight">
+   359→   359→                    {detail.user.name || `@${detail.user.username || '—'}`}
+   360→   360→                  </div>
+   361→   361→                  <div className="flex flex-wrap items-center justify-center gap-1.5">
+   362→   362→                    <KycBadge status={detail.user.kycStatus} />
+   363→   363→                    {detail.user.isBlocked && (
+   364→   364→                      <span className="rounded bg-down/15 px-1.5 py-0.5 text-[9px] font-bold text-down">BLOCKED</span>
+   365→   365→                    )}
+   366→   366→                    <span className="rounded bg-secondary px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">
+   367→   367→                      {detail.user.provider === 'google' ? 'GOOGLE' : 'CREDENTIALS'}
+   368→   368→                    </span>
+   369→   369→                  </div>
+   370→   370→                </div>
+   371→   371→
+   372→   372→                {/* Email — prominent */}
+   373→   373→                <a
+   374→   374→                  href={`mailto:${detail.user.email}`}
+   375→   375→                  className="flex items-center gap-3 rounded-xl border border-gold/30 bg-gold/5 p-3 transition-colors hover:bg-gold/10"
+   376→   376→                >
+   377→   377→                  <Mail className="h-5 w-5 shrink-0 text-gold" />
+   378→   378→                  <div className="min-w-0 flex-1">
+   379→   379→                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Email</div>
+   380→   380→                    <div className="truncate text-sm font-semibold text-foreground">{detail.user.email}</div>
+   381→   381→                  </div>
+   382→   382→                </a>
+   383→   383→
+   384→   384→                {/* Profile info */}
+   385→   385→                <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-secondary/30 p-3 text-xs">
+   386→   386→                  <Info icon={AtSign} label="Username" value={`@${detail.user.username || '—'}`} />
+   387→   387→                  <Info icon={Hash} label="UID" value={detail.user.uid} />
+   388→   388→                  <Info icon={Mail} label="Phone" value={detail.user.phone || '—'} />
+   389→   389→                  <Info icon={Mail} label="Country" value={detail.user.country || '—'} />
+   390→   390→                </div>
+   391→   391→
+   392→   392→                {/* Password — never show plaintext, just note it's hashed */}
+   393→   393→                <div className="rounded-xl border border-border bg-secondary/20 p-3">
+   394→   394→                  <div className="flex items-center gap-2 text-xs">
+   395→   395→                    <KeyRound className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+   396→   396→                    <div className="flex-1 min-w-0">
+   397→   397→                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Password</div>
+   398→   398→                      {detail.user.hasPassword ? (
+   399→   399→                        <>
+   400→   400→                          <div className="font-mono text-sm font-semibold tracking-wider text-foreground">
+   401→   401→                            •••••••• <span className="text-[10px] font-normal text-muted-foreground">(hashed for security)</span>
+   402→   402→                          </div>
+   403→   403→                          <div className="mt-1 text-[10px] leading-snug text-muted-foreground">
+   404→   404→                            Stored as a one-way bcrypt hash. Plaintext is never saved and cannot be recovered — the user must reset it if forgotten.
+   405→   405→                          </div>
+   406→   406→                        </>
+   407→   407→                      ) : (
+   408→   408→                        <>
+   409→   409→                          <div className="text-sm font-semibold text-foreground">No password set</div>
+   410→   410→                          <div className="mt-1 text-[10px] leading-snug text-muted-foreground">
+   411→   411→                            This account signs in with Google only.
+   412→   412→                          </div>
+   413→   413→                        </>
+   414→   414→                      )}
+   415→   415→                    </div>
+   416→   416→                  </div>
+   417→   417→                </div>
+   418→   418→
+   419→   419→                {/* KYC section */}
+   420→   420→                <div className="rounded-xl border border-border bg-secondary/20 p-3">
+   421→   421→                  <div className="mb-2 flex items-center justify-between">
+   422→   422→                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+   423→   423→                      <ShieldCheck className="h-3.5 w-3.5" /> KYC Verification
+   424→   424→                    </div>
+   425→   425→                    <KycBadge status={detail.user.kycStatus} />
+   426→   426→                  </div>
+   427→   427→                  {detail.user.kycStatus && detail.user.kycStatus !== 'none' ? (
+   428→   428→                    <div className="grid grid-cols-2 gap-2 text-xs">
+   429→   429→                      <Info icon={UserIcon} label="Full Name" value={detail.user.kycFullName || '—'} />
+   430→   430→                      <Info icon={MapPin} label="City" value={detail.user.kycCity || '—'} />
+   431→   431→                      <Info icon={IdCard} label="ID Type" value={ID_LABELS[detail.user.kycIdType || ''] || detail.user.kycIdType || '—'} />
+   432→   432→                      <Info icon={Clock} label="Submitted" value={detail.user.kycSubmittedAt ? new Date(detail.user.kycSubmittedAt).toLocaleDateString() : '—'} />
+   433→   433→                    </div>
+   434→   434→                  ) : (
+   435→   435→                    <div className="text-[11px] text-muted-foreground">User has not submitted KYC verification.</div>
+   436→   436→                  )}
+   437→   437→
+   438→   438→                  {detail.user.kycStatus === 'rejected' && detail.user.kycRejectReason && (
+   439→   439→                    <div className="mt-2 flex items-start gap-2 rounded-lg border border-down/40 bg-down/5 p-2 text-[11px] text-down">
+   440→   440→                      <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+   441→   441→                      <span>Reject reason: {detail.user.kycRejectReason}</span>
+   442→   442→                    </div>
+   443→   443→                  )}
+   444→   444→
+   445→   445→                  {/* KYC documents (front + back) — only visible if they still exist in DB */}
+   446→   446→                  {detail.kycApplications.length > 0 && (
+   447→   447→                    <div className="mt-3 space-y-3">
+   448→   448→                      {detail.kycApplications.map((app) => (
+   449→   449→                        <div key={app.id} className="rounded-lg border border-border/60 bg-secondary/30 p-2">
+   450→   450→                          <div className="mb-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
+   451→   451→                            <span>Application · {app.status}</span>
+   452→   452→                            <span>{new Date(app.submittedAt).toLocaleDateString()}</span>
+   453→   453→                          </div>
+   454→   454→                          {app.documents.length > 0 ? (
+   455→   455→                            <div className="grid grid-cols-1 gap-2">
+   456→   456→                              {app.documents.map((doc) => (
+   457→   457→                                <div key={doc.id} className="space-y-1">
+   458→   458→                                  <div className="flex items-center justify-between">
+   459→   459→                                    <span className="text-[10px] font-bold uppercase tracking-wider text-gold">
+   460→   460→                                      {doc.side === 'back' ? 'Back of ID' : 'Front of ID'}
+   461→   461→                                    </span>
+   462→   462→                                    {doc.deleteAfter && (
+   463→   463→                                      <span className="text-[9px] text-muted-foreground">
+   464→   464→                                        Auto-deletes {new Date(doc.deleteAfter).toLocaleDateString()}
+   465→   465→                                      </span>
+   466→   466→                                    )}
+   467→   467→                                  </div>
+   468→   468→                                  <div className="rounded border border-border overflow-hidden">
+   469→   469→                                    <img
+   470→   470→                                      src={`/api/kyc/document?id=${doc.id}`}
+   471→   471→                                      alt={`${doc.side} of ID`}
+   472→   472→                                      className="w-full max-h-[180px] object-contain bg-black/30"
+   473→   473→                                    />
+   474→   474→                                  </div>
+   475→   475→                                  <div className="flex gap-1.5">
+   476→   476→                                    <a
+   477→   477→                                      href={`/api/kyc/document?id=${doc.id}&download=true`}
+   478→   478→                                      target="_blank"
+   479→   479→                                      rel="noreferrer"
+   480→   480→                                      className="flex-1"
+   481→   481→                                    >
+   482→   482→                                      <Button size="sm" variant="outline" className="h-7 w-full text-[10px]">
+   483→   483→                                        <Download className="mr-1 h-3 w-3" /> Download
+   484→   484→                                      </Button>
+   485→   485→                                    </a>
+   486→   486→                                    <a
+   487→   487→                                      href={`/api/kyc/document?id=${doc.id}`}
+   488→   488→                                      target="_blank"
+   489→   489→                                      rel="noreferrer"
+   490→   490→                                      className="flex-1"
+   491→   491→                                    >
+   492→   492→                                      <Button size="sm" variant="outline" className="h-7 w-full text-[10px]">
+   493→   493→                                        <ExternalLink className="mr-1 h-3 w-3" /> Open
+   494→   494→                                      </Button>
+   495→   495→                                    </a>
+   496→   496→                                  </div>
+   497→   497→                                </div>
+   498→   498→                              ))}
+   499→   499→                            </div>
+   500→   500→                          ) : (
+   501→   501→                            <div className="rounded border border-dashed border-border p-2 text-center text-[10px] text-muted-foreground">
+   502→   502→                              ID documents auto-deleted (retention period expired)
+   503→   503→                            </div>
+   504→   504→                          )}
+   505→   505→                        </div>
+   506→   506→                      ))}
+   507→   507→                    </div>
+   508→   508→                  )}
+   509→   509→                </div>
+   510→   510→
+   511→   511→                {detail.user.isBlocked && detail.user.blockedReason && (
+   512→   512→                  <div className="flex items-start gap-2 rounded-lg border border-down/40 bg-down/5 p-2.5 text-[11px] text-down">
+   513→   513→                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+   514→   514→                    <span>Blocked reason: {detail.user.blockedReason}</span>
+   515→   515→                  </div>
+   516→   516→                )}
+   517→   517→
+   518→   518→                {/* Total balance */}
+   519→   519→                <div className="rounded-xl border border-gold/30 bg-gold/5 p-3">
+   520→   520→                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total Balance</div>
+   521→   521→                  <div className="mt-0.5 text-2xl font-extrabold tabular-nums text-foreground">{formatUsd(detail.totalUsd)}</div>
+   522→   522→                </div>
+   523→   523→
+   524→   524→                {/* Token balances */}
+   525→   525→                <div>
+   526→   526→                  <div className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Token Holdings</div>
+   527→   527→                  <div className="space-y-1.5">
+   528→   528→                    {detail.balances.map((b) => (
+   529→   529→                      <div key={b.symbol} className="flex items-center gap-2 rounded-lg border border-border bg-secondary/20 px-3 py-2">
+   530→   530→                        <TokenIcon symbol={b.symbol} iconUrl={(b as any).iconUrl} icon={b.icon} color={b.color} size={28} />
+   531→   531→                        <div className="flex-1">
+   532→   532→                          <div className="text-xs font-bold">{b.symbol}</div>
+   533→   533→                          <div className="text-[10px] text-muted-foreground">{b.name}</div>
+   534→   534→                        </div>
+   535→   535→                        <div className="text-right">
+   536→   536→                          <div className="font-mono text-sm font-semibold">{formatTokenAmount(b.amount, b.symbol)}</div>
+   537→   537→                          <div className="text-[10px] text-muted-foreground">{formatUsd(b.usdValue)}</div>
+   538→   538→                        </div>
+   539→   539→                      </div>
+   540→   540→                    ))}
+   541→   541→                  </div>
+   542→   542→                </div>
+   543→   543→
+   544→   544→                {/* Recent transactions */}
+   545→   545→                <div>
+   546→   546→                  <div className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Recent Transactions</div>
+   547→   547→                  <div className="max-h-48 space-y-1 overflow-y-auto custom-scroll">
+   548→   548→                    {detail.transactions.length === 0 ? (
+   549→   549→                      <div className="rounded-lg border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">No transactions</div>
+   550→   550→                    ) : (
+   551→   551→                      detail.transactions.map((t) => (
+   552→   552→                        <div key={t.id} className="flex items-center justify-between rounded border border-border/50 bg-secondary/20 px-2.5 py-1.5 text-[11px]">
+   553→   553→                          <div>
+   554→   554→                            <div className="font-semibold">{t.type} · {t.token}</div>
+   555→   555→                            <div className="text-[10px] text-muted-foreground">{t.note || ''} · {timeAgo(t.createdAt)}</div>
+   556→   556→                          </div>
+   557→   557→                          <div className="font-mono font-bold">{t.amount}</div>
+   558→   558→                        </div>
+   559→   559→                      ))
+   560→   560→                    )}
+   561→   561→                  </div>
+   562→   562→                </div>
+   563→   563→
+   564→   564→                {/* Admin actions */}
+   565→   565→                <div className="space-y-2 border-t border-border pt-4">
+   566→   566→                  <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Admin Actions</div>
+   567→   567→                  <div className="grid grid-cols-2 gap-2">
+   568→   568→                    <Button variant="outline" className="h-10 border-gold/30 text-gold hover:bg-gold/10" onClick={() => setRewardOpen(true)}>
+   569→   569→                      <Gift className="mr-1 h-4 w-4" /> Reward
+   570→   570→                    </Button>
+   571→   571→                    <Button variant="outline" className="h-10 border-down/30 text-down hover:bg-down/10" onClick={() => setDeductOpen(true)}>
+   572→   572→                      <ArrowDownToLine className="mr-1 h-4 w-4" /> Deduct
+   573→   573→                    </Button>
+   574→   574→                    <Button variant="outline" className="h-10 border-gold/40 text-gold hover:bg-gold/10" onClick={() => setCardDeductOpen(true)}>
+   575→   575→                      <CreditCard className="mr-1 h-4 w-4" /> Card Deduct
+   576→   576→                    </Button>
+   577→   577→                    <Button variant="outline" className="h-10 border-down/40 text-down hover:bg-down/10" onClick={() => setWarningOpen(true)}>
+   578→   578→                      <AlertTriangle className="mr-1 h-4 w-4" /> Warning
+   579→   579→                    </Button>
+   580→   580→                    <Button variant="outline" className="h-10 border-border hover:bg-secondary" onClick={() => setNotifyOpen(true)}>
+   581→   581→                      <Send className="mr-1 h-4 w-4" /> Notify
+   582→   582→                    </Button>
+   583→   583→                    {detail.user.isBlocked ? (
+   584→   584→                      <Button variant="outline" className="h-10 border-up/40 text-up hover:bg-up/10" disabled={acting === 'unblock'} onClick={() => act('unblock')}>
+   585→   585→                        {acting === 'unblock' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Unlock className="mr-1 h-4 w-4" />} Unblock
+   586→   586→                      </Button>
+   587→   587→                    ) : (
+   588→   588→                      <Button variant="outline" className="h-10 border-gold/40 text-gold hover:bg-gold/10" disabled={acting === 'block'} onClick={() => {
+   589→   589→                        const reason = prompt('Reason for blocking? (optional)')
+   590→   590→                        act('block', { reason: reason || undefined })
+   591→   591→                      }}>
+   592→   592→                        {acting === 'block' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="mr-1 h-4 w-4" />} Block
+   593→   593→                      </Button>
+   594→   594→                    )}
+   595→   595→                    <Button variant="outline" className="h-10 border-down/40 text-down hover:bg-down/10" disabled={acting === 'delete'} onClick={() => {
+   596→   596→                      if (confirm(`Permanently delete @${detail.user.username}? This removes ALL their data (balances, transactions). This cannot be undone.`)) act('delete')
+   597→   597→                    }}>
+   598→   598→                      {acting === 'delete' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="mr-1 h-4 w-4" />} Delete
+   599→   599→                    </Button>
+   600→   600→                  </div>
+   601→   601→                </div>
+   602→   602→              </div>
+   603→   603→            </>
+   604→   604→          )}
+   605→   605→        </SheetContent>
+   606→   606→      </Sheet>
+   607→   607→
+   608→   608→      {/* Notify dialog */}
+   609→   609→      <Dialog open={notifyOpen} onOpenChange={setNotifyOpen}>
+   610→   610→        <DialogContent className="max-w-[420px] border-border bg-card">
+   611→   611→          <DialogTitle className="text-lg font-bold">Send Notification</DialogTitle>
+   612→   612→          <DialogDescription className="text-xs">Write a message to @{detail?.user.username}</DialogDescription>
+   613→   613→          <div className="space-y-3">
+   614→   614→            <div className="space-y-1.5">
+   615→   615→              <Label className="text-xs text-muted-foreground">Title</Label>
+   616→   616→              <Input value={notifTitle} onChange={(e) => setNotifTitle(e.target.value)} placeholder="" className="bg-secondary/40" />
+   617→   617→            </div>
+   618→   618→            <div className="space-y-1.5">
+   619→   619→              <Label className="text-xs text-muted-foreground">Message</Label>
+   620→   620→              <Textarea value={notifMsg} onChange={(e) => setNotifMsg(e.target.value)} placeholder="Type your message…" className="min-h-[100px] bg-secondary/40" />
+   621→   621→            </div>
+   622→   622→            <Button className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground" disabled={acting === 'notify' || !notifTitle.trim() || !notifMsg.trim()} onClick={sendNotify}>
+   623→   623→              {acting === 'notify' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="mr-1 h-4 w-4" />} Send Notification
+   624→   624→            </Button>
+   625→   625→          </div>
+   626→   626→        </DialogContent>
+   627→   627→      </Dialog>
+   628→   628→
+   629→   629→      {/* Reward dialog */}
+   630→   630→      <Dialog open={rewardOpen} onOpenChange={setRewardOpen}>
+   631→   631→        <DialogContent className="max-w-[420px] border-border bg-card">
+   632→   632→          <DialogTitle className="text-lg font-bold">Reward User 🎁</DialogTitle>
+   633→   633→          <DialogDescription className="text-xs">Credit any token to @{detail?.user.username}</DialogDescription>
+   634→   634→          <div className="space-y-3">
+   635→   635→            <div className="space-y-1.5">
+   636→   636→              <Label className="text-xs text-muted-foreground">Token</Label>
+   637→   637→              <Select value={rewardToken} onValueChange={setRewardToken}>
+   638→   638→                <SelectTrigger className="bg-secondary/40"><SelectValue /></SelectTrigger>
+   639→   639→                <SelectContent>
+   640→   640→                  {TOKENS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+   641→   641→                </SelectContent>
+   642→   642→              </Select>
+   643→   643→            </div>
+   644→   644→            <div className="space-y-1.5">
+   645→   645→              <Label className="text-xs text-muted-foreground">Amount</Label>
+   646→   646→              <Input type="number" min="0" step="any" value={rewardAmount} onChange={(e) => setRewardAmount(e.target.value)} placeholder="0.00" className="bg-secondary/40" />
+   647→   647→            </div>
+   648→   648→            <div className="space-y-1.5">
+   649→   649→              <Label className="text-xs text-muted-foreground">Note (optional)</Label>
+   650→   650→              <Input value={rewardNote} onChange={(e) => setRewardNote(e.target.value)} placeholder="" className="bg-secondary/40" />
+   651→   651→            </div>
+   652→   652→            <Button className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground" disabled={acting === 'reward' || !rewardAmount} onClick={sendReward}>
+   653→   653→              {acting === 'reward' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gift className="mr-1 h-4 w-4" />} Send Reward
+   654→   654→            </Button>
+   655→   655→          </div>
+   656→   656→        </DialogContent>
+   657→   657→      </Dialog>
+   658→   658→
+   659→   659→      {/* Deduct dialog */}
+   660→   660→      <Dialog open={deductOpen} onOpenChange={setDeductOpen}>
+   661→   661→        <DialogContent className="max-w-[420px] border-border bg-card">
+   662→   662→          <DialogTitle className="text-lg font-bold">Deduct Funds ⚠️</DialogTitle>
+   663→   663→          <DialogDescription className="text-xs">Remove any token from @{detail?.user.username}</DialogDescription>
+   664→   664→          <div className="space-y-3">
+   665→   665→            <div className="space-y-1.5">
+   666→   666→              <Label className="text-xs text-muted-foreground">Token</Label>
+   667→   667→              <Select value={deductToken} onValueChange={setDeductToken}>
+   668→   668→                <SelectTrigger className="bg-secondary/40"><SelectValue /></SelectTrigger>
+   669→   669→                <SelectContent>
+   670→   670→                  {TOKENS.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+   671→   671→                </SelectContent>
+   672→   672→              </Select>
+   673→   673→            </div>
+   674→   674→            <div className="space-y-1.5">
+   675→   675→              <Label className="text-xs text-muted-foreground">Amount to deduct</Label>
+   676→   676→              <Input type="number" min="0" step="any" value={deductAmount} onChange={(e) => setDeductAmount(e.target.value)} placeholder="0.00" className="bg-secondary/40" />
+   677→   677→            </div>
+   678→   678→            <div className="space-y-1.5">
+   679→   679→              <Label className="text-xs text-muted-foreground">Reason (optional)</Label>
+   680→   680→              <Input value={deductNote} onChange={(e) => setDeductNote(e.target.value)} placeholder="" className="bg-secondary/40" />
+   681→   681→            </div>
+   682→   682→            <Button className="h-11 w-full font-semibold bg-down text-white hover:bg-down/90" disabled={acting === 'deduct' || !deductAmount} onClick={sendDeduct}>
+   683→   683→              {acting === 'deduct' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowDownToLine className="mr-1 h-4 w-4" />} Deduct Funds
+   684→   684→            </Button>
+   685→   685→          </div>
+   686→   686→        </DialogContent>
+   687→   687→      </Dialog>
+   688→   688→
+   689→   689→      {/* Card Deduct dialog */}
+   690→   690→      <Dialog open={cardDeductOpen} onOpenChange={setCardDeductOpen}>
+   691→   691→        <DialogContent className="max-w-[420px] border-border bg-card">
+   692→   692→          <DialogTitle className="text-lg font-bold">Deduct from Card ⚠️</DialogTitle>
+   693→   693→          <DialogDescription className="text-xs">Remove funds from @{detail?.user.username}'s Habesha Card balance</DialogDescription>
+   694→   694→          <div className="space-y-3">
+   695→   695→            <div className="space-y-1.5">
+   696→   696→              <Label className="text-xs text-muted-foreground">Amount (USD)</Label>
+   697→   697→              <Input type="number" min="0" step="any" value={cardDeductAmount} onChange={(e) => setCardDeductAmount(e.target.value)} placeholder="0.00" className="bg-secondary/40" />
+   698→   698→            </div>
+   699→   699→            <div className="space-y-1.5">
+   700→   700→              <Label className="text-xs text-muted-foreground">Reason (optional)</Label>
+   701→   701→              <Input value={cardDeductNote} onChange={(e) => setCardDeductNote(e.target.value)} placeholder="" className="bg-secondary/40" />
+   702→   702→            </div>
+   703→   703→            <Button className="h-11 w-full font-semibold bg-down text-white hover:bg-down/90" disabled={acting === 'cardDeduct' || !cardDeductAmount} onClick={sendCardDeduct}>
+   704→   704→              {acting === 'cardDeduct' ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="mr-1 h-4 w-4" />} Deduct from Card
+   705→   705→            </Button>
+   706→   706→          </div>
+   707→   707→        </DialogContent>
+   708→   708→      </Dialog>
+   709→   709→
+   710→   710→      {/* Warning popup dialog */}
+   711→   711→      <Dialog open={warningOpen} onOpenChange={setWarningOpen}>
+   712→   712→        <DialogContent className="max-w-[420px] border-border bg-card">
+   713→   713→          <DialogTitle className="text-lg font-bold">Send Warning ⚠️</DialogTitle>
+   714→   714→          <DialogDescription className="text-xs">Send a warning popup to @{detail?.user.username}. They'll see a ⚠️ animation when they open the website.</DialogDescription>
+   715→   715→          <div className="space-y-3">
+   716→   716→            <div className="space-y-1.5">
+   717→   717→              <Label className="text-xs text-muted-foreground">Warning Title</Label>
+   718→   718→              <Input value={warningTitle} onChange={(e) => setWarningTitle(e.target.value)} placeholder="Account Warning" className="bg-secondary/40" />
+   719→   719→            </div>
+   720→   720→            <div className="space-y-1.5">
+   721→   721→              <Label className="text-xs text-muted-foreground">Warning Message</Label>
+   722→   722→              <textarea value={warningMsg} onChange={(e) => setWarningMsg(e.target.value)} placeholder="Write the warning message..." className="w-full rounded-lg border border-border bg-secondary/40 p-3 text-sm min-h-[80px]" />
+   723→   723→            </div>
+   724→   724→            <Button className="h-11 w-full font-semibold bg-down/90 text-white hover:bg-down" disabled={acting === 'warning' || !warningTitle || !warningMsg} onClick={sendWarning}>
+   725→   725→              {acting === 'warning' ? <Loader2 className="h-4 w-4 animate-spin" /> : <AlertTriangle className="mr-1 h-4 w-4" />} Send Warning
+   726→   726→            </Button>
+   727→   727→          </div>
+   728→   728→        </DialogContent>
+   729→   729→      </Dialog>
+   730→   730→    </div>
+   731→   731→  )
+   732→   732→}
+   733→   733→
+   734→   734→function Info({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+   735→   735→  return (
+   736→   736→    <div className="flex items-center gap-2">
+   737→   737→      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+   738→   738→      <div className="min-w-0">
+   739→   739→        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+   740→   740→        <div className="truncate font-medium text-foreground">{value}</div>
+   741→   741→      </div>
+   742→   742→    </div>
+   743→   743→  )
+   744→   744→}
+   745→   745→
+   746→   746→/** Colored pill showing the user's KYC status. */
+   747→   747→function KycBadge({ status }: { status: string | null }) {
+   748→   748→  const map: Record<string, { label: string; cls: string }> = {
+   749→   749→    approved: { label: 'KYC APPROVED', cls: 'bg-up/15 text-up' },
+   750→   750→    pending: { label: 'KYC PENDING', cls: 'bg-gold/15 text-gold' },
+   751→   751→    rejected: { label: 'KYC REJECTED', cls: 'bg-down/15 text-down' },
+   752→   752→    none: { label: 'NO KYC', cls: 'bg-secondary text-muted-foreground' },
+   753→   753→  }
+   754→   754→  const s = map[status || 'none'] || map.none
+   755→   755→  return <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${s.cls}`}>{s.label}</span>
+   756→   756→}
+   757→   757→

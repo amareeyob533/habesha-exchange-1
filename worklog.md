@@ -2147,3 +2147,37 @@ Stage Summary:
 - Recreated the buy/upload + kyc/upload routes (deleted during prior git operations) with the same DB-retry pattern as before — buying USDT and submitting KYC work again.
 - Admin cards API already showed ALL verified users (not just those with cardBalance > 0) — left as-is per task context.
 - Lint: 0 errors, 9 warnings (8 pre-existing + 1 new in dashboard-shell.tsx, all the same project-wide `document.hidden ? stop() : start()` polling pattern).
+
+---
+Task ID: NOTIFICATION-ADMIN-MGMT
+Agent: main
+Task: Remove the prompt()-based custom-message editor (was failing in iframe sandbox) and replace it with a proper admin notification management feature in the user profile drawer.
+
+Work Log:
+- src/components/dashboard/views/admin.tsx: Removed the prompt() blocks in actDeposit + actWithdrawal. They now POST only { depositId } / { id } with no customMessage — the backend falls back to its default notification text. No more blocked dialogs.
+- src/app/api/admin/users/detail/route.ts: Added `notifications: { orderBy: createdAt desc, take: 50 }` to the Prisma include, and surfaced `notifications: u.notifications` in the JSON response.
+- src/app/api/admin/users/notifications/route.ts (NEW): PATCH (edit title/message/type) + DELETE (permanently remove) endpoints, both admin-only via isAdminEmail. PATCH validates type ∈ {info, success, warning} and only updates provided fields. Both check the notification exists first and return 404 otherwise.
+- src/components/dashboard/views/admin-users.tsx:
+  * Added UserNotification interface + added notifications: UserNotification[] to UserDetail.
+  * Added state: editingNotifId, editNotifTitle, editNotifMsg, editNotifType, notifSaving, notifDeleting.
+  * Added startEditNotif / cancelEditNotif / saveEditNotif (PATCH) / deleteNotif (DELETE with confirm).
+  * Added a new "USER NOTIFICATIONS" section in the user profile Sheet, placed between Recent Transactions and Admin Actions.
+  * Each notification card shows: type badge (INFO gold / SUCCESS green / WARNING red) with icon, unread pulsing dot, title, message (whitespace-preserving), time-ago, and Edit + Delete buttons.
+  * Edit swaps the card to an inline editor: Title input, Message textarea, Type dropdown (Info/Success/Warning), Save (green) + Cancel (X) buttons. On save → PATCH → reload detail.
+  * Header shows "{n} total · {m} unread" count.
+  * Imports: added Bell, Pencil, Check, X as XIcon, Info as InfoIcon, CheckCircle2, AlertOctagon from lucide-react.
+- Lint: 0 errors, 9 warnings (all pre-existing polling-pattern warnings).
+- Browser verification (Agent Browser end-to-end):
+  * Signed in as admin (amareeyob533@gmail.com).
+  * Created test user testuser@example.com via signup API.
+  * Sent 2 test notifications to the user via /api/admin/users/notify.
+  * Searched & opened the user's profile drawer → "USER NOTIFICATIONS · 2 total · 2 unread" rendered with both notifications (Account Warning + Deposit Approved).
+  * Clicked Edit on "Account Warning" → inline editor opened pre-filled with title + message + type. Changed title to "Account Warning - Updated" and message text, clicked Save → PATCH /api/admin/users/notifications 200, drawer re-fetched detail, updated text shown.
+  * Clicked Delete on "Deposit Approved" → confirm dialog "Delete this notification permanently?" → accepted → DELETE /api/admin/users/notifications 200, count dropped to "1 total · 1 unread", only the edited notification remained.
+  * Navigated to Deposits, created a test deposit as the user, clicked Approve in admin → NO prompt appeared, deposit approved instantly with "Deposit approved. Balance credited." toast. POST /api/admin/deposits/approve 200.
+- Git: committed as f51786d "Replace prompt()-based message editor with admin notification management" and pushed to origin/main (a2e77fb..f51786d).
+
+Stage Summary:
+- The unreliable prompt() custom-message feature is completely removed from deposit/withdrawal approve/reject.
+- New admin feature: Admin → Users → open any user profile → "USER NOTIFICATIONS" section lists all their notifications (latest 50) with type badges, read/unread indicator, and per-item inline Edit + Delete. Edits persist via PATCH, deletes via DELETE — both admin-only. After approving/rejecting a deposit, the admin can immediately open the user's profile and edit the resulting notification text there if needed.
+- All changes pushed to GitHub (commit f51786d).

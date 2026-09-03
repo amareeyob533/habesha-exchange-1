@@ -36,11 +36,14 @@ export async function fetchDeposits(status?: string): Promise<DepositWithUser[]>
  * Idempotent — returns 'already' if already processed.
  * Returns 'not_found' if deposit doesn't exist, 'done' on success.
  */
-export async function approveDeposit(depositId: string): Promise<'done' | 'already' | 'not_found' | 'conflict'> {
+export async function approveDeposit(depositId: string, customMessage?: string): Promise<'done' | 'already' | 'not_found' | 'conflict'> {
   const deposit = await db.deposit.findUnique({ where: { id: depositId }, include: { user: true } })
   if (!deposit) return 'not_found'
   if (deposit.status === 'approved') return 'already'
   if (deposit.status === 'rejected') return 'conflict'
+
+  const title = 'Deposit Credited ✓'
+  const message = customMessage || `Your deposit of ${deposit.amount} ${deposit.token} on ${deposit.network} has been approved and credited to your account.`
 
   await db.$transaction(async (tx) => {
     await tx.deposit.update({ where: { id: deposit.id }, data: { status: 'approved' } })
@@ -66,39 +69,36 @@ export async function approveDeposit(depositId: string): Promise<'done' | 'alrea
     await tx.notification.create({
       data: {
         userId: deposit.userId,
-        title: 'Deposit Credited ✓',
-        message: `Your deposit of ${deposit.amount} ${deposit.token} on ${deposit.network} has been approved and credited to your account.`,
+        title,
+        message,
         type: 'success',
       },
     })
   }, { timeout: 15000 })
-  // Push notification sent AFTER the transaction commits — never inside it
-  // (network calls inside a transaction cause timeout errors on Vercel).
-  await sendPushNotification(deposit.userId, { title: 'Deposit Credited ✓', body: `Your deposit of ${deposit.amount} ${deposit.token} on ${deposit.network} has been approved and credited to your account.` }).catch(() => {})
+  await sendPushNotification(deposit.userId, { title, body: message }).catch(() => {})
   return 'done'
 }
 
-/**
- * Reject a deposit: mark rejected (no balance change) + notify user.
- * Idempotent.
- */
-export async function rejectDeposit(depositId: string): Promise<'done' | 'already' | 'not_found' | 'conflict'> {
+export async function rejectDeposit(depositId: string, customMessage?: string): Promise<'done' | 'already' | 'not_found' | 'conflict'> {
   const deposit = await db.deposit.findUnique({ where: { id: depositId }, include: { user: true } })
   if (!deposit) return 'not_found'
   if (deposit.status === 'rejected') return 'already'
   if (deposit.status === 'approved') return 'conflict'
+
+  const title = 'Deposit Rejected'
+  const message = customMessage || `Your deposit of ${deposit.amount} ${deposit.token} on ${deposit.network} could not be confirmed and has been rejected. Please contact support if you believe this is an error.`
 
   await db.$transaction(async (tx) => {
     await tx.deposit.update({ where: { id: deposit.id }, data: { status: 'rejected' } })
     await tx.notification.create({
       data: {
         userId: deposit.userId,
-        title: 'Deposit Rejected',
-        message: `Your deposit of ${deposit.amount} ${deposit.token} on ${deposit.network} could not be confirmed and has been rejected. Please contact support if you believe this is an error.`,
+        title,
+        message,
         type: 'warning',
       },
     })
   }, { timeout: 15000 })
-  await sendPushNotification(deposit.userId, { title: 'Deposit Rejected', body: `Your deposit of ${deposit.amount} ${deposit.token} on ${deposit.network} could not be confirmed and has been rejected. Please contact support if you believe this is an error.` }).catch(() => {})
+  await sendPushNotification(deposit.userId, { title, body: message }).catch(() => {})
   return 'done'
 }

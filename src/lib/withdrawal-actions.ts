@@ -30,7 +30,7 @@ export async function fetchWithdrawals(status?: string): Promise<WithdrawalWithU
  * (Balance was already deducted at request time, so no balance change here.)
  * Idempotent.
  */
-export async function approveWithdrawal(id: string): Promise<'done' | 'already' | 'not_found' | 'conflict'> {
+export async function approveWithdrawal(id: string, customMessage?: string): Promise<'done' | 'already' | 'not_found' | 'conflict'> {
   const wd = await db.withdrawal.findUnique({ where: { id }, include: { user: true } })
   if (!wd) return 'not_found'
   if (wd.status === 'completed') return 'already'
@@ -57,9 +57,9 @@ export async function approveWithdrawal(id: string): Promise<'done' | 'already' 
       data: {
         userId: wd.userId,
         title: isBank ? 'Bank Withdrawal Approved ✓' : 'Withdrawal Completed ✓',
-        message: isBank
+        message: customMessage || (isBank
           ? `Your bank withdrawal of ${wd.amount} USDT (≈ ${Number(wd.birrAmount).toLocaleString('en-US')} ETB) to ${wd.bankName} account ${wd.address} (${wd.accountName}) has been approved. The ETB will arrive in your bank account shortly.`
-          : `Your withdrawal of ${wd.amount} ${wd.token} to ${wd.address.slice(0, 12)}... has been approved and sent.`,
+          : `Your withdrawal of ${wd.amount} ${wd.token} to ${wd.address} has been approved and sent.`),
         type: 'success',
       },
     })
@@ -67,9 +67,9 @@ export async function approveWithdrawal(id: string): Promise<'done' | 'already' 
   const _isBank = wd.network === 'bank'
   await sendPushNotification(wd.userId, {
     title: _isBank ? 'Bank Withdrawal Approved ✓' : 'Withdrawal Completed ✓',
-    body: _isBank
+    body: customMessage || (_isBank
       ? `Your bank withdrawal of ${wd.amount} USDT (≈ ${Number(wd.birrAmount).toLocaleString('en-US')} ETB) to ${wd.bankName} account ${wd.address} (${wd.accountName}) has been approved. The ETB will arrive in your bank account shortly.`
-      : `Your withdrawal of ${wd.amount} ${wd.token} to ${wd.address.slice(0, 12)}... has been approved and sent.`,
+      : `Your withdrawal of ${wd.amount} ${wd.token} to ${wd.address} has been approved and sent.`),
   }).catch(() => {})
   return 'done'
 }
@@ -78,7 +78,7 @@ export async function approveWithdrawal(id: string): Promise<'done' | 'already' 
  * Reject a withdrawal: refund the deducted balance + mark rejected + create refund
  * transaction + notify user. Idempotent.
  */
-export async function rejectWithdrawal(id: string): Promise<'done' | 'already' | 'not_found' | 'conflict'> {
+export async function rejectWithdrawal(id: string, customMessage?: string): Promise<'done' | 'already' | 'not_found' | 'conflict'> {
   const wd = await db.withdrawal.findUnique({ where: { id }, include: { user: true } })
   if (!wd) return 'not_found'
   if (wd.status === 'rejected') return 'already'
@@ -111,20 +111,18 @@ export async function rejectWithdrawal(id: string): Promise<'done' | 'already' |
       data: {
         userId: wd.userId,
         title: 'Withdrawal Rejected',
-        message:
-          wd.network === 'bank'
-            ? `Your bank withdrawal of ${wd.amount} USDT was rejected. ${wd.amount} USDT has been returned to your account. Please contact support if you believe this is an error.`
-            : `Your withdrawal of ${wd.amount} ${wd.token} was rejected. ${wd.amount} ${wd.token} has been returned to your account.`,
+        message: customMessage || (wd.network === 'bank'
+          ? `Your bank withdrawal of ${wd.amount} USDT was rejected. ${wd.amount} USDT has been returned to your account. Please contact support if you believe this is an error.`
+          : `Your withdrawal of ${wd.amount} ${wd.token} was rejected. ${wd.amount} ${wd.token} has been returned to your account.`),
         type: 'warning',
       },
     })
   }, { timeout: 15000 })
   await sendPushNotification(wd.userId, {
     title: 'Withdrawal Rejected',
-    body:
-      wd.network === 'bank'
-        ? `Your bank withdrawal of ${wd.amount} USDT was rejected. ${wd.amount} USDT has been returned to your account. Please contact support if you believe this is an error.`
-        : `Your withdrawal of ${wd.amount} ${wd.token} was rejected. ${wd.amount} ${wd.token} has been returned to your account.`,
+    body: customMessage || (wd.network === 'bank'
+      ? `Your bank withdrawal of ${wd.amount} USDT was rejected. ${wd.amount} USDT has been returned to your account. Please contact support if you believe this is an error.`
+      : `Your withdrawal of ${wd.amount} ${wd.token} was rejected. ${wd.amount} ${wd.token} has been returned to your account.`),
   }).catch(() => {})
   return 'done'
 }

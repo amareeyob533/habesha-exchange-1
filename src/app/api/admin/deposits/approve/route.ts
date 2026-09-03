@@ -10,9 +10,9 @@ export async function POST(req: NextRequest) {
     if (!isAdminEmail(user.email)) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
-    const { depositId } = await req.json()
+    const { depositId, customMessage } = await req.json()
     if (!depositId) return NextResponse.json({ error: 'depositId required' }, { status: 400 })
-    const result = await approveDeposit(depositId)
+    const result = await approveDeposit(depositId, customMessage)
     const message =
       result === 'done' ? 'Deposit approved. Balance credited.' :
       result === 'already' ? 'Deposit was already approved.' :

@@ -11,9 +11,9 @@ export async function POST(req: NextRequest) {
     if (!isAdminEmail(user.email)) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
-    const { id } = await req.json()
+    const { id, customMessage } = await req.json()
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
-    const result = await rejectWithdrawal(id)
+    const result = await rejectWithdrawal(id, customMessage)
     const message =
       result === 'done' ? 'Withdrawal rejected. Funds returned to user.' :
       result === 'already' ? 'Withdrawal was already rejected.' :

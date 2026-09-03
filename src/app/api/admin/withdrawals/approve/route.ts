@@ -11,9 +11,9 @@ export async function POST(req: NextRequest) {
     if (!isAdminEmail(user.email)) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
-    const { id } = await req.json()
+    const { id, customMessage } = await req.json()
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
-    const result = await approveWithdrawal(id)
+    const result = await approveWithdrawal(id, customMessage)
     const message =
       result === 'done' ? 'Withdrawal approved and sent.' :
       result === 'already' ? 'Withdrawal was already approved.' :

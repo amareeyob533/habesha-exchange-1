@@ -74,6 +74,19 @@ interface UserNotification {
   createdAt: string
 }
 
+interface UserTransaction {
+  id: string
+  type: string // deposit | withdraw | transfer_in | transfer_out | airdrop | refund
+  token: string
+  amount: number
+  status: string // pending | completed | failed
+  counterpartyUid: string | null
+  network: string | null
+  address: string | null
+  note: string | null
+  createdAt: string
+}
+
 interface UserDetail {
   user: {
     id: string; uid: string; username: string | null; email: string; name: string | null
@@ -92,7 +105,7 @@ interface UserDetail {
   }
   balances: { symbol: string; name: string; amount: number; usdValue: number; price: number; color: string; icon: string }[]
   totalUsd: number
-  transactions: { id: string; type: string; token: string; amount: number; status: string; note: string | null; createdAt: string }[]
+  transactions: UserTransaction[]
   notifications: UserNotification[]
   kycApplications: KycApplicationRow[]
 }
@@ -139,6 +152,19 @@ export function UsersAdmin() {
   const [editNotifType, setEditNotifType] = useState('info')
   const [notifSaving, setNotifSaving] = useState(false)
   const [notifDeleting, setNotifDeleting] = useState<string | null>(null)
+  // Transaction detail expand + edit/delete state
+  const [expandedTxId, setExpandedTxId] = useState<string | null>(null)
+  const [editingTxId, setEditingTxId] = useState<string | null>(null)
+  const [editTxType, setEditTxType] = useState('deposit')
+  const [editTxToken, setEditTxToken] = useState('USDT')
+  const [editTxAmount, setEditTxAmount] = useState('')
+  const [editTxStatus, setEditTxStatus] = useState('completed')
+  const [editTxNote, setEditTxNote] = useState('')
+  const [editTxNetwork, setEditTxNetwork] = useState('')
+  const [editTxAddress, setEditTxAddress] = useState('')
+  const [editTxCounterparty, setEditTxCounterparty] = useState('')
+  const [txSaving, setTxSaving] = useState(false)
+  const [txDeleting, setTxDeleting] = useState<string | null>(null)
 
   const search = useCallback(async (q: string) => {
     if (!q.trim()) { setResults([]); return }
@@ -338,6 +364,73 @@ export function UsersAdmin() {
       toast({ variant: 'destructive', title: 'Failed', description: err.message })
     } finally {
       setNotifDeleting(null)
+    }
+  }
+
+  function startEditTx(t: UserTransaction) {
+    setEditingTxId(t.id)
+    setEditTxType(t.type || 'deposit')
+    setEditTxToken(t.token || 'USDT')
+    setEditTxAmount(String(t.amount ?? ''))
+    setEditTxStatus(t.status || 'completed')
+    setEditTxNote(t.note || '')
+    setEditTxNetwork(t.network || '')
+    setEditTxAddress(t.address || '')
+    setEditTxCounterparty(t.counterpartyUid || '')
+  }
+
+  function cancelEditTx() {
+    setEditingTxId(null)
+    setEditTxType('deposit'); setEditTxToken('USDT'); setEditTxAmount('')
+    setEditTxStatus('completed'); setEditTxNote(''); setEditTxNetwork('')
+    setEditTxAddress(''); setEditTxCounterparty('')
+  }
+
+  async function saveEditTx(id: string) {
+    if (!editTxAmount || Number.isNaN(Number(editTxAmount))) {
+      toast({ variant: 'destructive', title: 'Required', description: 'Enter a valid amount.' })
+      return
+    }
+    setTxSaving(true)
+    try {
+      await apiFetch<{ ok: boolean }>(`/api/admin/users/transactions`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          id,
+          type: editTxType,
+          token: editTxToken,
+          amount: Number(editTxAmount),
+          status: editTxStatus,
+          note: editTxNote,
+          network: editTxNetwork,
+          address: editTxAddress,
+          counterpartyUid: editTxCounterparty,
+        }),
+      })
+      toast({ title: 'Transaction updated', description: 'The transaction record has been saved.' })
+      cancelEditTx()
+      if (detail) await loadDetail(detail.user.id)
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Failed', description: err.message })
+    } finally {
+      setTxSaving(false)
+    }
+  }
+
+  async function deleteTx(id: string) {
+    if (!confirm('Delete this transaction permanently? This cannot be undone and will remove it from the user\'s history.')) return
+    setTxDeleting(id)
+    try {
+      await apiFetch<{ ok: boolean }>(`/api/admin/users/transactions`, {
+        method: 'DELETE',
+        body: JSON.stringify({ id }),
+      })
+      toast({ title: 'Transaction deleted' })
+      if (detail) await loadDetail(detail.user.id)
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Failed', description: err.message })
+    } finally {
+      setTxDeleting(null)
     }
   }
 
@@ -609,24 +702,166 @@ export function UsersAdmin() {
                   </div>
                 </div>
 
-                {/* Recent transactions */}
+                {/* Recent transactions — expandable + editable */}
                 <div>
-                  <div className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Recent Transactions</div>
-                  <div className="max-h-48 space-y-1 overflow-y-auto custom-scroll">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <ArrowDownToLine className="h-3.5 w-3.5" /> Recent Transactions
+                    </div>
+                    {detail.transactions.length > 0 && (
+                      <span className="rounded bg-secondary px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">
+                        {detail.transactions.length} record{detail.transactions.length > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+                  <div className="max-h-72 space-y-1.5 overflow-y-auto custom-scroll">
                     {detail.transactions.length === 0 ? (
                       <div className="rounded-lg border border-dashed border-border p-3 text-center text-[11px] text-muted-foreground">No transactions</div>
                     ) : (
-                      detail.transactions.map((t) => (
-                        <div key={t.id} className="flex items-center justify-between rounded border border-border/50 bg-secondary/20 px-2.5 py-1.5 text-[11px]">
-                          <div>
-                            <div className="font-semibold">{t.type} · {t.token}</div>
-                            <div className="text-[10px] text-muted-foreground">{t.note || ''} · {timeAgo(t.createdAt)}</div>
+                      detail.transactions.map((t) => {
+                        const isExpanded = expandedTxId === t.id
+                        const isEditing = editingTxId === t.id
+                        const typeMeta: Record<string, { label: string; cls: string }> = {
+                          deposit: { label: 'DEPOSIT', cls: 'bg-up/15 text-up' },
+                          withdraw: { label: 'WITHDRAW', cls: 'bg-down/15 text-down' },
+                          transfer_in: { label: 'TRANSFER IN', cls: 'bg-up/15 text-up' },
+                          transfer_out: { label: 'TRANSFER OUT', cls: 'bg-down/15 text-down' },
+                          airdrop: { label: 'AIRDROP', cls: 'bg-gold/15 text-gold' },
+                          refund: { label: 'REFUND', cls: 'bg-gold/15 text-gold' },
+                        }
+                        const tm = typeMeta[t.type] || { label: t.type?.toUpperCase() || 'TX', cls: 'bg-secondary text-muted-foreground' }
+                        const statusCls =
+                          t.status === 'completed' ? 'text-up' :
+                          t.status === 'pending' ? 'text-gold' : 'text-down'
+                        return (
+                          <div key={t.id} className={`rounded-lg border bg-secondary/20 text-[11px] ${isEditing ? 'border-gold/50 ring-1 ring-gold/20' : 'border-border/50'}`}>
+                            {isEditing ? (
+                              <div className="space-y-2 p-2.5">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className="space-y-1">
+                                    <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">Type</Label>
+                                    <Select value={editTxType} onValueChange={setEditTxType}>
+                                      <SelectTrigger className="h-8 bg-card text-xs"><SelectValue /></SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="deposit">Deposit</SelectItem>
+                                        <SelectItem value="withdraw">Withdraw</SelectItem>
+                                        <SelectItem value="transfer_in">Transfer In</SelectItem>
+                                        <SelectItem value="transfer_out">Transfer Out</SelectItem>
+                                        <SelectItem value="airdrop">Airdrop</SelectItem>
+                                        <SelectItem value="refund">Refund</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">Token</Label>
+                                    <Select value={editTxToken} onValueChange={setEditTxToken}>
+                                      <SelectTrigger className="h-8 bg-card text-xs"><SelectValue /></SelectTrigger>
+                                      <SelectContent>
+                                        {TOKENS.map((tk) => <SelectItem key={tk} value={tk}>{tk}</SelectItem>)}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">Amount</Label>
+                                    <Input type="number" step="any" value={editTxAmount} onChange={(e) => setEditTxAmount(e.target.value)} className="h-8 bg-card text-xs" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">Status</Label>
+                                    <Select value={editTxStatus} onValueChange={setEditTxStatus}>
+                                      <SelectTrigger className="h-8 bg-card text-xs"><SelectValue /></SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="completed">Completed</SelectItem>
+                                        <SelectItem value="pending">Pending</SelectItem>
+                                        <SelectItem value="failed">Failed</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">Note</Label>
+                                  <Input value={editTxNote} onChange={(e) => setEditTxNote(e.target.value)} placeholder="(optional)" className="h-8 bg-card text-xs" />
+                                </div>
+                                <div className="grid grid-cols-1 gap-2">
+                                  <div className="space-y-1">
+                                    <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">Network</Label>
+                                    <Input value={editTxNetwork} onChange={(e) => setEditTxNetwork(e.target.value)} placeholder="e.g. TRON (TRC20) — leave blank if none" className="h-8 bg-card text-xs" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">Address / Destination</Label>
+                                    <Input value={editTxAddress} onChange={(e) => setEditTxAddress(e.target.value)} placeholder="wallet or bank account — leave blank if none" className="h-8 bg-card text-xs" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[9px] uppercase tracking-wider text-muted-foreground">Counterparty UID (transfers only)</Label>
+                                    <Input value={editTxCounterparty} onChange={(e) => setEditTxCounterparty(e.target.value)} placeholder="UID of the other user — leave blank if none" className="h-8 bg-card text-xs" />
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 pt-1">
+                                  <div className="flex-1" />
+                                  <Button size="sm" className="h-8 bg-up text-white hover:bg-up/90" disabled={txSaving} onClick={() => saveEditTx(t.id)}>
+                                    {txSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />} Save
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="h-8" onClick={cancelEditTx}>
+                                    <XIcon className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                {/* Compact summary row — click to expand */}
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedTxId(isExpanded ? null : t.id)}
+                                  className="flex w-full items-center justify-between gap-2 px-2.5 py-2 text-left transition-colors hover:bg-secondary/40"
+                                >
+                                  <div className="flex min-w-0 items-center gap-1.5">
+                                    <span className={`inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[8px] font-bold ${tm.cls}`}>
+                                      {tm.label}
+                                    </span>
+                                    <span className="font-semibold truncate text-foreground">{t.token}</span>
+                                    <span className={`text-[9px] font-bold ${statusCls}`}>· {t.status}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono font-bold">{formatTokenAmount(t.amount, t.token)}</span>
+                                    <span className="text-[9px] text-muted-foreground">{timeAgo(t.createdAt)}</span>
+                                  </div>
+                                </button>
+                                {/* Expanded detail */}
+                                {isExpanded && (
+                                  <div className="border-t border-border/50 px-2.5 py-2 space-y-2">
+                                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
+                                      <div><span className="text-muted-foreground">Date:</span> <span className="font-medium">{new Date(t.createdAt).toLocaleString()}</span></div>
+                                      <div><span className="text-muted-foreground">Status:</span> <span className={`font-bold ${statusCls}`}>{t.status}</span></div>
+                                      <div><span className="text-muted-foreground">Type:</span> <span className="font-medium">{t.type}</span></div>
+                                      <div><span className="text-muted-foreground">Token:</span> <span className="font-medium">{t.token}</span></div>
+                                      <div><span className="text-muted-foreground">Amount:</span> <span className="font-mono font-bold">{formatTokenAmount(t.amount, t.token)}</span></div>
+                                      {t.network && <div className="col-span-2"><span className="text-muted-foreground">Network:</span> <span className="font-medium">{t.network}</span></div>}
+                                      {t.address && (
+                                        <div className="col-span-2 min-w-0">
+                                          <span className="text-muted-foreground">Address:</span>{' '}
+                                          <span className="font-mono break-all">{t.address}</span>
+                                        </div>
+                                      )}
+                                      {t.counterpartyUid && <div className="col-span-2"><span className="text-muted-foreground">Counterparty UID:</span> <span className="font-mono">{t.counterpartyUid}</span></div>}
+                                      {t.note && <div className="col-span-2"><span className="text-muted-foreground">Note:</span> <span>{t.note}</span></div>}
+                                    </div>
+                                    <div className="flex justify-end gap-1.5 pt-1">
+                                      <Button size="sm" variant="outline" className="h-7 px-2 text-[10px]" onClick={() => startEditTx(t)}>
+                                        <Pencil className="mr-1 h-3 w-3" /> Edit
+                                      </Button>
+                                      <Button size="sm" variant="outline" className="h-7 px-2 text-[10px] border-down/30 text-down hover:bg-down/10" disabled={txDeleting === t.id} onClick={() => deleteTx(t.id)}>
+                                        {txDeleting === t.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="mr-1 h-3 w-3" />} Delete
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            )}
                           </div>
-                          <div className="font-mono font-bold">{t.amount}</div>
-                        </div>
-                      ))
+                        )
+                      })
                     )}
                   </div>
+                  <div className="mt-1 text-[9px] text-muted-foreground">Tip: click a transaction to expand its full details. Use Edit / Delete to manage the record.</div>
                 </div>
 
                 {/* Notifications — admin can view / edit / delete */}

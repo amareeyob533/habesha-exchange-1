@@ -2181,3 +2181,41 @@ Stage Summary:
 - The unreliable prompt() custom-message feature is completely removed from deposit/withdrawal approve/reject.
 - New admin feature: Admin → Users → open any user profile → "USER NOTIFICATIONS" section lists all their notifications (latest 50) with type badges, read/unread indicator, and per-item inline Edit + Delete. Edits persist via PATCH, deletes via DELETE — both admin-only. After approving/rejecting a deposit, the admin can immediately open the user's profile and edit the resulting notification text there if needed.
 - All changes pushed to GitHub (commit f51786d).
+
+---
+Task ID: TRANSACTION-ADMIN-EDIT
+Agent: main
+Task: Add admin ability to see user transaction details and edit/delete them from the user profile drawer.
+
+Work Log:
+- src/app/api/admin/users/transactions/route.ts (NEW): PATCH (edit) + DELETE (permanently remove) endpoints, both admin-only via isAdminEmail.
+  * PATCH accepts: id, type?, token?, amount?, status?, note?, network?, address?, counterpartyUid?. Only provided fields are updated. Validates type ∈ {deposit, withdraw, transfer_in, transfer_out, airdrop, refund}, token must be a supported TOKENS entry, status ∈ {completed, pending, failed}, amount must be a non-negative finite number. Empty strings for note/network/address/counterpartyUid are normalized to null.
+  * DELETE accepts { id }, checks existence first, returns 404 if not found.
+- src/components/dashboard/views/admin-users.tsx:
+  * Added UserTransaction interface (id, type, token, amount, status, counterpartyUid, network, address, note, createdAt) and updated UserDetail.transactions to use it.
+  * Added state: expandedTxId, editingTxId, editTxType/Token/Amount/Status/Note/Network/Address/Counterparty, txSaving, txDeleting.
+  * Added startEditTx / cancelEditTx / saveEditTx (PATCH) / deleteTx (DELETE with confirm) handlers.
+  * Replaced the old compact "Recent Transactions" list (max-h-48, one-line rows) with a richer expandable + editable section:
+    - Header: "RECENT TRANSACTIONS" with "{n} record(s)" count badge.
+    - Each row: type badge (color-coded: DEPOSIT/TRANSFER IN/REFUND→up-green, WITHDRAW/TRANSFER OUT→down-red, AIRDROP→gold), token, status pill (completed=green, pending=gold, failed=red), formatted amount, time-ago.
+    - Click row → expands inline detail panel: Date, Status, Type, Token, Amount, Network, Address (break-all), Counterparty UID, Note. Plus Edit + Delete buttons.
+    - Edit swaps to inline editor: Type dropdown (6 options), Token dropdown (7 supported tokens), Amount number input, Status dropdown (3 options), Note input, Network input, Address input, Counterparty UID input. Save (green) + Cancel (X) buttons.
+    - Empty strings for note/network/address/counterparty are saved as null.
+    - Max height raised to 72 (max-h-72) with custom-scroll.
+    - Added helper tip text: "Tip: click a transaction to expand its full details. Use Edit / Delete to manage the record."
+- Lint: 0 errors, 9 warnings (all pre-existing polling-pattern warnings).
+- Browser verification (Agent Browser end-to-end):
+  * Signed in as admin, navigated to Users, searched "testuser", opened profile.
+  * "RECENT TRANSACTIONS · 1 record" rendered with the approved deposit (DEPOSIT · USDT · completed · 50.00).
+  * Clicked the transaction → expanded to show: Date "9/3/2026, 8:01:30 PM", Status "completed", Type "deposit", Token "USDT", Amount "50.00", Network "TRON (TRC20)", Note "Deposit approved by admin".
+  * Clicked Edit → inline editor opened pre-filled with all fields. Changed Amount to 75 and Note to "Deposit approved by admin — amount corrected to 75 USDT" → clicked Save.
+  * PATCH /api/admin/users/transactions 200. Detail re-fetched. Expanded view now showed Amount "75.00" and the updated note.
+  * Clicked Delete → confirm dialog "Delete this transaction permanently?..." → accepted → DELETE /api/admin/users/transactions 200. UI now showed "No transactions".
+  * Confirmed the User Notifications section (immediately below) still rendered correctly ("3 total · 3 unread" with the previously-edited "Account Warning - Updated"). No console errors.
+- Git: committed as 0c61c2f "Admin can view transaction details + edit/delete them from user profile" and pushed to origin/main (f51786d..0c61c2f).
+
+Stage Summary:
+- Admin → Users → open any user profile → "RECENT TRANSACTIONS" section now shows each transaction as an expandable card. Click to see full details (date, status, type, token, amount, network, address, counterparty UID, note). Edit button opens an inline editor for all fields (type, token, amount, status, note, network, address, counterparty UID). Delete button removes the transaction permanently (with confirmation).
+- All editable fields are validated server-side. Empty optional fields (note, network, address, counterpartyUid) are normalized to null.
+- Sits directly above the User Notifications section (also editable/deletable) so the admin has full control over a user's transaction + notification history from one drawer.
+- Changes pushed to GitHub (commit 0c61c2f).

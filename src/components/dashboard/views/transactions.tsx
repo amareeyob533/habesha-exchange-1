@@ -164,7 +164,7 @@ export function TransactionsView() {
                       {t.type === 'transfer_out' && t.counterpartyUid ? `To UID ${t.counterpartyUid}` : ''}
                       {t.type === 'transfer_in' && t.counterpartyUid ? `From UID ${t.counterpartyUid}` : ''}
                       {t.type === 'deposit' && t.network ? `${t.network}` : ''}
-                      {t.type === 'withdraw' && t.address ? `${t.network === 'internal' ? `UID ${t.address}` : shortAddr(t.address)}` : ''}
+                      {t.type === 'withdraw' && t.address ? `${t.network === 'internal' ? `UID ${t.address}` : t.address}` : ''}
                       {t.type === 'buy' && t.note ? t.note : ''}
                       {t.type === 'airdrop' && t.note ? t.note : ''}
                       {t.type === 'reward' && t.note ? t.note : ''}

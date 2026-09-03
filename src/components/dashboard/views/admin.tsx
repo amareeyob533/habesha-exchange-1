@@ -382,7 +382,7 @@ function WithdrawalsTable({ withdrawals, acting, onAct }: { withdrawals: AdminWi
                   <div className="text-muted-foreground">Name: {w.accountName}</div>
                 </div>
               ) : (
-                <div className="truncate font-mono text-[11px] text-muted-foreground" title={w.address}>{shortAddr(w.address, 8)}</div>
+                <div className="break-all font-mono text-[11px] text-muted-foreground" title={w.address}>{w.address}</div>
               )}
             </div>
             <div className="col-span-6 text-[11px] text-muted-foreground sm:col-span-1">{timeAgo(w.createdAt)}</div>

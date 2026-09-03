@@ -200,7 +200,7 @@ function WithdrawForm({ initialSymbol, onClose }: { initialSymbol: string; onClo
               ? `${done.amount} ${symbol} sent to UID ${done.to} instantly.`
               : done.mode === 'bank'
               ? `${done.amount} USDT (≈ ${done.birr?.toLocaleString('en-US')} ETB) to ${done.bank} is pending admin approval. You'll be notified once the ETB is sent to your bank.`
-              : `${done.amount} ${symbol} is processing to ${shortAddr(done.to)}. You'll be notified on completion.`}
+              : `${done.amount} ${symbol} is processing to ${done.to}. You'll be notified on completion.`}
           </p>
           <Button className="bg-gold-gradient mt-5 w-full font-semibold text-primary-foreground" onClick={onClose}>Done</Button>
         </motion.div>

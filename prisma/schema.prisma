@@ -33,6 +33,7 @@ model User {
   cardBalance       Float    @default(0) // Habesha Mastercard balance (separate from wallet)
   country         String?
   phone           String?
+  visitorId       String?  // device fingerprint (ThumbmarkJS) — set at signup, used for device banning
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -305,4 +306,12 @@ model BroadcastSeen {
   userId      String
   seenAt      DateTime @default(now())
   @@unique([broadcastId, userId]) // one seen record per user per broadcast
+}
+
+model BannedDevice {
+  id        String   @id @default(cuid())
+  visitorId String   @unique // ThumbmarkJS / FingerprintJS visitor id
+  userId    String?  // optional: the user whose device was banned (if known)
+  reason    String?  // optional: why the device was banned
+  createdAt DateTime @default(now())
 }

@@ -12,6 +12,7 @@ import { apiFetch } from '@/lib/api-client'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, User, AtSign, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, Check, X } from 'lucide-react'
 import { LogoMark } from '@/components/common/logo'
+import { getVisitorId } from '@/lib/fingerprint'
 
 interface AuthModalProps {
   open: boolean
@@ -92,15 +93,33 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
       toast({ variant: 'destructive', title: 'Invalid username', description: 'Min 3 chars, letters/numbers/underscore/dot only.' })
       return
     }
+    // Generate a device fingerprint so the server can block banned devices
+    // and tag this user's account with the device visitorId.
+    let visitorId = ''
     try {
-      await signup(semail, spass, sname, susername)
+      visitorId = await getVisitorId()
+    } catch {
+      // Non-fatal — the server treats '' as "not banned" (fail-open).
+    }
+    try {
+      await signup(semail, spass, sname, susername, visitorId)
       toast({
         title: 'Account created! 🎉',
         description: 'Welcome to Habesha Exchange. Your account is ready.',
       })
       onOpenChange(false)
     } catch (err: any) {
-      toast({ variant: 'destructive', title: 'Sign up failed', description: err.message })
+      const msg = err?.message || 'Sign up failed'
+      // Surface a clearer message when the device is banned.
+      if (msg.toLowerCase().includes('device') || msg.toLowerCase().includes('restricted')) {
+        toast({
+          variant: 'destructive',
+          title: 'Device blocked',
+          description: 'This device is restricted from creating new accounts.',
+        })
+      } else {
+        toast({ variant: 'destructive', title: 'Sign up failed', description: msg })
+      }
     }
   }
 
@@ -127,11 +146,24 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
               onBack={() => setShowGoogle(false)}
               onPick={async (profile) => {
                 try {
-                  await loginWithGoogle(profile)
+                  // Attach the device fingerprint so Google signups are also
+                  // protected by the device ban + tracked on the user record.
+                  let visitorId = ''
+                  try { visitorId = await getVisitorId() } catch {}
+                  await loginWithGoogle({ ...profile, visitorId })
                   toast({ title: 'Signed in with Google', description: 'Welcome to Habesha Exchange.' })
                   onOpenChange(false)
                 } catch (err: any) {
-                  toast({ variant: 'destructive', title: 'Google sign-in failed', description: err.message })
+                  const msg = err?.message || 'Google sign-in failed'
+                  if (msg.toLowerCase().includes('device') || msg.toLowerCase().includes('restricted')) {
+                    toast({
+                      variant: 'destructive',
+                      title: 'Device blocked',
+                      description: 'This device is restricted from creating new accounts.',
+                    })
+                  } else {
+                    toast({ variant: 'destructive', title: 'Google sign-in failed', description: msg })
+                  }
                 }
               }}
               loading={loading}
@@ -252,7 +284,7 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
                     </Field>
                     <div className="flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 p-2.5 text-[11px] text-muted-foreground">
                       <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                      <span>Your account is protected with industry-standard encryption. Welcome to Habesha Exchange.</span>
+                      <span>Your account is protected with industry-standard encryption and device verification. Welcome to Habesha Exchange.</span>
                     </div>
                     <Button type="submit" disabled={loading} className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground hover:opacity-95">
                       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Create Account <ArrowRight className="ml-1 h-4 w-4" /></>}

@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { setSessionCookie } from '@/lib/auth'
 import { generateUid, ensureBalances } from '@/lib/uid'
 import { TOKEN_SYMBOLS } from '@/lib/tokens'
+import { isDeviceBanned } from '@/lib/device-ban'
 
 /**
  * Simulated Google sign-in.
@@ -14,11 +15,19 @@ import { TOKEN_SYMBOLS } from '@/lib/tokens'
  */
 export async function POST(req: NextRequest) {
   try {
-    const { email, name, avatarUrl } = await req.json()
+    const { email, name, avatarUrl, visitorId } = await req.json()
     if (!email) {
       return NextResponse.json({ error: 'Google account email is required' }, { status: 400 })
     }
     const normalizedEmail = email.toLowerCase().trim()
+
+    // Device ban check — block signup if this device is banned.
+    if (visitorId && await isDeviceBanned(visitorId)) {
+      return NextResponse.json(
+        { error: 'This device is restricted from creating new accounts.', deviceBanned: true },
+        { status: 403 },
+      )
+    }
 
     let user = await db.user.findUnique({ where: { email: normalizedEmail } })
     if (!user) {
@@ -30,6 +39,7 @@ export async function POST(req: NextRequest) {
           name: name?.trim() || normalizedEmail.split('@')[0],
           avatarUrl: avatarUrl || null,
           provider: 'google',
+          visitorId: visitorId || null,
         },
       })
       await ensureBalances(user.id, TOKEN_SYMBOLS)

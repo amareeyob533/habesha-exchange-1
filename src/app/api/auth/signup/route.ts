@@ -4,6 +4,7 @@ import { hashPassword, setSessionCookie } from '@/lib/auth'
 import { generateUid, ensureBalances } from '@/lib/uid'
 import { TOKEN_SYMBOLS } from '@/lib/tokens'
 import { sendPushNotification } from '@/lib/push'
+import { isDeviceBanned } from '@/lib/device-ban'
 
 function normalizeUsername(raw: string): string {
   return raw.toLowerCase().trim().replace(/\s+/g, '')
@@ -11,12 +12,22 @@ function normalizeUsername(raw: string): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, name, username } = await req.json()
+    const { email, password, name, username, visitorId } = await req.json()
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
     if (password.length < 6) {
       return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
+    }
+
+    // Device ban check — block signup before any further validation if the
+    // device fingerprint is in the banned_devices table. Fail OPEN (allow)
+    // if visitorId is missing so legitimate clients without JS still work.
+    if (visitorId && await isDeviceBanned(visitorId)) {
+      return NextResponse.json(
+        { error: 'This device is restricted from creating new accounts.', deviceBanned: true },
+        { status: 403 },
+      )
     }
     // Username required + validated + unique
     const uname = normalizeUsername(username || '')
@@ -73,6 +84,9 @@ export async function POST(req: NextRequest) {
         name: name?.trim() || uname,
         passwordHash,
         provider: 'credentials',
+        // Attach the device fingerprint so the admin can later ban this
+        // device from the user's profile (and block future signups).
+        visitorId: visitorId || null,
       },
     })
 

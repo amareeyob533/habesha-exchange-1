@@ -30,7 +30,7 @@ import {
   Lock, Unlock, AlertTriangle, Mail, AtSign, Hash,
   Download, ExternalLink, KeyRound, IdCard, MapPin, User as UserIcon, Clock,
   ArrowDownToLine, CreditCard, Bell, Pencil, Check, X as XIcon, Info as InfoIcon,
-  CheckCircle2, AlertOctagon,
+  CheckCircle2, AlertOctagon, Fingerprint, Smartphone,
 } from 'lucide-react'
 
 interface SearchUser {
@@ -92,6 +92,7 @@ interface UserDetail {
     id: string; uid: string; username: string | null; email: string; name: string | null
     avatarUrl: string | null; isBlocked: boolean; blockedReason: string | null
     provider: string; country: string | null; phone: string | null; createdAt: string
+    visitorId: string | null
     // KYC summary (denormalized onto User)
     kycStatus: string | null
     kycSubmittedAt: string | null
@@ -165,6 +166,10 @@ export function UsersAdmin() {
   const [editTxCounterparty, setEditTxCounterparty] = useState('')
   const [txSaving, setTxSaving] = useState(false)
   const [txDeleting, setTxDeleting] = useState<string | null>(null)
+  // Device ban state
+  const [deviceBanned, setDeviceBanned] = useState(false)
+  const [deviceLoading, setDeviceLoading] = useState(false)
+  const [banReason, setBanReason] = useState('')
 
   const search = useCallback(async (q: string) => {
     if (!q.trim()) { setResults([]); return }
@@ -190,6 +195,11 @@ export function UsersAdmin() {
     try {
       const data = await apiFetch<UserDetail>(`/api/admin/users/detail?userId=${userId}`)
       setDetail(data)
+      // Fetch this user's device ban status in parallel (non-fatal if it fails)
+      setDeviceBanned(false)
+      apiFetch<{ banned: boolean }>(`/api/admin/users/devices?userId=${userId}`)
+        .then((d) => setDeviceBanned(!!d.banned))
+        .catch(() => {})
     } catch (err: any) {
       // Silently skip auth errors (happens during logout)
       const msg = String(err?.message || '')
@@ -431,6 +441,47 @@ export function UsersAdmin() {
       toast({ variant: 'destructive', title: 'Failed', description: err.message })
     } finally {
       setTxDeleting(null)
+    }
+  }
+
+  async function banUserDevice() {
+    if (!detail) return
+    if (!detail.user.visitorId) {
+      toast({ variant: 'destructive', title: 'No device fingerprint', description: 'This user signed up before device tracking was enabled, so there is no fingerprint to ban.' })
+      return
+    }
+    if (!confirm(`Ban this user's device? They will no longer be able to create new accounts from this device. ${banReason ? `\n\nReason: ${banReason}` : ''}`)) return
+    setDeviceLoading(true)
+    try {
+      const res = await apiFetch<{ ok: boolean; message: string }>(`/api/admin/users/ban-device`, {
+        method: 'POST',
+        body: JSON.stringify({ userId: detail.user.id, reason: banReason || undefined }),
+      })
+      toast({ title: 'Device banned 🔒', description: res.message })
+      setDeviceBanned(true)
+      setBanReason('')
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Failed', description: err.message })
+    } finally {
+      setDeviceLoading(false)
+    }
+  }
+
+  async function unbanUserDevice() {
+    if (!detail?.user.visitorId) return
+    if (!confirm('Un-ban this device? New signups from it will be allowed again.')) return
+    setDeviceLoading(true)
+    try {
+      const res = await apiFetch<{ ok: boolean; message: string }>(`/api/admin/users/ban-device`, {
+        method: 'DELETE',
+        body: JSON.stringify({ visitorId: detail.user.visitorId }),
+      })
+      toast({ title: 'Device un-banned', description: res.message })
+      setDeviceBanned(false)
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Failed', description: err.message })
+    } finally {
+      setDeviceLoading(false)
     }
   }
 
@@ -953,6 +1004,58 @@ export function UsersAdmin() {
                       })
                     )}
                   </div>
+                </div>
+
+                {/* Device security — fingerprint + ban/un-ban device */}
+                <div className="rounded-xl border border-border bg-secondary/20 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <Fingerprint className="h-3.5 w-3.5" /> Device Security
+                    </div>
+                    {deviceBanned ? (
+                      <span className="rounded bg-down/15 px-1.5 py-0.5 text-[9px] font-bold text-down">DEVICE BANNED</span>
+                    ) : detail.user.visitorId ? (
+                      <span className="rounded bg-up/15 px-1.5 py-0.5 text-[9px] font-bold text-up">CLEAN</span>
+                    ) : (
+                      <span className="rounded bg-secondary px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">NO FINGERPRINT</span>
+                    )}
+                  </div>
+                  {detail.user.visitorId ? (
+                    <>
+                      <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 p-2">
+                        <Smartphone className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[9px] uppercase tracking-wider text-muted-foreground">Device Fingerprint (visitorId)</div>
+                          <div className="truncate font-mono text-[11px] text-foreground">{detail.user.visitorId}</div>
+                        </div>
+                      </div>
+                      {!deviceBanned && (
+                        <div className="mt-2 space-y-1.5">
+                          <Input
+                            value={banReason}
+                            onChange={(e) => setBanReason(e.target.value)}
+                            placeholder="Reason for banning this device (optional)"
+                            className="h-8 bg-card text-xs"
+                          />
+                          <Button size="sm" className="h-8 w-full bg-down/90 text-white hover:bg-down" disabled={deviceLoading} onClick={banUserDevice}>
+                            {deviceLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ban className="mr-1 h-3.5 w-3.5" />} Ban this device
+                          </Button>
+                        </div>
+                      )}
+                      {deviceBanned && (
+                        <Button size="sm" variant="outline" className="mt-2 h-8 w-full border-up/40 text-up hover:bg-up/10" disabled={deviceLoading} onClick={unbanUserDevice}>
+                          {deviceLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Unlock className="mr-1 h-3.5 w-3.5" />} Un-ban this device
+                        </Button>
+                      )}
+                      <div className="mt-1.5 text-[9px] leading-snug text-muted-foreground">
+                        Banning this device will prevent anyone from creating new accounts from it in the future. The user can still sign in with existing accounts.
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-[11px] text-muted-foreground">
+                      This user signed up before device fingerprinting was enabled, so no device fingerprint is on file. New signups from this user's device will be fingerprinted automatically.
+                    </div>
+                  )}
                 </div>
 
                 {/* Admin actions */}

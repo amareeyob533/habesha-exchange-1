@@ -82,6 +82,7 @@ export async function GET(req: NextRequest) {
         country: u.country,
         phone: u.phone,
         createdAt: u.createdAt,
+        visitorId: u.visitorId,
         // KYC summary fields (denormalized onto the User row)
         kycStatus: u.kycStatus,
         kycSubmittedAt: u.kycSubmittedAt,

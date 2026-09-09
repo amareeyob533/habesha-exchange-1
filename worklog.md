@@ -2263,3 +2263,28 @@ Stage Summary:
   3. Metadata storage: visitorId is stored on the User row at signup (`user.visitorId`) so the admin can see which device each account was created from.
   4. Ban logic: POST /api/admin/users/ban-device {userId, reason?} inserts into BannedDevice. DELETE un-bans. Admin user profile drawer has a "Device Security" section with a "Ban this device" / "Un-ban this device" button.
 - Committed as 3b1bee9 "Device-blocking mechanism: fingerprint users at signup, ban devices from admin panel". NOTE: git push failed because the sandbox git credentials expired during this session — the commit is local and ready to push when credentials are restored.
+
+---
+Task ID: VERIFIED-BADGE-RESIZE
+Agent: main
+Task: The blue KYC verification checkmark badge on the topbar avatar was too big/bulky. Make it smaller and more professional, with better placement.
+
+Work Log:
+- Analyzed the user's screenshot with VLM → confirmed the blue verification badge on the small topbar avatar looked "slightly bulky" at ~50% of the avatar diameter. Industry standard (Twitter/X, Instagram, LinkedIn) is ~25-35%.
+- src/components/common/verified-avatar.tsx (the single source of truth for the verified badge, used in topbar + profile + admin drawer):
+  * Reduced badge sizes per variant:
+    - sm (28px avatar): 14px → 12px badge (~43% ratio)
+    - md (80px avatar): 24px → 20px badge (~25% ratio)
+    - lg (96px avatar): 28px → 24px badge (~25% ratio)
+  * Added per-size position offsets so the badge sits cleanly on the avatar edge:
+    - sm: -bottom-0 -right-0
+    - md: -bottom-1 -right-1
+    - lg: -bottom-1.5 -right-1.5
+  * Thinner stroke weight on sm badges (2.5 vs 3) for a refined look at small sizes.
+  * Added shadow-sm for subtle depth.
+  * Kept Twitter-blue (#1D9BF0) + ring-2 ring-background for clean separation from the avatar.
+- Browser verification: signed in as admin (recreated with KYC approved), confirmed the topbar badge renders at 12x12px (was 14x14px). VLM analysis of the after screenshot: "professional and appropriately sized, not bulky... follows modern UI/UX best practices for identity verification indicators. Conveys authority and trustworthiness without cluttering the interface."
+
+Stage Summary:
+- The blue KYC verification badge is now properly proportioned (~25-43% of avatar depending on size) instead of the bulky 50% it was before. Placement is cleaner with per-size offsets, the stroke is thinner on small badges, and a subtle shadow adds depth. Verified visually via VLM that it now matches the professional standard set by Twitter/X/Instagram/LinkedIn.
+- Committed as af405b5. NOTE: git push failed again because the sandbox GitHub credentials expired during the prior db:push — the commit is local and ready to push when credentials are restored.

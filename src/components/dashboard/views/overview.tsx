@@ -41,17 +41,17 @@ export function OverviewView() {
             <div className="mt-1 flex items-center gap-1.5 text-xs text-up">
               <TrendingUp className="h-3.5 w-3.5" /> Ready to trade
             </div>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Button className="bg-gold-gradient font-semibold text-primary-foreground" onClick={() => openDeposit('USDT')}>
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <Button className="h-11 bg-[#2a1f1a] font-semibold text-white hover:bg-[#3a2a22]" onClick={() => openDeposit('USDT')}>
                 <ArrowDownToLine className="mr-1 h-4 w-4" /> Deposit
               </Button>
-              <Button variant="outline" className="border-gold/30 text-gold hover:bg-gold/10" onClick={() => openWithdraw('USDT')}>
+              <Button variant="outline" className="h-11 border-border bg-secondary/40 text-gold hover:bg-gold/10 hover:border-gold/30" onClick={() => openWithdraw('USDT')}>
                 <ArrowUpFromLine className="mr-1 h-4 w-4" /> Withdraw
               </Button>
-              <Button variant="outline" onClick={() => openBuy()}>
+              <Button variant="outline" className="h-11 border-border bg-secondary/40 text-foreground hover:bg-secondary/60" onClick={() => openBuy()}>
                 <ShoppingCart className="mr-1 h-4 w-4" /> Buy USDT
               </Button>
-              <Button variant="outline" onClick={() => openWithdraw('USDT')}>
+              <Button variant="outline" className="h-11 col-span-3 border-border bg-secondary/40 text-foreground hover:bg-secondary/60" onClick={() => openWithdraw('USDT')}>
                 <Send className="mr-1 h-4 w-4" /> Transfer
               </Button>
             </div>
@@ -80,7 +80,7 @@ export function OverviewView() {
               </span>
             </div>
             <LiveRateDisplay />
-            <Button className="shimmer-btn bg-gold-gradient mt-4 h-11 w-full font-bold text-primary-foreground shadow-gold hover:opacity-95" onClick={() => openBuy()}>
+            <Button className="mt-4 h-11 w-full bg-[#2a1f1a] font-bold text-white hover:bg-[#3a2a22]" onClick={() => openBuy()}>
               Buy Now <ShoppingCart className="ml-1 h-4 w-4" />
             </Button>
             <div className="mt-3 grid grid-cols-2 gap-2">
@@ -185,7 +185,7 @@ function LiveRateDisplay() {
           className="flex items-baseline gap-1"
         >
           <span className="text-[11px] uppercase tracking-wider text-muted-foreground">1 USDT =</span>
-          <span className="text-4xl font-extrabold tabular-nums text-gold-gradient">{rate.toFixed(5)}</span>
+          <span className="text-4xl font-extrabold tabular-nums text-[#F6465D]">{rate.toFixed(5)}</span>
           <span className="text-sm font-bold text-muted-foreground">ETB</span>
         </motion.div>
       </div>

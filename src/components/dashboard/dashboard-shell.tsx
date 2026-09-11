@@ -22,6 +22,7 @@ import { NotificationPanel } from '@/components/dashboard/notification-panel'
 import { BottomNav } from '@/components/dashboard/bottom-nav'
 import { PushPermissionBanner } from '@/components/dashboard/push-banner'
 import { GiftBoxPopup, pickUnseenGiftBroadcast, type GiftBroadcast } from '@/components/effects/gift-box-popup'
+import { NewYearPopup, pickUnseenNewYearBroadcast, type NewYearBroadcast } from '@/components/effects/new-year-popup'
 import { WarningPopup } from '@/components/effects/warning-popup'
 import { useUI } from '@/hooks/use-ui'
 import { useAuth } from '@/hooks/use-auth'
@@ -33,6 +34,7 @@ export function DashboardShell() {
   const { view, setView } = useUI()
   const { fetchMe, user } = useAuth()
   const [giftBroadcast, setGiftBroadcast] = useState<GiftBroadcast | null>(null)
+  const [newYearBroadcast, setNewYearBroadcast] = useState<NewYearBroadcast | null>(null)
 
   const isAdmin = user?.email?.toLowerCase() === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'amareeyob533@gmail.com').toLowerCase()
 
@@ -55,23 +57,34 @@ export function DashboardShell() {
     return () => { stop(); document.removeEventListener('visibilitychange', onVis) }
   }, [fetchMe])
 
-  // Check for unseen gift broadcasts (only for non-admin users, since admins
-  // don't want to receive their own gift popups).
+  // Check for unseen gift + New Year broadcasts (only for non-admin users,
+  // since admins don't want to receive their own popups).
   const checkGiftBroadcasts = useCallback(async () => {
     if (isAdmin) return
     if (!getStoredToken()) return
-    // Don't re-check if a popup is already showing.
-    if (giftBroadcast) return
+    // Don't re-check if either popup is already showing.
+    if (giftBroadcast || newYearBroadcast) return
     try {
-      const data = await apiFetch<{ broadcasts: GiftBroadcast[] }>('/api/broadcasts')
-      const unseen = pickUnseenGiftBroadcast(data.broadcasts || [])
-      if (unseen) {
-        setGiftBroadcast(unseen)
+      const data = await apiFetch<{ broadcasts: (GiftBroadcast & NewYearBroadcast)[] }>('/api/broadcasts')
+      const list = data.broadcasts || []
+      // New Year popup takes priority (festive occasion).
+      if (!newYearBroadcast) {
+        const unseenNY = pickUnseenNewYearBroadcast(list)
+        if (unseenNY) {
+          setNewYearBroadcast(unseenNY)
+          return
+        }
+      }
+      if (!giftBroadcast) {
+        const unseenGift = pickUnseenGiftBroadcast(list)
+        if (unseenGift) {
+          setGiftBroadcast(unseenGift)
+        }
       }
     } catch {
       // soft fail
     }
-  }, [isAdmin, giftBroadcast])
+  }, [isAdmin, giftBroadcast, newYearBroadcast])
 
   // Check on mount + every 15s for new gift broadcasts.
   // Initial check is deferred to a microtask so we don't trigger a cascading
@@ -145,6 +158,8 @@ export function DashboardShell() {
 
       {/* Gift box popup — shows when an unseen gift broadcast is available */}
       <GiftBoxPopup broadcast={giftBroadcast} onClose={() => setGiftBroadcast(null)} />
+      {/* Ethiopian New Year popup — shows when an unseen New Year broadcast is available */}
+      <NewYearPopup broadcast={newYearBroadcast} onClose={() => setNewYearBroadcast(null)} />
       <WarningPopup />
     </div>
   )

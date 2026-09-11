@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { Topbar } from '@/components/dashboard/topbar'
 import { OverviewView } from '@/components/dashboard/views/overview'
@@ -35,6 +35,8 @@ export function DashboardShell() {
   const { fetchMe, user } = useAuth()
   const [giftBroadcast, setGiftBroadcast] = useState<GiftBroadcast | null>(null)
   const [newYearBroadcast, setNewYearBroadcast] = useState<NewYearBroadcast | null>(null)
+  // Ensures we only call the New Year auto-seed route once per session.
+  const newYearSeededRef = useRef(false)
 
   const isAdmin = user?.email?.toLowerCase() === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'amareeyob533@gmail.com').toLowerCase()
 
@@ -65,6 +67,18 @@ export function DashboardShell() {
     // Don't re-check if either popup is already showing.
     if (giftBroadcast || newYearBroadcast) return
     try {
+      // One-time auto-seed: ensure the New Year broadcast exists in the DB.
+      // This is what makes the popup work on production without the admin
+      // having to manually send the broadcast. Idempotent — only creates
+      // the broadcast if it doesn't already exist. Called once per session.
+      if (!newYearSeededRef.current) {
+        newYearSeededRef.current = true
+        try {
+          await apiFetch('/api/broadcasts/new-year', { method: 'POST' })
+        } catch {
+          // soft fail — the broadcast check below still works
+        }
+      }
       const data = await apiFetch<{ broadcasts: (GiftBroadcast & NewYearBroadcast)[] }>('/api/broadcasts')
       const list = data.broadcasts || []
       // New Year popup takes priority (festive occasion).

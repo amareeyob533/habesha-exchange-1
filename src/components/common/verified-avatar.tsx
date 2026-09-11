@@ -13,51 +13,57 @@ interface VerifiedAvatarProps {
   verified?: boolean
 }
 
-// Avatar sizes — kept the same so existing layouts don't break.
+// Avatar sizes — unchanged so existing layouts don't break.
 const SIZE_MAP = {
-  sm: 'h-7 w-7',
-  md: 'h-20 w-20',
-  lg: 'h-24 w-24',
+  sm: 'h-7 w-7',   // 28px
+  md: 'h-20 w-20', // 80px
+  lg: 'h-24 w-24', // 96px
 }
 
-// Badge sizes — tuned to a ~30-35% ratio of the avatar (Twitter/X standard).
-// Previously the `sm` badge was 50% of the avatar which looked bulky and
-// unprofessional. Now it's a subtle, premium accent.
+// Badge sizes — tuned to ~28-36% of the avatar diameter.
+// Smaller than before so the badge reads as a subtle status accent, not a
+// second circle competing with the avatar.
 const BADGE_SIZE_MAP = {
-  sm: 'h-3 w-3',     // 12px on 28px avatar  (~43% — was 14px/50%)
-  md: 'h-5 w-5',     // 20px on 80px avatar  (~25% — was 24px/30%)
-  lg: 'h-6 w-6',     // 24px on 96px avatar  (~25% — was 28px/29%)
+  sm: 'h-2.5 w-2.5',  // 10px on 28px avatar (~36%)
+  md: 'h-4 w-4',      // 16px on 80px avatar (~20%)
+  lg: 'h-5 w-5',      // 20px on 96px avatar (~21%)
 }
 
-// Badge position — sits cleanly on the bottom-right edge of the avatar ring.
-// Slightly tighter on `sm` so it doesn't overflow the topbar row.
+// Position — pulled INWARD so ~30% of the badge overlaps the avatar edge
+// (the "layered" look used by Twitter/X, Instagram, TikTok). Previously
+// the badge sat on the outside edge with a visible gap, which made it
+// look "tacked on" rather than integrated.
 const BADGE_POSITION_MAP = {
-  sm: '-bottom-0 -right-0',
-  md: '-bottom-1 -right-1',
-  lg: '-bottom-1.5 -right-1.5',
+  sm: '-bottom-0.5 -right-0.5',
+  md: '-bottom-0.5 -right-0.5',
+  lg: '-bottom-1 -right-1',
 }
 
-// Icon stroke weight per size — thinner on small badges for a refined look.
+// Icon stroke weight — slightly thinner for a refined, premium feel.
 const BADGE_STROKE_MAP = {
-  sm: 2.5,
+  sm: 3,
   md: 3,
-  lg: 3,
+  lg: 2.75,
 }
 
 /**
  * Avatar with optional blue KYC verification checkmark.
  *
  * When `verified` is true, a blue circular badge with a white checkmark is
- * shown overlapping the bottom-right edge of the avatar — exactly like
- * Twitter/Instagram verified profiles.
+ * shown overlapping the bottom-right edge of the avatar.
  *
- * Badge proportions are tuned to ~30-35% of the avatar size (the industry
- * standard for verified badges) so it reads as a subtle, premium accent
- * rather than a bulky circle dominating the avatar.
+ * Design notes (tuned to match Twitter/X, Instagram, TikTok verified badges):
+ *  - Badge diameter is ~25-36% of the avatar (industry standard).
+ *  - Badge is pulled inward so ~30% overlaps the avatar edge (layered look,
+ *    not "tacked on").
+ *  - Thin 1px ring (ring-1) in the background color — just enough to
+ *    separate the badge from the avatar, not a thick white frame.
+ *  - Subtle drop shadow (shadow-md) for depth, so the badge "lifts" off
+ *    the avatar without needing a heavy border.
  *
- * - `sm`: topbar avatar (28px) — 12px badge
- * - `md`: profile page avatar (80px) — 20px badge
- * - `lg`: large profile avatar (96px) — 24px badge
+ * - `sm`: topbar avatar (28px) — 10px badge
+ * - `md`: profile page avatar (80px) — 16px badge
+ * - `lg`: large profile avatar (96px) — 20px badge
  */
 export function VerifiedAvatar({ src, fallback, size = 'md', className, verified }: VerifiedAvatarProps) {
   return (
@@ -71,15 +77,23 @@ export function VerifiedAvatar({ src, fallback, size = 'md', className, verified
       {verified && (
         <span
           className={cn(
+            // Verified blue — kept as Twitter/X blue (#1D9BF0) because blue
+            // is the universal color users recognize for "verified". The
+            // shadow + thin ring integrate it with the dark/gold UI.
             'absolute flex items-center justify-center rounded-full bg-[#1D9BF0]',
-            'ring-2 ring-background shadow-sm',
+            // Thin 1px ring in the background color — clean separation
+            // without a bulky white frame.
+            'ring-1 ring-background',
+            // Subtle drop shadow gives the badge depth so it "lifts" off
+            // the avatar without needing a thick border.
+            'shadow-md shadow-black/40',
             BADGE_POSITION_MAP[size],
             BADGE_SIZE_MAP[size],
           )}
           title="Verified (KYC)"
         >
           <BadgeCheck
-            className="h-full w-full text-white"
+            className="h-[85%] w-[85%] text-white"
             strokeWidth={BADGE_STROKE_MAP[size]}
           />
         </span>

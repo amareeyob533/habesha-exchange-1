@@ -2288,3 +2288,46 @@ Work Log:
 Stage Summary:
 - The blue KYC verification badge is now properly proportioned (~25-43% of avatar depending on size) instead of the bulky 50% it was before. Placement is cleaner with per-size offsets, the stroke is thinner on small badges, and a subtle shadow adds depth. Verified visually via VLM that it now matches the professional standard set by Twitter/X/Instagram/LinkedIn.
 - Committed as af405b5. NOTE: git push failed again because the sandbox GitHub credentials expired during the prior db:push — the commit is local and ready to push when credentials are restored.
+
+---
+Task ID: ETHIOPIAN-NEW-YEAR-POPUP
+Agent: main
+Task: Broadcast a Happy Ethiopian New Year (Enkutatash) message to all users with a popup animation of the traditional Adey Abeba flower (🌼). When users press the flower, reveal the Amharic New Year message.
+
+Work Log:
+- src/components/effects/new-year-popup.tsx (NEW):
+  * Full-screen popup with dimmed backdrop (radial golden tint + blur).
+  * 14 ambient falling 🌼 petals continuously drifting down the screen (staggered timing).
+  * Large clickable 🌼 flower (180px) with:
+    - Golden drop-shadow glow + pulsing radial halo
+    - Floating + gentle rotation animation (framer-motion)
+    - 10 orbiting sparkle dots around the flower
+    - 'ENKUTATASH' label + broadcast title in gold-gradient text
+    - Pulsing 'Tap the flower to open your message 🌼' prompt
+  * On click: 24 daisy-petal particles burst outward (radial gradients with glow), then message card scales in with spring animation.
+  * Message card: gold-gradient header (🌼 + 'HABESHA EXCHANGE' + title), festive flower dividers, full Amharic message (whitespace-preserving), Like button + '🌼 Thank you!' button.
+  * 6 floating 🌼 decorations around the opened card.
+  * Seen state persisted in localStorage (newyear-seen-{id}) — only shows once per browser.
+  * Fires /api/broadcasts/seen on display so server stops re-pushing.
+  * pickUnseenNewYearBroadcast() detects New Year broadcasts by title/message containing 'new year' / 'enkutatash' / 'ዓመት' / 'መለወጫ' or the 🌼 emoji.
+- src/components/dashboard/dashboard-shell.tsx:
+  * Imported NewYearPopup + pickUnseenNewYearBroadcast + NewYearBroadcast type.
+  * Added newYearBroadcast state.
+  * checkGiftBroadcasts now also checks for unseen New Year broadcasts (takes priority over gift broadcasts since it's a festive occasion). Re-checks paused while either popup is showing.
+  * Renders <NewYearPopup> alongside <GiftBoxPopup>.
+- Broadcast sent via POST /api/admin/broadcast (admin-only):
+  * Title: እንኳን ለ2019 ዓ.ም. ዘመን መለወጫ በዓል አደረሰዎ! 🌼
+  * Message: ውድ ደንበኛችን እንኳን ለ2019 ዓ.ም. የዘመን መለወጫ በዓል አደረሰዎ!🌼 በዓሉ የሰላም እና የደስታ እንዲሆንልዎ እንመኛለን!\n\nHABESHA EXCHANGE ✅️
+  * The broadcast API fan-outs to ALL users: creates a Notification row for each user + sends a web push notification to each.
+- Browser verification (Agent Browser end-to-end):
+  * Created test user newyearuser@example.com, signed in.
+  * Popup appeared with the large Adey Abeba flower + 'ENKUTATASH' label + Amharic title + 'Tap the flower to open your message 🌼' prompt.
+  * VLM confirmed: 'festive and professional, large yellow flower with glowing effect, dark background makes yellow/gold elements pop, floating flower animations in background.'
+  * Clicked the flower → petal burst animation played → message card revealed with the full Amharic New Year greeting + 'HABESHA EXCHANGE ✅️' + Like + '🌼 Thank you!' buttons.
+  * VLM confirmed opened card: 'professional and festive, yellow accents matching the Adey Abeba, HABESHA EXCHANGE visible, Like + Thank you buttons present.'
+- Lint: 0 errors, 9 warnings (all pre-existing polling-pattern warnings).
+- Git: committed as dc1a68e, pushed to origin/main (7ac3775..dc1a68e).
+
+Stage Summary:
+- Every non-admin user now sees a beautiful Ethiopian New Year popup with the traditional Adey Abeba (🌼) flower animation. The flower floats with a golden glow, surrounded by orbiting sparkles and falling petals. When they tap the flower, it bursts into daisy petals and reveals the Amharic New Year message from the admin in a festive gold card with Like + Thank you buttons. The popup only shows once per browser (localStorage-tracked). The broadcast was sent to all users via the admin broadcast API.
+- Changes pushed to GitHub (commit dc1a68e).

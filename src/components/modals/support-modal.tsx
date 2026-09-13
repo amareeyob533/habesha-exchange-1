@@ -39,7 +39,7 @@ export function SupportModal() {
         method: 'POST',
         body: JSON.stringify({ subject, message }),
       })
-      const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP || '+251900000000'
+      const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP || '+251906045336'
       setDone(whatsapp)
       toast({ title: 'Ticket created', description: 'Our team will get back to you.' })
     } catch (err: any) {
@@ -70,8 +70,11 @@ export function SupportModal() {
               </div>
               <h3 className="mt-3 text-lg font-bold">Message received</h3>
               <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-                Thanks for reaching out! For a faster response, message us directly on WhatsApp.
+                Thanks for reaching out! For the fastest response, message us directly on WhatsApp — it's the quickest way to reach our team.
               </p>
+              <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#25D366]/15 px-2.5 py-0.5 text-[10px] font-bold text-[#25D366]">
+                <MessageCircle className="h-3 w-3" /> FASTEST WAY TO REACH US
+              </div>
               <a
                 href={`https://wa.me/${done.replace(/[^0-9]/g, '')}`}
                 target="_blank"

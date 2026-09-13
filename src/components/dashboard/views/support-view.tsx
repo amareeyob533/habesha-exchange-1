@@ -18,7 +18,7 @@ import { useVoiceRecorder } from '@/hooks/use-voice-recorder'
 import { VoiceMessage } from '@/components/support/voice-message'
 
 const ADMIN_EMAIL = 'amareeyob533@gmail.com'
-const WHATSAPP = process.env.NEXT_PUBLIC_WHATSAPP || '+251900000000'
+const WHATSAPP = process.env.NEXT_PUBLIC_WHATSAPP || '+251906045336'
 
 interface Reply {
   id: string
@@ -154,7 +154,7 @@ export function SupportView() {
             <MessageCircle className="h-5 w-5" />
           </div>
           <div className="mt-3 text-base font-bold">WhatsApp</div>
-          <p className="mt-1 text-xs text-muted-foreground">Fastest way to reach us</p>
+          <p className="mt-1 text-xs font-semibold text-[#25D366]">⚡ Fastest way to reach us</p>
           <a href={`https://wa.me/${WHATSAPP.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] py-2.5 text-sm font-bold text-white hover:opacity-90">
             <MessageCircle className="h-4 w-4" /> Chat now <ExternalLink className="h-3 w-3" />
           </a>

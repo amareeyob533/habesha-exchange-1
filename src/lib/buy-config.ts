@@ -14,8 +14,8 @@ export const BUY_BANKS: BuyBank[] = [
   {
     code: 'CBE',
     name: 'Commercial Bank of Ethiopia (CBE)',
-    accountName: 'Eyob Amare',
-    accountNumber: '1000795867825',
+    accountName: 'Melesech Aschale',
+    accountNumber: '1000031904904',
   },
   {
     code: 'Telebirr',

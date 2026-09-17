@@ -23,18 +23,6 @@ export const BUY_BANKS: BuyBank[] = [
     accountName: 'Kirubel',
     accountNumber: '0962404391',
   },
-  {
-    code: 'Abay Bank',
-    name: 'Abay Bank',
-    accountName: 'Melesech Aschale',
-    accountNumber: '4209117438414016',
-  },
-  {
-    code: 'M-PESA',
-    name: 'M-PESA',
-    accountName: 'Amare Yalew',
-    accountNumber: '0718373923',
-  },
 ]
 
 export function getBuyBank(code: string): BuyBank | undefined {

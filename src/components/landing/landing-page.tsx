@@ -190,7 +190,7 @@ export function LandingPage() {
             { icon: Wallet, title: 'Multi-Network Wallets', desc: 'Deposit via TRON, Ethereum, Bitcoin and TON networks with verified addresses.' },
             { icon: Users, title: 'Internal Transfers', desc: 'Send funds instantly to any user by their 6-digit UID — zero fees, zero delay.' },
             { icon: TrendingUp, title: 'Live Markets', desc: 'Track BTC, USDT, USDC and TON with real-time CoinGecko pricing.' },
-            { icon: Globe2, title: 'Bank Withdrawals', desc: 'Cash out to Ethiopian banks (CBE, Telebirr, Abay, M-PESA) in ETB at fixed rates.' },
+            { icon: Globe2, title: 'Bank Withdrawals', desc: 'Cash out to Ethiopian banks (CBE, Telebirr) in ETB at fixed rates.' },
           ].map((f, i) => (
             <motion.div
               key={f.title}
@@ -300,7 +300,7 @@ export function LandingPage() {
             </div>
             <div className="glass-card gradient-border rounded-2xl p-6 transition-all hover:shadow-gold">
               <div className="text-sm font-bold">Bank Withdrawals</div>
-              <div className="mt-1 text-xs text-muted-foreground">CBE · Telebirr · Abay · M-PESA</div>
+              <div className="mt-1 text-xs text-muted-foreground">CBE · Telebirr</div>
               <div className="mt-4 text-2xl font-extrabold text-gold-gradient">~186 ETB</div>
               <div className="text-[11px] text-muted-foreground">per 1 USDT</div>
             </div>

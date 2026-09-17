@@ -6,7 +6,7 @@ import { useLiveRate } from '@/hooks/use-live-rate'
 import { formatUsd, timeAgo } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
-import { ArrowDownToLine, ArrowUpFromLine, Send, Plus, TrendingUp, ShoppingCart, LineChart, ArrowLeftRight, TrendingDown, Eye, EyeOff } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, Send, Plus, TrendingUp, ShoppingCart, LineChart, ArrowLeftRight, TrendingDown, Eye, EyeOff, CreditCard, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MiniMarketOverview } from '@/components/dashboard/views/mini-market'
 
@@ -228,27 +228,31 @@ function LiveRateDisplay() {
       )}
 
       {/* Bank options */}
-      <div className="mt-2 text-center text-[11px] text-muted-foreground">Pay via CBE · Telebirr · Abay · M-PESA</div>
+      <div className="mt-2 text-center text-[11px] text-muted-foreground">Pay via CBE · Telebirr</div>
 
-      {/* Cinematic bank image */}
-      <motion.div
+      {/* Habesha Exchange Mastercard promotional card */}
+      <motion.button
+        type="button"
+        onClick={() => setView('card')}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.3, duration: 0.6 }}
-        className="relative mt-4 overflow-hidden rounded-xl"
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="relative mt-4 flex w-full items-center gap-3 overflow-hidden rounded-xl border border-gold/30 bg-gradient-to-br from-[#1a1410] via-[#221a12] to-[#0f0c08] p-3 text-left transition-colors hover:border-gold/50"
       >
-        <div className="bg-gold-glow pointer-events-none absolute inset-0 opacity-20" />
-        <img
-          src="/national-bank.jpg"
-          alt="National Bank of Ethiopia"
-          className="w-full object-cover"
-          style={{ maxHeight: '120px', objectPosition: 'center' }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
-        <div className="absolute bottom-2 left-3 text-[10px] font-semibold text-foreground/80">
-          Regulated financial ecosystem
+        <div className="bg-gold-glow pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full opacity-30" />
+        {/* Mastercard-style chip + icon */}
+        <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gold/30 to-gold/10 ring-1 ring-gold/30">
+          <CreditCard className="h-5 w-5 text-gold" />
         </div>
-      </motion.div>
+        <div className="relative min-w-0 flex-1">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-gold">Habesha Exchange</div>
+          <div className="truncate text-sm font-bold text-foreground">Mastercard</div>
+          <div className="truncate text-[10px] text-muted-foreground">Spend crypto worldwide · Activate now</div>
+        </div>
+        <ArrowRight className="relative h-4 w-4 shrink-0 text-gold" />
+      </motion.button>
     </div>
   )
 }

@@ -11,8 +11,6 @@ export const ETB_RATE = 186 // 1 USD = ~186 ETB (base rate, actual fluctuates 18
 export const BANKS = [
   { code: 'CBE', name: 'Commercial Bank of Ethiopia (CBE)', short: 'CBE' },
   { code: 'Telebirr', name: 'Telebirr', short: 'Telebirr' },
-  { code: 'Abay Bank', name: 'Abay Bank', short: 'Abay Bank' },
-  { code: 'M-PESA', name: 'M-PESA', short: 'M-PESA' },
 ] as const
 
 export interface TokenConfig {

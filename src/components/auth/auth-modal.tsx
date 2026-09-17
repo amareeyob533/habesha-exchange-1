@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, User, AtSign, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, Check, X } from 'lucide-react'
 import { LogoMark } from '@/components/common/logo'
 import { getVisitorId } from '@/lib/fingerprint'
+import { TermsModal } from '@/components/auth/terms-modal'
 
 interface AuthModalProps {
   open: boolean
@@ -36,6 +37,9 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
   const [semail, setSemail] = useState('')
   const [spass, setSpass] = useState('')
   const [showPass, setShowPass] = useState(false)
+  // Terms of Service acceptance — required before signup
+  const [agreeToS, setAgreeToS] = useState(false)
+  const [tosOpen, setTosOpen] = useState(false)
 
   // Debounced username availability check
   useEffect(() => {
@@ -93,6 +97,11 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
       toast({ variant: 'destructive', title: 'Invalid username', description: 'Min 3 chars, letters/numbers/underscore/dot only.' })
       return
     }
+    // Require the Terms of Service checkbox to be checked before signup.
+    if (!agreeToS) {
+      toast({ variant: 'destructive', title: 'Accept the Terms', description: 'Please read and accept the Terms of Service and Disclaimer to continue.' })
+      return
+    }
     // Generate a device fingerprint so the server can block banned devices
     // and tag this user's account with the device visitorId.
     let visitorId = ''
@@ -124,6 +133,7 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[440px] gap-0 overflow-hidden border-border/80 bg-card p-0">
         <div className="relative">
@@ -286,7 +296,38 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
                       <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
                       <span>Your account is protected with industry-standard encryption and device verification. Welcome to Habesha Exchange.</span>
                     </div>
-                    <Button type="submit" disabled={loading} className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground hover:opacity-95">
+                    {/* Required Terms of Service checkbox */}
+                    <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border bg-secondary/30 p-2.5 text-[11px] leading-relaxed text-muted-foreground transition-colors hover:bg-secondary/50">
+                      <span className="relative mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center">
+                        <input
+                          type="checkbox"
+                          checked={agreeToS}
+                          onChange={(e) => setAgreeToS(e.target.checked)}
+                          className="peer absolute h-4 w-4 cursor-pointer appearance-none rounded border border-border bg-card checked:border-gold checked:bg-gold transition-colors"
+                        />
+                        <Check className="pointer-events-none absolute h-3 w-3 text-primary-foreground opacity-0 transition-opacity peer-checked:opacity-100" strokeWidth={3.5} />
+                      </span>
+                      <span>
+                        I have read and agree to the{' '}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setTosOpen(true) }}
+                          className="text-muted-foreground underline decoration-muted-foreground/40 underline-offset-2 transition-colors hover:text-foreground hover:decoration-muted-foreground"
+                        >
+                          Terms of Service
+                        </button>{' '}
+                        and{' '}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setTosOpen(true) }}
+                          className="text-muted-foreground underline decoration-muted-foreground/40 underline-offset-2 transition-colors hover:text-foreground hover:decoration-muted-foreground"
+                        >
+                          Disclaimer
+                        </button>
+                        .
+                      </span>
+                    </label>
+                    <Button type="submit" disabled={loading || !agreeToS} className="bg-gold-gradient h-11 w-full font-semibold text-primary-foreground transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50">
                       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Create Account <ArrowRight className="ml-1 h-4 w-4" /></>}
                     </Button>
                   </form>
@@ -316,6 +357,10 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
           </AnimatePresence>
         </DialogContent>
       </Dialog>
+
+      {/* Terms of Service & Disclaimer modal — opened by the ToS/Disclaimer links */}
+      <TermsModal open={tosOpen} onOpenChange={setTosOpen} />
+    </>
   )
 }
 

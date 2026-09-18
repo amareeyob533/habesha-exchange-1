@@ -37,7 +37,23 @@ export async function GET(req: NextRequest) {
     }
 
     if (format === 'json') {
-      return NextResponse.json({ agreements, count: agreements.length })
+      // Include the full ToS text + metadata so the on-screen certificate
+      // modal can render the complete document without an extra fetch.
+      const a = agreements[0]
+      const tosText = getTosFullText(a.tosVersion)
+      const tosMeta = getTosVersion(a.tosVersion)
+      return NextResponse.json({
+        agreements,
+        count: agreements.length,
+        // The full canonical ToS text (as agreed by the user)
+        tosFullText: tosText,
+        tosMeta: tosMeta ? {
+          version: tosMeta.version,
+          effectiveDate: tosMeta.effectiveDate,
+          title: tosMeta.title,
+          sections: tosMeta.sections,
+        } : null,
+      })
     }
 
     // format === 'txt' — produce a printable legal certificate

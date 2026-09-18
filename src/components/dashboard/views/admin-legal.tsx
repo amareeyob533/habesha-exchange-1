@@ -55,6 +55,7 @@ export function LegalAdmin() {
     tosFullText: string
     tosMeta: { version: string; effectiveDate: string; title: string; sections: { heading: string; body: string; severity: string }[] } | null
     currentKyc: { kycFullName: string | null; kycIdType: string | null; kycCity: string | null; kycStatus: string | null; kycApprovedAt: string | null } | null
+    kycApplications: { id: string; status: string; submittedAt: string; reviewedAt: string | null; documents: { id: string; side: string; fileName: string; mimeType: string; size: number; deleteAfter: string | null }[] }[]
   } | null>(null)
   const [certLoading, setCertLoading] = useState(false)
 
@@ -95,6 +96,7 @@ export function LegalAdmin() {
         tosFullText: string
         tosMeta: { version: string; effectiveDate: string; title: string; sections: { heading: string; body: string; severity: string }[] } | null
         currentKyc: { kycFullName: string | null; kycIdType: string | null; kycCity: string | null; kycStatus: string | null; kycApprovedAt: string | null } | null
+        kycApplications: { id: string; status: string; submittedAt: string; reviewedAt: string | null; documents: { id: string; side: string; fileName: string; mimeType: string; size: number; deleteAfter: string | null }[] }[]
       }>(`/api/admin/legal/agreements/user?userId=${a.userId}&format=json`)
       setCertificate(data)
     } catch (err: any) {
@@ -314,6 +316,7 @@ function CertificateModal({
     tosFullText: string
     tosMeta: { version: string; effectiveDate: string; title: string; sections: { heading: string; body: string; severity: string }[] } | null
     currentKyc: { kycFullName: string | null; kycIdType: string | null; kycCity: string | null; kycStatus: string | null; kycApprovedAt: string | null } | null
+    kycApplications: { id: string; status: string; submittedAt: string; reviewedAt: string | null; documents: { id: string; side: string; fileName: string; mimeType: string; size: number; deleteAfter: string | null }[] }[]
   } | null
   loading: boolean
   onClose: () => void
@@ -329,6 +332,12 @@ function CertificateModal({
   const kycCityVal = a?.kycCity || kyc?.kycCity || null
   const kycStatusVal = a?.kycStatus || kyc?.kycStatus || null
   const hasKyc = !!(kycName || kycType || kycCityVal)
+  const kycApps = certificate?.kycApplications || []
+  // Collect all KYC document images (front + back of ID) from all applications
+  const allDocs = kycApps.flatMap(app => app.documents.map(doc => ({ ...doc, appStatus: app.status })))
+  const frontDocs = allDocs.filter(d => d.side === 'front')
+  const backDocs = allDocs.filter(d => d.side === 'back')
+  const hasIdPhotos = frontDocs.length > 0 || backDocs.length > 0
   const ID_LABELS: Record<string, string> = {
     driver_license: "Driver's License",
     national_id: 'National ID',
@@ -432,6 +441,43 @@ function CertificateModal({
                   <p className="text-[11px] italic text-gray-500">
                     This user has not submitted KYC / national ID verification.
                   </p>
+                )}
+
+                {/* ID photos (front + back) — displayed on the certificate
+                    so the document can be used as legal proof of identity */}
+                {hasIdPhotos && (
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    {frontDocs.length > 0 && (
+                      <div>
+                        <div className="mb-1 text-[9px] font-bold uppercase tracking-wider text-gray-500">Front of ID</div>
+                        <img
+                          src={`/api/kyc/document?id=${frontDocs[0].id}`}
+                          alt="Front of ID"
+                          className="w-full rounded border border-gray-300 object-contain"
+                          style={{ maxHeight: '200px' }}
+                        />
+                      </div>
+                    )}
+                    {backDocs.length > 0 && (
+                      <div>
+                        <div className="mb-1 text-[9px] font-bold uppercase tracking-wider text-gray-500">Back of ID</div>
+                        <img
+                          src={`/api/kyc/document?id=${backDocs[0].id}`}
+                          alt="Back of ID"
+                          className="w-full rounded border border-gray-300 object-contain"
+                          style={{ maxHeight: '200px' }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+                {hasIdPhotos && (
+                  <div className="mt-1 text-[9px] text-gray-400">
+                    ID photos retained per the application's data retention policy.
+                    {kycApps[0]?.documents?.[0]?.deleteAfter && (
+                      <span> Auto-delete scheduled for {new Date(kycApps[0].documents[0].deleteAfter).toLocaleDateString('en-US')}.</span>
+                    )}
+                  </div>
                 )}
               </div>
 

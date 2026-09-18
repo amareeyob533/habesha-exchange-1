@@ -42,12 +42,25 @@ export async function GET(req: NextRequest) {
       const a = agreements[0]
       const tosText = getTosFullText(a.tosVersion)
       const tosMeta = getTosVersion(a.tosVersion)
-      // Also fetch the current User's KYC data — this ensures the certificate
-      // shows the latest national ID info even if the TosAgreement snapshot
-      // was null (e.g. user hadn't completed KYC at the time of agreement).
+      // Also fetch the current User's KYC data + their KYC applications
+      // (with documents = front/back ID photos) so the certificate can
+      // display the ID images alongside the text data.
       const currentUser = await db.user.findUnique({
         where: { id: userId },
-        select: { kycFullName: true, kycIdType: true, kycCity: true, kycStatus: true, kycApprovedAt: true },
+        select: {
+          kycFullName: true, kycIdType: true, kycCity: true, kycStatus: true, kycApprovedAt: true,
+          kycApplications: {
+            orderBy: { submittedAt: 'desc' },
+            take: 3,
+            select: {
+              id: true, status: true, submittedAt: true, reviewedAt: true,
+              documents: {
+                select: { id: true, side: true, fileName: true, mimeType: true, size: true, deleteAfter: true },
+                orderBy: { side: 'asc' },
+              },
+            },
+          },
+        },
       })
       return NextResponse.json({
         agreements,
@@ -70,6 +83,10 @@ export async function GET(req: NextRequest) {
           kycStatus: currentUser.kycStatus,
           kycApprovedAt: currentUser.kycApprovedAt,
         } : null,
+        // KYC applications with document IDs (front/back ID photos).
+        // The certificate modal renders these as <img> tags pointing to
+        // /api/kyc/document?id=xxx (admin-only image serving route).
+        kycApplications: currentUser?.kycApplications || [],
       })
     }
 

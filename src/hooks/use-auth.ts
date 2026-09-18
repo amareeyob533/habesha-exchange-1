@@ -52,7 +52,7 @@ interface AuthState {
   authChecked: boolean
   fetchMe: () => Promise<void>
   login: (email: string, password: string) => Promise<void>
-  signup: (email: string, password: string, name?: string, username?: string, visitorId?: string) => Promise<void>
+  signup: (email: string, password: string, name?: string, username?: string, visitorId?: string, agreedToS?: boolean) => Promise<void>
   loginWithGoogle: (profile: { email: string; name?: string; avatarUrl?: string; visitorId?: string }) => Promise<void>
   logout: () => Promise<void>
   updateProfile: (data: { name?: string; country?: string; phone?: string }) => Promise<void>
@@ -130,12 +130,12 @@ export const useAuth = create<AuthState>((set, get) => ({
     }
   },
 
-  signup: async (email, password, name, username, visitorId) => {
+  signup: async (email, password, name, username, visitorId, agreedToS) => {
     set({ loading: true })
     try {
       const res = await apiFetch<{ token: string }>('/api/auth/signup', {
         method: 'POST',
-        body: JSON.stringify({ email, password, name, username, visitorId }),
+        body: JSON.stringify({ email, password, name, username, visitorId, agreedToS }),
       })
       if (res.token) setStoredToken(res.token)
       useUI.getState().setView('overview')

@@ -5,19 +5,37 @@ import { generateUid, ensureBalances } from '@/lib/uid'
 import { TOKEN_SYMBOLS } from '@/lib/tokens'
 import { sendPushNotification } from '@/lib/push'
 import { isDeviceBanned } from '@/lib/device-ban'
+import { CURRENT_TOS_VERSION, getTosTextHash } from '@/lib/tos'
 
 function normalizeUsername(raw: string): string {
   return raw.toLowerCase().trim().replace(/\s+/g, '')
 }
 
+/** Extract the client's real IP from common proxy headers, falling back to the socket IP. */
+function getClientIp(req: NextRequest): string {
+  const forwarded = req.headers.get('x-forwarded-for')
+  if (forwarded) return forwarded.split(',')[0].trim()
+  const realIp = req.headers.get('x-real-ip')
+  if (realIp) return realIp.trim()
+  return req.headers.get('x-vercel-forwarded-for') || ''
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, name, username, visitorId } = await req.json()
+    const { email, password, name, username, visitorId, agreedToS } = await req.json()
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
     if (password.length < 6) {
       return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
+    }
+
+    // Require the Terms of Service checkbox to be checked — legal requirement.
+    if (!agreedToS) {
+      return NextResponse.json(
+        { error: 'You must accept the Terms of Service and Disclaimer to create an account.' },
+        { status: 403 },
+      )
     }
 
     // Device ban check — block signup before any further validation if the
@@ -74,6 +92,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'An account with this email already exists' }, { status: 409 })
     }
 
+    // Capture legal-evidence fields at the moment of agreement.
+    const clientIp = getClientIp(req)
+    const userAgent = req.headers.get('user-agent') || ''
+    const tosTextHash = getTosTextHash(CURRENT_TOS_VERSION)
+
     const passwordHash = await hashPassword(password)
     const uid = await generateUid()
     const user = await db.user.create({
@@ -87,8 +110,36 @@ export async function POST(req: NextRequest) {
         // Attach the device fingerprint so the admin can later ban this
         // device from the user's profile (and block future signups).
         visitorId: visitorId || null,
+        // Record the Terms-of-Service agreement on the User row (denormalized
+        // for quick access by the admin).
+        agreedToS: true,
+        tosVersion: CURRENT_TOS_VERSION,
+        tosAgreedAt: new Date(),
+        tosAgreedIp: clientIp || null,
       },
     })
+
+    // Create an immutable audit-log entry — the legal proof of agreement.
+    // Snapshots the account details + ToS version + hash so even if the user
+    // later changes their email/name, the original agreement record is intact.
+    try {
+      await db.tosAgreement.create({
+        data: {
+          userId: user.id,
+          tosVersion: CURRENT_TOS_VERSION,
+          ipAddress: clientIp || null,
+          userAgent: userAgent || null,
+          visitorId: visitorId || null,
+          accountEmail: user.email,
+          accountUid: user.uid,
+          accountName: user.name,
+          tosTextHash,
+        },
+      })
+    } catch (err) {
+      // Non-fatal — the User row already records the agreement. Log + continue.
+      console.error('Failed to create TosAgreement audit log:', err)
+    }
 
     // Initialize balances for all tokens
     await ensureBalances(user.id, TOKEN_SYMBOLS)

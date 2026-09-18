@@ -30,7 +30,7 @@ import {
   Lock, Unlock, AlertTriangle, Mail, AtSign, Hash,
   Download, ExternalLink, KeyRound, IdCard, MapPin, User as UserIcon, Clock,
   ArrowDownToLine, CreditCard, Bell, Pencil, Check, X as XIcon, Info as InfoIcon,
-  CheckCircle2, AlertOctagon, Fingerprint, Smartphone,
+  CheckCircle2, AlertOctagon, Fingerprint, Smartphone, Scale, FileText,
 } from 'lucide-react'
 
 interface SearchUser {
@@ -101,6 +101,11 @@ interface UserDetail {
     kycCity: string | null
     kycIdType: string | null
     kycRejectReason: string | null
+    // Terms of Service acceptance (legal proof)
+    agreedToS: boolean
+    tosVersion: string | null
+    tosAgreedAt: string | null
+    tosAgreedIp: string | null
     // Whether a bcrypt password hash is set (Google-only users have none)
     hasPassword: boolean
   }
@@ -1004,6 +1009,54 @@ export function UsersAdmin() {
                       })
                     )}
                   </div>
+                </div>
+
+                {/* Legal — Terms of Service agreement proof */}
+                <div className="rounded-xl border border-border bg-secondary/20 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <Scale className="h-3.5 w-3.5" /> Legal Agreement
+                    </div>
+                    {detail.user.agreedToS ? (
+                      <span className="rounded bg-up/15 px-1.5 py-0.5 text-[9px] font-bold text-up">AGREED ✓</span>
+                    ) : (
+                      <span className="rounded bg-down/15 px-1.5 py-0.5 text-[9px] font-bold text-down">NOT AGREED</span>
+                    )}
+                  </div>
+                  {detail.user.agreedToS ? (
+                    <div className="space-y-1.5">
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
+                        <div><span className="text-muted-foreground">ToS Version:</span> <span className="font-mono font-medium">{detail.user.tosVersion || '—'}</span></div>
+                        <div><span className="text-muted-foreground">Agreed (UTC):</span> <span className="font-medium">{detail.user.tosAgreedAt ? new Date(detail.user.tosAgreedAt).toLocaleString('en-US', { timeZone: 'UTC' }) : '—'}</span></div>
+                        <div className="col-span-2"><span className="text-muted-foreground">IP Address:</span> <span className="font-mono">{detail.user.tosAgreedIp || '—'}</span></div>
+                      </div>
+                      <div className="flex gap-1.5 pt-1">
+                        <a
+                          href={`/api/admin/legal/agreements/user?userId=${detail.user.id}&format=txt${getStoredToken() ? `&token=${getStoredToken()}` : ''}`}
+                          className="flex-1"
+                        >
+                          <Button size="sm" variant="outline" className="h-7 w-full text-[10px] border-gold/30 text-gold hover:bg-gold/10">
+                            <FileText className="mr-1 h-3 w-3" /> Certificate (.txt)
+                          </Button>
+                        </a>
+                        <a
+                          href={`/api/admin/legal/agreements/user?userId=${detail.user.id}&format=json${getStoredToken() ? `&token=${getStoredToken()}` : ''}`}
+                          className="flex-1"
+                        >
+                          <Button size="sm" variant="outline" className="h-7 w-full text-[10px]">
+                            <Download className="mr-1 h-3 w-3" /> JSON
+                          </Button>
+                        </a>
+                      </div>
+                      <div className="mt-1 text-[9px] leading-snug text-muted-foreground">
+                        Download the certificate as legal proof that this user accepted the Terms of Service + Disclaimer. Includes the exact ToS text, version, timestamp, and IP.
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-[11px] text-muted-foreground">
+                      This user has not accepted the Terms of Service. Users who signed up before the ToS requirement was added may not have a recorded agreement.
+                    </div>
+                  )}
                 </div>
 
                 {/* Device security — fingerprint + ban/un-ban device */}

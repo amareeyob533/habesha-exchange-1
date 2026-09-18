@@ -7,13 +7,14 @@ import { timeAgo, formatTokenAmount, shortAddr } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { motion } from 'framer-motion'
-import { Check, X, Loader2, RefreshCw, ShieldAlert, Inbox, Clock, ArrowDownToLine, ArrowUpFromLine, Users, ShoppingCart, Headphones, ShieldCheck, Megaphone, CreditCard } from 'lucide-react'
+import { Check, X, Loader2, RefreshCw, ShieldAlert, Inbox, Clock, ArrowDownToLine, ArrowUpFromLine, Users, ShoppingCart, Headphones, ShieldCheck, Megaphone, CreditCard, Scale } from 'lucide-react'
 import { UsersAdmin } from '@/components/dashboard/views/admin-users'
 import { BuysAdmin } from '@/components/dashboard/views/admin-buys'
 import { AdminSupport } from '@/components/dashboard/views/admin-support'
 import { KycAdmin } from '@/components/dashboard/views/admin-kyc'
 import { CardsAdmin } from '@/components/dashboard/views/admin-cards'
 import { BroadcastAdmin } from '@/components/dashboard/views/admin-broadcast'
+import { LegalAdmin } from '@/components/dashboard/views/admin-legal'
 
 interface AdminDeposit {
   id: string
@@ -38,7 +39,7 @@ interface AdminWithdrawal {
   user: { uid: string; email: string; name: string | null }
 }
 
-type Section = 'deposits' | 'withdrawals' | 'buys' | 'users' | 'support' | 'kyc' | 'broadcast' | 'cards'
+type Section = 'deposits' | 'withdrawals' | 'buys' | 'users' | 'support' | 'kyc' | 'broadcast' | 'cards' | 'legal'
 type StatusTab = 'pending' | 'approved' | 'rejected' | 'all'
 
 export function AdminView() {
@@ -52,7 +53,7 @@ export function AdminView() {
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!getStoredToken()) return
-    if (section === 'users' || section === 'buys' || section === 'support' || section === 'kyc' || section === 'broadcast' || section === 'cards') {
+    if (section === 'users' || section === 'buys' || section === 'support' || section === 'kyc' || section === 'broadcast' || section === 'cards' || section === 'legal') {
       // These sections load their own data internally.
       setLoading(false)
       return
@@ -177,6 +178,7 @@ export function AdminView() {
         <SectionPill icon={Headphones} label="Support" active={section === 'support'} onClick={() => setSection('support')} color="chart-4" />
         <SectionPill icon={Megaphone} label="Broadcast" active={section === 'broadcast'} onClick={() => setSection('broadcast')} color="gold" />
         <SectionPill icon={CreditCard} label="Cards" active={section === 'cards'} onClick={() => setSection('cards')} color="gold" />
+        <SectionPill icon={Scale} label="Legal" active={section === 'legal'} onClick={() => setSection('legal')} color="gold" />
       </div>
 
       {/* Pending alert */}
@@ -210,6 +212,8 @@ export function AdminView() {
           <BroadcastAdmin refreshKey={0} />
         ) : section === 'cards' ? (
           <CardsAdmin />
+        ) : section === 'legal' ? (
+          <LegalAdmin />
         ) : (
           <>
             <Tabs value={statusTab} onValueChange={(v) => setStatusTab(v as StatusTab)}>

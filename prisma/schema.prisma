@@ -34,6 +34,13 @@ model User {
   country         String?
   phone           String?
   visitorId       String?  // device fingerprint (ThumbmarkJS) — set at signup, used for device banning
+  // Terms of Service acceptance — legal proof that the user agreed to the
+  // ToS + Disclaimer at signup. Stored on the User row (denormalized for
+  // quick access) AND in the immutable TosAgreement audit log.
+  agreedToS       Boolean  @default(false)
+  tosVersion       String?  // e.g. "v1.0-2026-09-17" — which version of the ToS they agreed to
+  tosAgreedAt      DateTime? // when they agreed (UTC)
+  tosAgreedIp     String?  // the IP address they agreed from (legal evidence)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -48,6 +55,7 @@ model User {
   buyOrders            BuyOrder[]
   paymentProofs        PaymentProof[]
   kycApplications      KycApplication[]
+  tosAgreements        TosAgreement[]
 }
 
 model Balance {
@@ -314,4 +322,27 @@ model BannedDevice {
   userId    String?  // optional: the user whose device was banned (if known)
   reason    String?  // optional: why the device was banned
   createdAt DateTime @default(now())
+}
+
+/// Immutable audit log of every Terms-of-Service acceptance.
+/// One row is created per user each time they agree to a ToS version (at
+/// signup, or when a new ToS version is published and they re-accept).
+/// This is the legal proof that can be exported as CSV/PDF for defense.
+model TosAgreement {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tosVersion  String   // e.g. "v1.0-2026-09-17" — which ToS version they agreed to
+  agreedAt    DateTime @default(now()) // UTC timestamp of agreement
+  ipAddress   String?  // the client IP at the time of agreement
+  userAgent   String?  // the browser User-Agent string
+  visitorId   String?  // the device fingerprint (ThumbmarkJS)
+  accountEmail String  // the user's email at the time of agreement (snapshot — legal proof)
+  accountUid   String  // the user's UID at the time of agreement (snapshot)
+  accountName  String?  // the user's display name at the time of agreement (snapshot)
+  tosTextHash  String?  // SHA-256 hash of the exact ToS text they agreed to (tamper-proof)
+
+  @@index([userId])
+  @@index([tosVersion])
+  @@index([agreedAt])
 }

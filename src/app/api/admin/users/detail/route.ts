@@ -91,6 +91,11 @@ export async function GET(req: NextRequest) {
         kycCity: u.kycCity,
         kycIdType: u.kycIdType,
         kycRejectReason: u.kycRejectReason,
+        // Terms of Service acceptance (legal proof)
+        agreedToS: u.agreedToS,
+        tosVersion: u.tosVersion,
+        tosAgreedAt: u.tosAgreedAt,
+        tosAgreedIp: u.tosAgreedIp,
         // Password: we store bcrypt hashes (never plaintext). We surface a
         // boolean so the admin can see whether a password is set, but we do
         // NOT send the hash itself over the wire.

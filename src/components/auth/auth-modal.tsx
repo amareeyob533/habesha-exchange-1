@@ -111,7 +111,7 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
       // Non-fatal — the server treats '' as "not banned" (fail-open).
     }
     try {
-      await signup(semail, spass, sname, susername, visitorId)
+      await signup(semail, spass, sname, susername, visitorId, agreeToS)
       toast({
         title: 'Account created! 🎉',
         description: 'Welcome to Habesha Exchange. Your account is ready.',

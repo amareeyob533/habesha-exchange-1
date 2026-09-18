@@ -133,6 +133,9 @@ export async function POST(req: NextRequest) {
     })
 
     // Update the user record so the UI reflects "pending".
+    // Also update the user's display name with the full name they entered
+    // in KYC (first + father + grandfather) — so their profile name is
+    // always consistent with their verified identity.
     await db.user.update({
       where: { id: user.id },
       data: {
@@ -142,6 +145,8 @@ export async function POST(req: NextRequest) {
         kycCity: String(city).trim(),
         kycIdType: idType,
         kycRejectReason: null,
+        // Update the display name with the full name from KYC.
+        name: String(fullName).trim(),
       },
     })
     await db.notification.create({

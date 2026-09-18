@@ -62,10 +62,10 @@ export function KycModal() {
     }
   }, [open])
 
-  // Pre-fill first name from user profile
-  useEffect(() => {
-    if (open && user?.name && !firstName) setFirstName(user.name.split(' ')[0])
-  }, [open, user, firstName])
+  // NOTE: the first name field is intentionally NOT auto-filled from the
+  // user profile. The user must type it themselves so the name on the KYC
+  // application is exactly what they entered (legal requirement). The
+  // field starts empty and can be freely edited/cleared.
 
   // Combine the 3 name fields into a full name for submission
   const fullName = `${firstName.trim()} ${fatherName.trim()} ${grandfatherName.trim()}`.trim()

@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     // Find all users who don't have a recorded ToS agreement.
     const users = await db.user.findMany({
       where: { agreedToS: false },
-      select: { id: true, uid: true, email: true, name: true, visitorId: true, createdAt: true },
+      select: { id: true, uid: true, email: true, name: true, visitorId: true, createdAt: true, kycFullName: true, kycIdType: true, kycCity: true, kycStatus: true },
     })
 
     let updated = 0
@@ -71,6 +71,11 @@ export async function POST(req: NextRequest) {
             accountUid: u.uid,
             accountName: u.name,
             tosTextHash,
+            // KYC snapshot at time of backfill
+            kycFullName: u.kycFullName,
+            kycIdType: u.kycIdType,
+            kycCity: u.kycCity,
+            kycStatus: u.kycStatus,
           },
         })
         logged++

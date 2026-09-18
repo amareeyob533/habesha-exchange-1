@@ -42,6 +42,13 @@ export async function GET(req: NextRequest) {
       const a = agreements[0]
       const tosText = getTosFullText(a.tosVersion)
       const tosMeta = getTosVersion(a.tosVersion)
+      // Also fetch the current User's KYC data — this ensures the certificate
+      // shows the latest national ID info even if the TosAgreement snapshot
+      // was null (e.g. user hadn't completed KYC at the time of agreement).
+      const currentUser = await db.user.findUnique({
+        where: { id: userId },
+        select: { kycFullName: true, kycIdType: true, kycCity: true, kycStatus: true, kycApprovedAt: true },
+      })
       return NextResponse.json({
         agreements,
         count: agreements.length,
@@ -52,6 +59,16 @@ export async function GET(req: NextRequest) {
           effectiveDate: tosMeta.effectiveDate,
           title: tosMeta.title,
           sections: tosMeta.sections,
+        } : null,
+        // Current KYC / national ID data from the User table (latest).
+        // The TosAgreement row also has a snapshot (a.kycFullName etc.)
+        // but that may be null if the user hadn't done KYC yet.
+        currentKyc: currentUser ? {
+          kycFullName: currentUser.kycFullName,
+          kycIdType: currentUser.kycIdType,
+          kycCity: currentUser.kycCity,
+          kycStatus: currentUser.kycStatus,
+          kycApprovedAt: currentUser.kycApprovedAt,
         } : null,
       })
     }
@@ -77,6 +94,28 @@ export async function GET(req: NextRequest) {
     lines.push(`  Email:           ${a.accountEmail}`)
     lines.push(`  Name:            ${a.accountName || '(not provided)'}`)
     lines.push('')
+    // National ID / KYC section
+    const ID_LABELS: Record<string, string> = {
+      driver_license: "Driver's License",
+      national_id: 'National ID',
+      passport: 'Passport',
+    }
+    if (a.kycFullName || a.kycIdType || a.kycCity) {
+      lines.push('─'.repeat(72))
+      lines.push('NATIONAL ID / IDENTITY VERIFICATION')
+      lines.push('─'.repeat(72))
+      lines.push(`  Full Name (on ID): ${a.kycFullName || '(not provided)'}`)
+      lines.push(`  ID Type:           ${ID_LABELS[a.kycIdType || ''] || a.kycIdType || '—'}`)
+      lines.push(`  City:              ${a.kycCity || '—'}`)
+      lines.push(`  Verification:      ${a.kycStatus || 'none'}`)
+      lines.push('')
+    } else {
+      lines.push('─'.repeat(72))
+      lines.push('NATIONAL ID / IDENTITY VERIFICATION')
+      lines.push('─'.repeat(72))
+      lines.push('  (User has not submitted KYC / national ID verification.)')
+      lines.push('')
+    }
     lines.push('─'.repeat(72))
     lines.push('AGREEMENT DETAILS')
     lines.push('─'.repeat(72))

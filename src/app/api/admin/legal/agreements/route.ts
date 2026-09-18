@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 
     const usersWithout = await db.user.findMany({
       where: { id: { notIn: Array.from(userIdsWithAgreement) } },
-      select: { id: true, uid: true, email: true, name: true, visitorId: true, createdAt: true },
+      select: { id: true, uid: true, email: true, name: true, visitorId: true, createdAt: true, kycFullName: true, kycIdType: true, kycCity: true, kycStatus: true },
     })
 
     let backfilledCount = 0
@@ -74,6 +74,11 @@ export async function GET(req: NextRequest) {
             accountUid: u.uid,
             accountName: u.name,
             tosTextHash,
+            // KYC snapshot at time of backfill
+            kycFullName: u.kycFullName,
+            kycIdType: u.kycIdType,
+            kycCity: u.kycCity,
+            kycStatus: u.kycStatus,
           },
         }).catch(() => {})
         backfilledCount++

@@ -134,6 +134,12 @@ export async function POST(req: NextRequest) {
           accountUid: user.uid,
           accountName: user.name,
           tosTextHash,
+          // KYC snapshot (null at signup — user hasn't submitted KYC yet;
+          // updated later when they complete KYC or via the backfill).
+          kycFullName: user.kycFullName,
+          kycIdType: user.kycIdType,
+          kycCity: user.kycCity,
+          kycStatus: user.kycStatus,
         },
       })
     } catch (err) {

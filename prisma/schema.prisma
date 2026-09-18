@@ -341,6 +341,13 @@ model TosAgreement {
   accountUid   String  // the user's UID at the time of agreement (snapshot)
   accountName  String?  // the user's display name at the time of agreement (snapshot)
   tosTextHash  String?  // SHA-256 hash of the exact ToS text they agreed to (tamper-proof)
+  // KYC / National ID snapshot at the time of agreement (may be null if
+  // the user hadn't completed KYC yet — the certificate also fetches the
+  // current KYC status from the User table for the latest info).
+  kycFullName   String?  // full name as written on the ID
+  kycIdType     String?  // driver_license | national_id | passport
+  kycCity       String?  // city where the user lives
+  kycStatus     String?  // none | pending | approved | rejected
 
   @@index([userId])
   @@index([tosVersion])

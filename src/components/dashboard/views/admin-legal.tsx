@@ -54,6 +54,7 @@ export function LegalAdmin() {
     agreements: TosAgreementRow[]
     tosFullText: string
     tosMeta: { version: string; effectiveDate: string; title: string; sections: { heading: string; body: string; severity: string }[] } | null
+    currentKyc: { kycFullName: string | null; kycIdType: string | null; kycCity: string | null; kycStatus: string | null; kycApprovedAt: string | null } | null
   } | null>(null)
   const [certLoading, setCertLoading] = useState(false)
 
@@ -93,6 +94,7 @@ export function LegalAdmin() {
         agreements: TosAgreementRow[]
         tosFullText: string
         tosMeta: { version: string; effectiveDate: string; title: string; sections: { heading: string; body: string; severity: string }[] } | null
+        currentKyc: { kycFullName: string | null; kycIdType: string | null; kycCity: string | null; kycStatus: string | null; kycApprovedAt: string | null } | null
       }>(`/api/admin/legal/agreements/user?userId=${a.userId}&format=json`)
       setCertificate(data)
     } catch (err: any) {
@@ -311,6 +313,7 @@ function CertificateModal({
     agreements: TosAgreementRow[]
     tosFullText: string
     tosMeta: { version: string; effectiveDate: string; title: string; sections: { heading: string; body: string; severity: string }[] } | null
+    currentKyc: { kycFullName: string | null; kycIdType: string | null; kycCity: string | null; kycStatus: string | null; kycApprovedAt: string | null } | null
   } | null
   loading: boolean
   onClose: () => void
@@ -318,6 +321,25 @@ function CertificateModal({
   // The agreement being displayed (first = most recent)
   const a = certificate?.agreements?.[0] || agreement
   const tosMeta = certificate?.tosMeta
+  const kyc = certificate?.currentKyc
+  // Prefer the KYC snapshot from the TosAgreement row (legal proof at time
+  // of agreement), fall back to the current User KYC data (latest).
+  const kycName = a?.kycFullName || kyc?.kycFullName || null
+  const kycType = a?.kycIdType || kyc?.kycIdType || null
+  const kycCityVal = a?.kycCity || kyc?.kycCity || null
+  const kycStatusVal = a?.kycStatus || kyc?.kycStatus || null
+  const hasKyc = !!(kycName || kycType || kycCityVal)
+  const ID_LABELS: Record<string, string> = {
+    driver_license: "Driver's License",
+    national_id: 'National ID',
+    passport: 'Passport',
+  }
+  const KYC_STATUS_LABELS: Record<string, string> = {
+    approved: 'VERIFIED ✓',
+    pending: 'Pending Review',
+    rejected: 'Rejected',
+    none: 'Not Submitted',
+  }
 
   return (
     <>
@@ -383,6 +405,34 @@ function CertificateModal({
                     <CertRow label="Name" value={a.accountName || '(not provided)'} />
                   </tbody>
                 </table>
+              </div>
+
+              {/* National ID / Identity Verification */}
+              <div className="mt-5">
+                <div className="mb-2 flex items-center justify-between border-b border-gray-300 pb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                    National ID / Identity Verification
+                  </span>
+                  {hasKyc && (
+                    <span className={`text-[9px] font-bold ${kycStatusVal === 'approved' ? 'text-green-700' : kycStatusVal === 'pending' ? 'text-gray-500' : 'text-gray-400'}`}>
+                      {KYC_STATUS_LABELS[kycStatusVal || 'none'] || kycStatusVal || '—'}
+                    </span>
+                  )}
+                </div>
+                {hasKyc ? (
+                  <table className="w-full text-[12px]">
+                    <tbody>
+                      <CertRow label="Full Name (on ID)" value={kycName || '(not provided)'} />
+                      <CertRow label="ID Type" value={ID_LABELS[kycType || ''] || kycType || '—'} />
+                      <CertRow label="City" value={kycCityVal || '—'} />
+                      <CertRow label="Verification Status" value={KYC_STATUS_LABELS[kycStatusVal || 'none'] || kycStatusVal || '—'} />
+                    </tbody>
+                  </table>
+                ) : (
+                  <p className="text-[11px] italic text-gray-500">
+                    This user has not submitted KYC / national ID verification.
+                  </p>
+                )}
               </div>
 
               {/* Agreement Details */}

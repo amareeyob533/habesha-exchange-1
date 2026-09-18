@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { motion } from 'framer-motion'
-import { Scale, Download, FileText, Loader2, Search, ShieldCheck, Calendar, Globe, Fingerprint, Hash } from 'lucide-react'
+import { Scale, Download, FileText, Loader2, Search, ShieldCheck, Calendar, Globe, Fingerprint, Hash, RefreshCw } from 'lucide-react'
 
 interface TosAgreementRow {
   id: string
@@ -47,6 +47,7 @@ export function LegalAdmin() {
   const [summary, setSummary] = useState<SummaryRow[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [backfilling, setBackfilling] = useState(false)
 
   const load = useCallback(async () => {
     if (!getStoredToken()) return
@@ -66,6 +67,23 @@ export function LegalAdmin() {
       setLoading(false)
     }
   }, [search, toast])
+
+  async function backfill() {
+    if (!confirm('Backfill all existing users (who signed up before the ToS update) as having agreed to the Terms of Service?\n\nThis will:\n• Mark them as agreedToS=true\n• Use their original signup date as the agreement timestamp\n• Create a TosAgreement audit-log entry for each\n• IP will be marked as "(pre-ToS-update-backfill)"\n\nThis is safe to run multiple times (idempotent).')) return
+    setBackfilling(true)
+    try {
+      const res = await apiFetch<{ ok: boolean; backfilled: number; auditEntriesCreated: number; totalAgreements: number; message: string }>(
+        '/api/admin/legal/backfill',
+        { method: 'POST' },
+      )
+      toast({ title: 'Backfill complete', description: res.message })
+      await load()
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Backfill failed', description: err.message })
+    } finally {
+      setBackfilling(false)
+    }
+  }
 
   useEffect(() => {
     const id = setTimeout(() => load(), 300)
@@ -87,12 +105,16 @@ export function LegalAdmin() {
           </p>
         </div>
         <div className="flex gap-2">
-          <a href={`/api/admin/legal/tos-text${getStoredToken() ? `?token=${getStoredToken()}` : ''}`} className="flex-1 sm:flex-none">
+          <Button variant="outline" size="sm" className="h-10 border-border" disabled={backfilling} onClick={backfill}>
+            {backfilling ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-1.5 h-4 w-4" />}
+            {backfilling ? 'Backfilling…' : 'Backfill Old Users'}
+          </Button>
+          <a href={`/api/admin/legal/tos-text${getStoredToken() ? `?token=${getStoredToken()}` : ''}`} className="flex-none">
             <Button variant="outline" size="sm" className="h-10 border-gold/30 text-gold hover:bg-gold/10">
               <FileText className="mr-1.5 h-4 w-4" /> ToS Text
             </Button>
           </a>
-          <a href={`/api/admin/legal/agreements/csv${getStoredToken() ? `?token=${getStoredToken()}` : ''}`} className="flex-1 sm:flex-none">
+          <a href={`/api/admin/legal/agreements/csv${getStoredToken() ? `?token=${getStoredToken()}` : ''}`} className="flex-none">
             <Button size="sm" className="h-10 bg-gold-gradient font-semibold text-primary-foreground">
               <Download className="mr-1.5 h-4 w-4" /> Export All (CSV)
             </Button>

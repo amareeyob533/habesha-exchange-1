@@ -54,11 +54,19 @@ export function LegalAdmin() {
     setLoading(true)
     try {
       const q = search ? `&search=${encodeURIComponent(search.trim())}` : ''
-      const data = await apiFetch<{ agreements: TosAgreementRow[]; count: number; summary: SummaryRow[] }>(
+      const data = await apiFetch<{ agreements: TosAgreementRow[]; count: number; summary: SummaryRow[]; totalUsers?: number; autoBackfilled?: number }>(
         `/api/admin/legal/agreements?limit=200${q}`,
       )
       setAgreements(data.agreements)
       setSummary(data.summary || [])
+      // If the API auto-backfilled any users on this load, show a toast so
+      // the admin knows what happened.
+      if (data.autoBackfilled && data.autoBackfilled > 0) {
+        toast({
+          title: `${data.autoBackfilled} user(s) auto-backfilled ✓`,
+          description: `These users signed up before the ToS requirement. They've been automatically marked as agreed using their original signup dates.`,
+        })
+      }
     } catch (err: any) {
       const msg = String(err?.message || '')
       if (msg.includes('401') || msg.toLowerCase().includes('unauthorized')) return
